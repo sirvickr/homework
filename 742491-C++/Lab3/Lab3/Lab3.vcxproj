@@ -146,6 +146,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Lab3.cpp" />
+    <ClCompile Include="MainService.cpp" />
+    <ClCompile Include="ServiceBase.cpp" />
+    <ClCompile Include="ServiceInstaller.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="MainService.h" />
+    <ClInclude Include="ServiceBase.h" />
+    <ClInclude Include="ServiceInstaller.h" />
+    <ClInclude Include="ThreadPool.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

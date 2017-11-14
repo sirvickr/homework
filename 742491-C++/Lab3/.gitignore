@@ -1,0 +1,4 @@
+/Lab3/Release/*.log
+/Lab3/Debug/*.log
+/Lab3/x64/Debug/*.log
+/Lab3/x64/Release/*.log
