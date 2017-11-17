@@ -1,10 +1,20 @@
 #pragma once
 
 #include <fstream>
-#include <string>
-#include <list>
 
 #include "ServiceBase.h"
+
+#define MAX_BUFFER  4096
+//#define LOCAL_FILE_LOGGER
+
+// структура, содержащая все данные по наблюдаемому каталогу
+struct DIRECTORY_INFO {
+	HANDLE      hDir;
+	TCHAR       lpszDirName[MAX_PATH];
+	CHAR        lpBuffer[MAX_BUFFER];
+	DWORD       dwBufLength;
+	OVERLAPPED  Overlapped;
+};
 
 class CMainService : public CServiceBase
 {
@@ -23,26 +33,32 @@ protected:
 
 	void ServiceWorkerThread(void);
 
+	void BackupDir(PWSTR szSourceDir, PWSTR szTargetDir, PWSTR szSourceMask);
+
 private:
 
 	struct Pattern {
 		TCHAR mask[MAX_PATH];
 	};
 
-	BOOL m_fStopping;
 	HANDLE m_hStoppedEvent;
-	std::ofstream log;
+#ifdef LOCAL_FILE_LOGGER
 	FILE* logFile = nullptr;
-	// список резервируемых файлов
-	//std::list<std::string> m_sSrcPatterns;
-	std::list<Pattern> m_sSrcPatterns;
-	// имя директории, из которой выполняется копирование
-	//std::string m_sSrcPath;
-	wchar_t m_szSrcPath[MAX_PATH];
+#endif
+	// имя ini-файла
+	TCHAR szIniFileName[MAX_PATH];
+	// имя резервируемой (исходной) директории
+	TCHAR m_szSrcPath[MAX_PATH];
 	// имя директории, в которую выполняется резервирование
-	//std::string m_sDstPath;
-	wchar_t m_szDstPath[MAX_PATH];
-	// имя архива
-	//std::string m_sDstFile;
-	wchar_t m_szDstFile[MAX_PATH];
+	TCHAR m_szDstPath[MAX_PATH];
+
+	DIRECTORY_INFO DirInfo; // параметры исходной директории
+	HANDLE  hCompPort = NULL; // дескриптор "порта завершения"
+	DWORD dwNotifyFilter = // список модификаций исходной директории
+		FILE_NOTIFY_CHANGE_FILE_NAME
+		| FILE_NOTIFY_CHANGE_DIR_NAME
+		| FILE_NOTIFY_CHANGE_SIZE
+		| FILE_NOTIFY_CHANGE_LAST_WRITE
+		| FILE_NOTIFY_CHANGE_CREATION
+		;
 };

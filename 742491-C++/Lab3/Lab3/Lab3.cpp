@@ -18,7 +18,9 @@
 
 // The name of the account under which the service should run
 #define SERVICE_ACCOUNT          L"NT AUTHORITY\\LocalService"
+//#define SERVICE_ACCOUNT          L"NT AUTHORITY\\NetworkService"
 //#define SERVICE_ACCOUNT          L"NT AUTHORITY\\LocalSystem"
+//#define SERVICE_ACCOUNT          NULL
 
 // The password to the service account name
 #define SERVICE_PASSWORD         NULL

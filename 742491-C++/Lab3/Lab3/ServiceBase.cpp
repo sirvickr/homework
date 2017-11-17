@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <strsafe.h>
 
-// Initialize the singleton service instance.
+// Инициализация синглтона
 CServiceBase *CServiceBase::s_service = NULL;
 
 BOOL CServiceBase::Run(CServiceBase &service)

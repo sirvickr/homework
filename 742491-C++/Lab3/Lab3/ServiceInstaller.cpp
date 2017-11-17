@@ -2,27 +2,6 @@
 #include <windows.h>
 #include "ServiceInstaller.h"
 
-//
-//   FUNCTION: InstallService
-//
-//   PURPOSE: Install the current application as a service to the local 
-//   service control manager database.
-//
-//   PARAMETERS:
-//   * pszServiceName - the name of the service to be installed
-//   * pszDisplayName - the display name of the service
-//   * dwStartType - the service start option. This parameter can be one of 
-//     the following values: SERVICE_AUTO_START, SERVICE_BOOT_START, 
-//     SERVICE_DEMAND_START, SERVICE_DISABLED, SERVICE_SYSTEM_START.
-//   * pszDependencies - a pointer to a double null-terminated array of null-
-//     separated names of services or load ordering groups that the system 
-//     must start before this service.
-//   * pszAccount - the name of the account under which the service runs.
-//   * pszPassword - the password to the account name.
-//
-//   NOTE: If the function fails to install the service, it prints the error 
-//   in the standard output stream for users to diagnose the problem.
-//
 void InstallService(PWSTR pszServiceName,
 	PWSTR pszDisplayName,
 	DWORD dwStartType,
@@ -40,7 +19,6 @@ void InstallService(PWSTR pszServiceName,
 		goto Cleanup;
 	}
 
-	// Open the local default service control manager database
 	schSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT |
 		SC_MANAGER_CREATE_SERVICE);
 	if (schSCManager == NULL)
@@ -49,13 +27,12 @@ void InstallService(PWSTR pszServiceName,
 		goto Cleanup;
 	}
 
-	// Install the service into SCM by calling CreateService
 	schService = CreateService(
 		schSCManager,                   // SCManager database
 		pszServiceName,                 // Name of service
 		pszDisplayName,                 // Name to display
-		SERVICE_QUERY_STATUS,           // Desired access
-		SERVICE_WIN32_OWN_PROCESS,      // Service type
+		SERVICE_QUERY_STATUS,           // Desired access SERVICE_QUERY_STATUS SERVICE_ALL_ACCESS
+		SERVICE_WIN32_OWN_PROCESS,      // Service type SERVICE_USER_OWN_PROCESS?
 		dwStartType,                    // Service start type
 		SERVICE_ERROR_NORMAL,           // Error control type
 		szPath,                         // Service's binary
@@ -74,7 +51,7 @@ void InstallService(PWSTR pszServiceName,
 	wprintf(L"%s is installed.\n", pszServiceName);
 
 Cleanup:
-	// Centralized cleanup for all allocated resources.
+	// Общая точка освобождения всех выделенных ресурсов
 	if (schSCManager)
 	{
 		CloseServiceHandle(schSCManager);
@@ -87,25 +64,12 @@ Cleanup:
 	}
 }
 
-//
-//   FUNCTION: UninstallService
-//
-//   PURPOSE: Stop and remove the service from the local service control 
-//   manager database.
-//
-//   PARAMETERS: 
-//   * pszServiceName - the name of the service to be removed.
-//
-//   NOTE: If the function fails to uninstall the service, it prints the 
-//   error in the standard output stream for users to diagnose the problem.
-//
 void UninstallService(PWSTR pszServiceName)
 {
 	SC_HANDLE schSCManager = NULL;
 	SC_HANDLE schService = NULL;
 	SERVICE_STATUS ssSvcStatus = {};
 
-	// Open the local default service control manager database
 	schSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT);
 	if (schSCManager == NULL)
 	{
@@ -113,16 +77,14 @@ void UninstallService(PWSTR pszServiceName)
 		goto Cleanup;
 	}
 
-	// Open the service with delete, stop, and query status permissions
-	schService = OpenService(schSCManager, pszServiceName, SERVICE_STOP |
-		SERVICE_QUERY_STATUS | DELETE);
+	schService = OpenService(schSCManager, pszServiceName, SERVICE_STOP | SERVICE_QUERY_STATUS | DELETE);
 	if (schService == NULL)
 	{
 		wprintf(L"OpenService failed w/err 0x%08lx\n", GetLastError());
 		goto Cleanup;
 	}
 
-	// Try to stop the service
+	// Пытаемся остановить удаляемую службу
 	if (ControlService(schService, SERVICE_CONTROL_STOP, &ssSvcStatus))
 	{
 		wprintf(L"Stopping %s.", pszServiceName);
@@ -148,7 +110,7 @@ void UninstallService(PWSTR pszServiceName)
 		}
 	}
 
-	// Now remove the service by calling DeleteService.
+	// Теперь можно удалить службу
 	if (!DeleteService(schService))
 	{
 		wprintf(L"DeleteService failed w/err 0x%08lx\n", GetLastError());
@@ -158,7 +120,7 @@ void UninstallService(PWSTR pszServiceName)
 	wprintf(L"%s is removed.\n", pszServiceName);
 
 Cleanup:
-	// Centralized cleanup for all allocated resources.
+	// Общая точка освобождения всех выделенных ресурсов
 	if (schSCManager)
 	{
 		CloseServiceHandle(schSCManager);
