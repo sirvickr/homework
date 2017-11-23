@@ -17,5 +17,15 @@ struct AgentReply {
 	union  {
 		OSVERSIONINFOEX osVer;
 		SYSTEMTIME sysTime;
+		DWORD tickCount;
+		MEMORYSTATUSEX memStatus;
+		UINT driveType;
+		struct {
+			ULARGE_INTEGER freeBytesAvailable;
+			ULARGE_INTEGER totalNumberOfBytes;
+			ULARGE_INTEGER totalNumberOfFreeBytes;
+		} freeSpace;
+		ACL acl;
+		DWORD ownerNameSize;
 	} vf;
 };
