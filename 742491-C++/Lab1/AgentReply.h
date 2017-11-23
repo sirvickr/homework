@@ -26,6 +26,9 @@ struct AgentReply {
 			ULARGE_INTEGER totalNumberOfFreeBytes;
 		} freeSpace;
 		ACL acl;
-		DWORD ownerNameSize;
+		struct {
+			DWORD size;
+			TCHAR name[1];
+		} objectOwn;
 	} vf;
 };
