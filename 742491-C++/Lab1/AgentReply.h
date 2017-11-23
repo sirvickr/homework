@@ -11,6 +11,12 @@ enum RequestType {
 	reqObjectOwn,
 };
 
+struct AgentRequest {
+	DWORD reqType;
+	DWORD pathSize;
+	TCHAR objectPath[1];
+};
+
 struct AgentReply {
 	BOOL valid;
 	DWORD reqType;
