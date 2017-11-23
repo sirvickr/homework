@@ -1,154 +1,89 @@
 #include "stdafx.h"
+#include "TcpSrv.h"
 
 using namespace std;
 
-char* OpenURL(char *url);
+BOOL ValidOptions(int argc, char *argv[]);
+BOOL WINAPI CtrlHandler(DWORD dwEvent);
 
-int main()
+char *g_Port = DEFAULT_PORT;
+BOOL g_bVerbose = FALSE;
+TcpSrv* server = NULL;
+
+int main(int argc, char *argv[])
 {
-	WSADATA lpWSAData;
-	// Инициализация библиотеки Ws2_32.dll.
-	if (WSAStartup(MAKEWORD(1, 1), &lpWSAData) != 0) 
-		return WSAGetLastError();
-	
-	char *result = OpenURL("http://www.codenet.ru/");
-	if (result) {
-		printf("%s", result);
-		free(result);
+	if (!SetConsoleCtrlHandler(CtrlHandler, TRUE)) {
+		int err = GetLastError();
+		cerr << "SetConsoleCtrlHandler() failed to install console handler: " << err << endl;
+		return err;
 	}
-	else {
-		printf("Error # WSABASEERR+%d\n", WSAGetLastError() - WSABASEERR);
+	if (ValidOptions(argc, argv)) {
+		server = new TcpSrv(g_Port, g_bVerbose);
+		if (server) {
+			server->Run();
+		}
 	}
-
-	// Деинициализация библиотеки Ws2_32.dll
-	WSACleanup();
+	SetConsoleCtrlHandler(CtrlHandler, FALSE);
 	return 0;
 }
-#if 1
-char* OpenURL(char *url) {
-	SOCKET s;
 
-	// Проверим на правильность введенный адрес.
-	// Он должен начинаться с "http://"
-	if (memcmp(url, "HTTP://", 7) != 0 && memcmp(url, "http://", 7) != 0) return(NULL);
-	url += 7;
+BOOL ValidOptions(int argc, char *argv[])
+{
+	BOOL bRet = TRUE;
 
+	for (int i = 1; i < argc; i++) {
+		if ((argv[i][0] == '-') || (argv[i][0] == '/')) {
+			switch (tolower(argv[i][1])) {
+			case 'e':
+				if (strlen(argv[i]) > 3)
+					g_Port = &argv[i][3];
+				break;
 
-	// Получим имя хоста, номер порта и путь ----------------------------
+			case 'v':
+				g_bVerbose = TRUE;
+				break;
 
-	char *http_host = _strdup(url); // Имя хоста (HTTP_HOST)
-	int port_num = 80;             // Номер порта по умолчанию (HTTP_PORT)
-	char *http_path = NULL;        // Путь (REQUEST_URI)
+			case '?':
+				cout << "Usage:\n  iocpserver [-p:port] [-v] [-?]\n";
+				cout << "  -e:port\tSpecify echoing port number\n";
+				cout << "  -v\t\tVerbose\n";
+				cout << "  -?\t\tDisplay this help" << endl;
+				bRet = FALSE;
+				break;
 
-	char *pch = strchr(http_host, ':');
-	if (!pch) {
-		pch = strchr(http_host, '/');
-		if (pch) {
-			*pch = 0;
-			http_path = _strdup(pch + 1);
-		}
-		else http_path = _strdup("");
-	}
-	else {
-		*pch = 0; pch++;
-		char *pch1 = strchr(pch, '/');
-		if (pch1) {
-			*pch1 = 0;
-			http_path = _strdup(pch1 + 1);
-		}
-		else http_path = _strdup("");
-
-		port_num = atoi(pch);
-
-		if (port_num == 0) port_num = 80;
-	}
-
-	// Получаем IP адрес по имени хоста
-	struct hostent* hp;
-	//if (!(hp = getaddrinfo(http_host))) {
-	if (!(hp = gethostbyname(http_host))) {
-		free(http_host);
-		free(http_path);
-		return(NULL);
-	}
-
-	// Открываем сокет
-	s = socket(AF_INET, SOCK_STREAM, 0);
-	if (s == INVALID_SOCKET) {
-		free(http_host);
-		free(http_path);
-		return(NULL);
-	}
-
-	// Заполняем структуру sockaddr_in
-	struct sockaddr_in ssin;
-	memset((char *)&ssin, 0, sizeof(ssin));
-	ssin.sin_family = AF_INET;
-	ssin.sin_addr.S_un.S_un_b.s_b1 = hp->h_addr[0];
-	ssin.sin_addr.S_un.S_un_b.s_b2 = hp->h_addr[1];
-	ssin.sin_addr.S_un.S_un_b.s_b3 = hp->h_addr[2];
-	ssin.sin_addr.S_un.S_un_b.s_b4 = hp->h_addr[3];
-	ssin.sin_port = htons(port_num);
-
-	// Выводим IP адрес хоста, с которым будем соединятся
-	printf("Conecting to %d.%d.%d.%d...", (unsigned char)hp->h_addr[0],
-		(unsigned char)hp->h_addr[1],
-		(unsigned char)hp->h_addr[2],
-		(unsigned char)hp->h_addr[3]);
-
-	// Соединяемся с хостом
-	if (connect(s, (sockaddr *)&ssin, sizeof(ssin)) == -1) {
-		free(http_host);
-		free(http_path);
-		printf("Error\n");
-		return(NULL);
-	}
-	printf("Ok\n");
-
-	// Формируем HTTP запрос
-	size_t QuerySize = 2048;
-	char *query = (char*)malloc(QuerySize);
-
-	strcpy_s(query, QuerySize, "GET /");
-	strcat_s(query, QuerySize, http_path);
-	strcat_s(query, QuerySize, " HTTP/1.0\nHost: ");
-	strcat_s(query, QuerySize, http_host);
-	strcat_s(query, QuerySize, "\nUser-agent: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1)");
-	strcat_s(query, QuerySize, "\nAccept: */*\n\n");
-
-
-	// Выводим HTTP запрос
-	printf("%s", query);
-
-	// Отправляем запрос серверу
-	int cnt = send(s, query, strlen(query), 0);
-
-	// Освобождаем память
-	free(http_host);
-	free(http_path);
-	free(query);
-
-	// Проверяем, не произошло ли ошибки при отправке запроса на сервер
-	if (cnt == SOCKET_ERROR) return(NULL);
-
-	cnt = 1;
-
-	// Получаем ответ с сервера ---------------------------------
-
-	int size = 1024 * 1024; // 1Mb
-	char *result = (char*)malloc(size);
-	strcpy_s(result, size, "");
-	char *result_ptr = result;
-
-	while (cnt != 0 && size>0) {
-		cnt = recv(s, result_ptr, sizeof(size), 0);
-		if (cnt>0) {
-			result_ptr += cnt;
-			size -= cnt;
+			default:
+				cout << "Unknown options flag " << argv[i] << endl;
+				bRet = FALSE;
+				break;
+			}
 		}
 	}
-	*result_ptr = 0;
+	cout << "accepting on " << g_Port << endl;
 
-	return(result);
+	return bRet;
 }
-#endif
+
+BOOL WINAPI CtrlHandler(DWORD dwEvent)
+{
+	SOCKET sockTemp = INVALID_SOCKET;
+
+	switch (dwEvent) {
+	case CTRL_BREAK_EVENT:
+		if (server) {
+			server->Restart();
+		}
+	case CTRL_C_EVENT:
+	case CTRL_LOGOFF_EVENT:
+	case CTRL_SHUTDOWN_EVENT:
+	case CTRL_CLOSE_EVENT:
+		if (server) {
+			server->Shutdown();
+		}
+		break;
+
+	default:
+		// unknown type--better pass it on.
+		return(FALSE);
+	}
+	return TRUE;
+}
