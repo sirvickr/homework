@@ -468,14 +468,41 @@ DWORD WINAPI TcpSrv::WorkerThread(LPVOID lpParam)
 		case ClientIoRead:
 			// завершена операци€ чтени€, отправл€ем назад результат запроса,
 			// использу€ тот же контекст
-			dwIoSize = sizeof(reply);
 			memcpy(&dwReqType, lpIOContext->wsabuf.buf, sizeof(dwReqType));
 			cout << "got request: " << dwReqType << endl;
+
+			memset(&reply, 0x00, sizeof(reply));
+			reply.reqType = dwReqType;
+			switch(dwReqType) {
+			case reqOsVer:
+				reply.vf.osVer.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+				if (GetVersionEx((LPOSVERSIONINFO)&reply.vf.osVer)) {
+					reply.vf.osVer.szCSDVersion[63] = TEXT('\0');
+					cerr << "GetVersionEx succeeded: " << reply.vf.osVer.dwMajorVersion
+						<< "." << reply.vf.osVer.dwMinorVersion
+						<< "." << reply.vf.osVer.dwBuildNumber
+						<< " id " << reply.vf.osVer.dwPlatformId
+						<< " sp \"" << reply.vf.osVer.szCSDVersion << "\""
+						<< endl;
+					reply.valid = TRUE;
+				}
+				else {
+					cerr << "GetVersionEx failed: " << GetLastError() << endl;
+				}
+				break;
+			case reqSysTime:
+				GetSystemTime(&reply.vf.sysTime);
+				reply.valid = TRUE;
+				break;
+			default:
+				cerr << "Unknown request: " << dwReqType << endl;
+			}
+			dwIoSize = sizeof(reply);
+			memcpy(lpIOContext->wsabuf.buf, &reply, dwIoSize);
+
 			lpIOContext->IOOperation = ClientIoWrite;
 			lpIOContext->nTotalBytes = dwIoSize;
 			lpIOContext->nSentBytes = 0;
-			reply.reqType = dwReqType + 1;
-			memcpy(lpIOContext->wsabuf.buf, &reply, dwIoSize);
 			lpIOContext->wsabuf.len = dwIoSize;
 			dwFlags = 0;
 			nRet = WSASend(lpPerSocketContext->Socket, &lpIOContext->wsabuf, 1,
