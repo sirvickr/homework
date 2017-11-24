@@ -10,3 +10,6 @@
 *.ipch
 *.ilk
 *.exe
+*.pch
+*.log
+*.user
