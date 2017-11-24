@@ -7,7 +7,7 @@ enum RequestType {
 	reqMemStatus,
 	reqDriveType,
 	reqFreeSpace,
-	reqObjectAcl,
+	reqAccessRights,
 	reqObjectOwn,
 };
 
@@ -31,7 +31,7 @@ struct AgentReply {
 			ULARGE_INTEGER totalNumberOfBytes;
 			ULARGE_INTEGER totalNumberOfFreeBytes;
 		} freeSpace;
-		ACL acl;
+		AUTHZ_ACCESS_REPLY accessRights;
 		struct {
 			DWORD size;
 			TCHAR name[1];
