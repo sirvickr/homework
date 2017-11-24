@@ -66,25 +66,31 @@ PSID ConvertNameToBinarySid(LPTSTR pAccountName, LPDWORD lpdwRetCode)
 	return pSid;
 }
 
-void DisplayAccessMask(ACCESS_MASK Mask)
+void DisplayAccessReply(const AUTHZ_ACCESS_REPLY& accessReply)
 {
-	cout << "Effective Allowed Access Mask : " << hex << uppercase 
-		<< setfill('0') << setw(8) << Mask << dec << endl;
-	if (((Mask & GENERIC_ALL) == GENERIC_ALL)
-		|| ((Mask & FILE_ALL_ACCESS) == FILE_ALL_ACCESS))
-	{
-		cout << "Full Control" << endl;
-		return;
+	cout << "Effective Allowed Access Mask: ResultListLength " << accessReply.ResultListLength << endl;
+	for (DWORD i = 0; i < accessReply.ResultListLength; i++) {
+		ACCESS_MASK Mask = accessReply.GrantedAccessMask[i];
+		cout << " [" << i << "]: "
+			<< hex << uppercase << setfill('0') << setw(8) << Mask << dec;
+		if (((Mask & GENERIC_ALL) == GENERIC_ALL)
+			|| ((Mask & FILE_ALL_ACCESS) == FILE_ALL_ACCESS))
+		{
+			cout << " ( Full Control )" << endl;
+			return;
+		}
+		cout << " (";
+		if (((Mask & GENERIC_READ) == GENERIC_READ)
+			|| ((Mask & FILE_GENERIC_READ) == FILE_GENERIC_READ))
+			cout << " Read";
+		if (((Mask & GENERIC_WRITE) == GENERIC_WRITE)
+			|| ((Mask & FILE_GENERIC_WRITE) == FILE_GENERIC_WRITE))
+			cout << " Write";
+		if (((Mask & GENERIC_EXECUTE) == GENERIC_EXECUTE)
+			|| ((Mask & FILE_GENERIC_EXECUTE) == FILE_GENERIC_EXECUTE))
+			cout << " Execute";
+		cout << " )" << endl;
 	}
-	if (((Mask & GENERIC_READ) == GENERIC_READ)
-		|| ((Mask & FILE_GENERIC_READ) == FILE_GENERIC_READ))
-		cout << "Read" << endl;
-	if (((Mask & GENERIC_WRITE) == GENERIC_WRITE)
-		|| ((Mask & FILE_GENERIC_WRITE) == FILE_GENERIC_WRITE))
-		cout << "Write" << endl;
-	if (((Mask & GENERIC_EXECUTE) == GENERIC_EXECUTE)
-		|| ((Mask & FILE_GENERIC_EXECUTE) == FILE_GENERIC_EXECUTE))
-		cout << "Execute" << endl;
 }
 
 DWORD GetAccess(AUTHZ_CLIENT_CONTEXT_HANDLE hAuthzClient, PSECURITY_DESCRIPTOR psd, PAUTHZ_ACCESS_REPLY pAccessReply)

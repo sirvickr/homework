@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "WinApiHelper.h"
 #include "TcpSrv.h"
 #include "../AgentReply.h"
 
@@ -19,6 +20,8 @@ TcpSrv::TcpSrv(const char *port, BOOL verbose)
 
 	GetSystemInfo(&systemInfo);
 	g_dwThreadCount = 1;// systemInfo.dwNumberOfProcessors * 2;
+
+	nTotalRecv = 0;
 
 	WSAStartup(MAKEWORD(2, 2), &wsaData);
 
@@ -459,46 +462,234 @@ DWORD WINAPI TcpSrv::WorkerThread(LPVOID lpParam)
 			continue;
 		}
 
-		DWORD dwReqType = 0;
-		AgentReply reply;
+		LPTSTR pObjectOwner = NULL;
 		// определим тип пакета завершения с помощью проверки 
 		// структуры PER_IO_CONTEXT, ассоциированной с этим сокетом
 		lpIOContext = (PER_IO_CONTEXT*)lpOverlapped;
+		AgentRequest* pRequest = (AgentRequest*)lpIOContext->wsabuf.buf;
+		DWORD headSize = sizeof(pRequest->reqSize) + sizeof(pRequest->reqType);
+
+		// TODO  ориентироваться на size в заголовке
+		/*if (dwIoSize < pRequest->pathSize) {
+			// прочитана не весь блок данных, снова отправляем запрос на прием
+			lpIOContext->IOOperation = ClientIoRead;
+			dwRecvNumBytes = 0;
+			dwFlags = 0;
+			buffRecv.buf = lpIOContext->Buffer;
+			buffRecv.len = MAX_BUFF_SIZE;
+			nRet = WSARecv(lpPerSocketContext->Socket, &buffRecv, 1,
+				&dwRecvNumBytes, &dwFlags, &lpIOContext->Overlapped, NULL);
+			if (nRet == SOCKET_ERROR && (ERROR_IO_PENDING != WSAGetLastError())) {
+				cerr << "WSARecv() failed: " << WSAGetLastError() << endl;
+				self->CloseClient(lpPerSocketContext, FALSE);
+			}
+			else if (self->g_bVerbose) {
+				cout << "WorkerThread " << GetCurrentThreadId() << ": "
+					<< "Socket(" << lpPerSocketContext->Socket << ") "
+					<< "Send completed (" << dwIoSize << " bytes)" << endl;
+			}
+		}*/
+
+		// обработка запроса
+		AgentReply reply;
+		memset(&reply, 0x00, sizeof(reply));
 		switch (lpIOContext->IOOperation) {
 		case ClientIoRead:
 			// завершена операция чтения, отправляем назад результат запроса,
 			// используя тот же контекст
-			memcpy(&dwReqType, lpIOContext->wsabuf.buf, sizeof(dwReqType));
-			cout << "got request: " << dwReqType << endl;
-
-			memset(&reply, 0x00, sizeof(reply));
-			reply.reqType = dwReqType;
-			switch(dwReqType) {
+			//memcpy(&request, lpIOContext->wsabuf.buf, sizeof(request));
+			cout << "got request: " << pRequest->reqType << endl;
+			reply.reqType = pRequest->reqType;
+			switch(reply.reqType) {
 			case reqOsVer:
 				reply.vf.osVer.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
 				if (GetVersionEx((LPOSVERSIONINFO)&reply.vf.osVer)) {
 					reply.vf.osVer.szCSDVersion[63] = TEXT('\0');
-					cerr << "GetVersionEx succeeded: " << reply.vf.osVer.dwMajorVersion
+					cout << "OS version " << reply.vf.osVer.dwMajorVersion
 						<< "." << reply.vf.osVer.dwMinorVersion
 						<< "." << reply.vf.osVer.dwBuildNumber
-						<< " id " << reply.vf.osVer.dwPlatformId
-						<< " sp \"" << reply.vf.osVer.szCSDVersion << "\""
 						<< endl;
-					reply.valid = TRUE;
+					cout << " dwPlatformId " << reply.vf.osVer.dwPlatformId << endl;
+					wcout << TEXT(" sp \"") << reply.vf.osVer.szCSDVersion << TEXT("\"") << endl;
+					cout << " ServicePack " << reply.vf.osVer.wServicePackMajor 
+						<< "." << reply.vf.osVer.wServicePackMinor << endl;
+					cout << " wSuiteMask " << hex << uppercase << setfill('0') 
+						<< setw(8) << reply.vf.osVer.wSuiteMask << dec << endl;
+					cout << " wProductType " << DWORD(reply.vf.osVer.wProductType) << endl;
 				}
 				else {
-					cerr << "GetVersionEx failed: " << GetLastError() << endl;
+					reply.errorCode = (int)GetLastError();
+					cerr << "GetVersionEx failed: " << reply.errorCode << endl;
 				}
+				dwIoSize = sizeof(reply);
+				memcpy(lpIOContext->wsabuf.buf, &reply, dwIoSize);
 				break;
 			case reqSysTime:
 				GetSystemTime(&reply.vf.sysTime);
-				reply.valid = TRUE;
+				cout << "GetSystemTime: " << reply.vf.sysTime.wYear
+					<< "-" << reply.vf.sysTime.wMonth
+					<< "-" << reply.vf.sysTime.wDay
+					<< " (" << reply.vf.sysTime.wDayOfWeek << ")"
+					<< " " << reply.vf.sysTime.wHour
+					<< ":" << reply.vf.sysTime.wMinute
+					<< ":" << reply.vf.sysTime.wSecond
+					<< "." << reply.vf.sysTime.wMilliseconds
+					<< endl;
+				dwIoSize = sizeof(reply);
+				memcpy(lpIOContext->wsabuf.buf, &reply, dwIoSize);
+				break;
+			case reqTickCount:
+				reply.vf.tickCount = GetTickCount();
+				cout << "GetTickCount: " << reply.vf.tickCount << endl;
+				dwIoSize = sizeof(reply);
+				memcpy(lpIOContext->wsabuf.buf, &reply, dwIoSize);
+				break;
+			case reqMemStatus:
+				reply.vf.memStatus.dwLength = sizeof(reply.vf.memStatus);
+				if (GlobalMemoryStatusEx(&reply.vf.memStatus)) {
+					cout << "percent of memory in use " << reply.vf.memStatus.dwMemoryLoad << endl;
+					cout << "total KB of physical memory " << reply.vf.memStatus.ullTotalPhys << endl;
+					cout << "free  KB of physical memory " << reply.vf.memStatus.ullAvailPhys << endl;
+					cout << "total KB of paging file " << reply.vf.memStatus.ullTotalPageFile << endl;
+					cout << "free  KB of paging file " << reply.vf.memStatus.ullAvailPageFile << endl;
+					cout << "total KB of virtual memory " << reply.vf.memStatus.ullTotalVirtual << endl;
+					cout << "free  KB of virtual memory " << reply.vf.memStatus.ullAvailVirtual << endl;
+					cout << "free  KB of extended memory " << reply.vf.memStatus.ullAvailExtendedVirtual << endl;
+				} else {
+					reply.errorCode = (int)GetLastError();
+					cerr << "GlobalMemoryStatusEx failed: " << reply.errorCode << endl;
+				}
+				dwIoSize = sizeof(reply);
+				memcpy(lpIOContext->wsabuf.buf, &reply, dwIoSize);
+				break;
+			case reqDriveType:
+				if (pRequest->reqSize > headSize) {
+					tcout << TEXT("object path: \"") << pRequest->objectPath << TEXT("\"") << endl;
+					reply.vf.driveType = GetDriveType(pRequest->objectPath);
+					cout << "GetDriveType: " << reply.vf.driveType << endl;
+					dwIoSize = sizeof(reply);
+					memcpy(lpIOContext->wsabuf.buf, &reply, dwIoSize);
+				} else {
+					reply.errorCode = -1;
+					cerr << "Unspecified path" << reply.errorCode << endl;
+				}
+				break;
+			case reqFreeSpace:
+				if (pRequest->reqSize > headSize) {
+					tcout << TEXT("object path: \"") << pRequest->objectPath << TEXT("\"") << endl;
+					reply.vf.memStatus.dwLength = sizeof(reply.vf.memStatus);
+					if (GetDiskFreeSpaceEx(pRequest->objectPath,
+						&reply.vf.freeSpace.freeBytesAvailable,
+						&reply.vf.freeSpace.totalNumberOfBytes,
+						&reply.vf.freeSpace.totalNumberOfFreeBytes))
+					{
+						cout << "total " << reply.vf.freeSpace.totalNumberOfBytes.QuadPart
+							<< " free " << reply.vf.freeSpace.totalNumberOfFreeBytes.QuadPart
+							<< " (" << reply.vf.freeSpace.freeBytesAvailable.QuadPart << ")" << endl;
+					}
+					else {
+						reply.errorCode = (int)GetLastError();
+						cerr << "GlobalMemoryStatusEx failed: " << reply.errorCode << endl;
+					}
+					dwIoSize = sizeof(reply);
+					memcpy(lpIOContext->wsabuf.buf, &reply, dwIoSize);
+				} else {
+					reply.errorCode = -1;
+					cerr << "Unspecified path" << reply.errorCode << endl;
+				}
+				break;
+			case reqAccessRights:
+				reply.errorCode = -1;
+				if (pRequest->reqSize > headSize) {
+					tcout << TEXT("object path: \"") << pRequest->objectPath << TEXT("\"") << endl;
+					AUTHZ_ACCESS_REPLY accessReply;
+					memset(&accessReply, 0x00, sizeof(accessReply));
+					reply.vf.accessMask = 0;
+					dwIoSize = sizeof(reply.errorCode) + sizeof(reply.reqType) + sizeof(reply.vf.accessMask);
+					DWORD bodySize = 0;
+					DWORD dwRetCode = ERROR_SUCCESS;
+					{
+						LPTSTR pAccountName = TEXT("vickr");
+						PACL                 pacl;
+						PSECURITY_DESCRIPTOR psd;
+						PSID                 psid = NULL;
+
+						dwRetCode = GetNamedSecurityInfo(
+							pRequest->objectPath,
+							SE_FILE_OBJECT,
+							DACL_SECURITY_INFORMATION | OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION,
+							NULL,
+							NULL,
+							&pacl,
+							NULL,
+							&psd);
+
+						if (dwRetCode == ERROR_SUCCESS) {
+							dwRetCode = UseAuthzSolution(psd, pAccountName, &accessReply);
+							if (dwRetCode == ERROR_SUCCESS) {
+								DisplayAccessReply(accessReply);
+								bodySize = sizeof(ACCESS_MASK);
+								reply.vf.accessMask = *accessReply.GrantedAccessMask;
+							}
+							else {
+								cerr << "UseAuthzSolution failed" << endl;
+							}
+						} else {
+							cerr << "GetNamedSecurityInfo failed: " << dwRetCode << endl;
+						}
+
+						if (psid != NULL) {
+							LocalFree(psid);
+							psid = NULL;
+						};
+
+						LocalFree(psd);
+
+					}
+
+					reply.errorCode = dwRetCode;
+					memcpy(lpIOContext->wsabuf.buf, &reply, dwIoSize);
+#if 0
+					if (bodySize) {
+						memcpy(lpIOContext->wsabuf.buf + dwIoSize, accessReply.GrantedAccessMask, bodySize);
+						dwIoSize += bodySize;
+					}
+#endif
+
+				} else {
+					cerr << "Unspecified path" << reply.errorCode << endl;
+				}
+				break;
+			case reqObjectOwn:
+				if(pRequest->reqSize > headSize) {
+					tcout << TEXT("object path: \"") << pRequest->objectPath << TEXT("\"") << endl;
+					pObjectOwner = GetObjectOwner(pRequest->objectPath, SE_FILE_OBJECT, &reply.vf.objectOwn.size);
+					if (pObjectOwner && reply.vf.objectOwn.size) {
+						tcout << TEXT("GetObjectOwner (size ") << reply.vf.objectOwn.size << TEXT("): \"") << pObjectOwner << TEXT("\"") << endl;
+
+						CHAR *pBuf = lpIOContext->wsabuf.buf;
+						dwIoSize = sizeof(BOOL) + sizeof(DWORD) * 2;
+						memcpy(pBuf, &reply, dwIoSize);
+						pBuf += dwIoSize;
+
+						memcpy(pBuf, pObjectOwner, reply.vf.objectOwn.size * sizeof(TCHAR));
+						dwIoSize += reply.vf.objectOwn.size * sizeof(TCHAR);
+					} else {
+						reply.errorCode = (int)GetLastError();
+						cerr << "GlobalMemoryStatusEx failed: " << reply.errorCode << endl;
+						dwIoSize = sizeof(reply);
+						memcpy(lpIOContext->wsabuf.buf, &reply, dwIoSize);
+					}
+				} else {
+					reply.errorCode = -1;
+					cerr << "Unspecified path" << reply.errorCode << endl;
+				}
 				break;
 			default:
-				cerr << "Unknown request: " << dwReqType << endl;
+				cerr << "Unknown request: " << reply.reqType << endl;
+				dwIoSize = sizeof(reply);
+				memcpy(lpIOContext->wsabuf.buf, &reply, dwIoSize);
 			}
-			dwIoSize = sizeof(reply);
-			memcpy(lpIOContext->wsabuf.buf, &reply, dwIoSize);
 
 			lpIOContext->IOOperation = ClientIoWrite;
 			lpIOContext->nTotalBytes = dwIoSize;

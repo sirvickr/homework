@@ -69,4 +69,7 @@ private:
 	HANDLE g_ThreadHandles[MAX_WORKER_THREAD];
 	PER_SOCKET_CONTEXT *g_pCtxtList = NULL; // список контекстных структур
 	CRITICAL_SECTION g_CriticalSection;		// защита доступа к этому списку
+	// TODO пока только для одного потока
+	char InBuf[MAX_BUFF_SIZE];
+	int  nTotalRecv;
 };

@@ -1,7 +1,7 @@
 #pragma once
 
 PSID ConvertNameToBinarySid(LPTSTR pAccountName, LPDWORD lpdwRetCode);
-void DisplayAccessMask(ACCESS_MASK Mask);
+void DisplayAccessReply(const AUTHZ_ACCESS_REPLY& accessReply);
 DWORD GetAccess(
 	AUTHZ_CLIENT_CONTEXT_HANDLE hAuthzClient, 
 	PSECURITY_DESCRIPTOR psd, 
