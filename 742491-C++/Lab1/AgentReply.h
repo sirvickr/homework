@@ -12,8 +12,8 @@ enum RequestType {
 };
 
 struct AgentRequest {
+	DWORD reqSize;
 	DWORD reqType;
-	DWORD pathSize;
 	TCHAR objectPath[1];
 };
 
