@@ -31,7 +31,7 @@ struct AgentReply {
 			ULARGE_INTEGER totalNumberOfBytes;
 			ULARGE_INTEGER totalNumberOfFreeBytes;
 		} freeSpace;
-		DWORD accResCount;
+		ACCESS_MASK accessMask;
 		struct {
 			DWORD size;
 			TCHAR name[1];
