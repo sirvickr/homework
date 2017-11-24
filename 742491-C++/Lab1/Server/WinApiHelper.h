@@ -1,14 +1,17 @@
 #pragma once
 
-PSID ConvertNameToBinarySid(LPTSTR pAccountName);
+PSID ConvertNameToBinarySid(LPTSTR pAccountName, LPDWORD lpdwRetCode);
 void DisplayAccessMask(ACCESS_MASK Mask);
-void GetAccess(AUTHZ_CLIENT_CONTEXT_HANDLE hAuthzClient, PSECURITY_DESCRIPTOR psd);
-BOOL GetEffectiveRightsForUser(
+DWORD GetAccess(
+	AUTHZ_CLIENT_CONTEXT_HANDLE hAuthzClient, 
+	PSECURITY_DESCRIPTOR psd, 
+	PAUTHZ_ACCESS_REPLY pAccessReply);
+DWORD GetEffectiveRightsForUser(
 	AUTHZ_RESOURCE_MANAGER_HANDLE hManager,
 	PSECURITY_DESCRIPTOR psd,
-	LPTSTR lpszUserName);
-void UseAuthzSolution(PSECURITY_DESCRIPTOR psd, LPTSTR lpszUserName);
-void DisplayError(char* pszAPI, DWORD dwError);
+	LPTSTR lpszUserName, 
+	PAUTHZ_ACCESS_REPLY pAccessReply);
+DWORD UseAuthzSolution(PSECURITY_DESCRIPTOR psd, LPTSTR lpszUserName, PAUTHZ_ACCESS_REPLY pAccessReply);
 
 LPTSTR GetObjectOwner(
 	LPTSTR pObjectName,

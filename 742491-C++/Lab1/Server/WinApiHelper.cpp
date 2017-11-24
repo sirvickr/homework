@@ -1,23 +1,9 @@
 #include "stdafx.h"
 #include "WinApiHelper.h"
 
-typedef std::basic_string<TCHAR> tstring;
-typedef std::basic_ostream<TCHAR> tostream;
-typedef std::basic_istream<TCHAR> tistream;
-typedef std::basic_ostringstream<TCHAR> tostringstream;
-typedef std::basic_istringstream<TCHAR> tistringstream;
-
-#if defined(UNICODE) || defined(_UNICODE)
-#define tcout std::wcout
-#define tcerr std::wcerr
-#else
-#define tcout std::cout
-#define tcerr std::cerr
-#endif
-
 using namespace std;
 
-PSID ConvertNameToBinarySid(LPTSTR pAccountName)
+PSID ConvertNameToBinarySid(LPTSTR pAccountName, LPDWORD lpdwRetCode)
 {
 	LPTSTR lpServerName = NULL;
 	LPTSTR pDomainName = NULL;
@@ -28,17 +14,17 @@ PSID ConvertNameToBinarySid(LPTSTR pAccountName)
 	BOOL fSuccess = FALSE;
 	HRESULT hr = S_OK;
 
-	DWORD dwCode = 0;
+	DWORD dwCode = ERROR_SUCCESS;
 	for (int i = 0; i < 2; i++) {
-		dwCode = LookupAccountName(
-			lpServerName,      // look up on local system
+		if (!LookupAccountName(
+			lpServerName,      // NULL - поиск на локальной машине
 			pAccountName,
-			pSid,              // buffer to receive name
+			pSid,              // буфер для резултата (первый раз NULL - запрос размеров)
 			&dwSidSize,
 			pDomainName,
 			&dwDomainNameSize,
-			&sidType);
-		if (!dwCode) {
+			&sidType)) 
+		{
 			dwCode = GetLastError();
 			cerr << "LookupAccountName failed with error " << dwCode << ": ";
 			if (dwCode == ERROR_NONE_MAPPED) {
@@ -49,20 +35,20 @@ PSID ConvertNameToBinarySid(LPTSTR pAccountName)
 				cerr << "ERROR_INSUFFICIENT_BUFFER (dwSidSize " << dwSidSize << " dwDomainNameSize " << dwDomainNameSize << ")" << endl;
 				pSid = (LPTSTR)LocalAlloc(LPTR, dwSidSize * sizeof(TCHAR));
 				if (pSid == NULL) {
-					cerr << "LocalAlloc failed with error " << GetLastError() << endl;
+					dwCode = GetLastError();
+					cerr << "LocalAlloc failed with error " << dwCode << endl;
 					break;
 				}
 				pDomainName = (LPTSTR)LocalAlloc(LPTR, dwDomainNameSize * sizeof(TCHAR));
 				if (pDomainName == NULL) {
-					cerr << "LocalAlloc failed with error " << GetLastError() << endl;
+					dwCode = GetLastError();
+					cerr << "LocalAlloc failed with error " << dwCode << endl;
 					break;
 				}
-			}
-			else {
+			} else {
 				cerr << "unexpected" << endl;
 			}
-		}
-		else {
+		} else {
 			tcerr << TEXT("SUCCESS: pDomainName ") << pDomainName << endl;
 			fSuccess = TRUE;
 			break;
@@ -76,58 +62,37 @@ PSID ConvertNameToBinarySid(LPTSTR pAccountName)
 		LocalFree(pSid);
 		pSid = NULL;
 	}
+	*lpdwRetCode = dwCode;
 	return pSid;
-}
-
-void DisplayError(char* pszAPI, DWORD dwError)
-{
-	LPVOID lpvMessageBuffer;
-
-	if (!FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_HMODULE | FORMAT_MESSAGE_FROM_SYSTEM,
-		GetModuleHandle(L"Kernel32.dll"), dwError,
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),  // the user default language
-		(LPTSTR)&lpvMessageBuffer, 0, NULL))
-	{
-		wprintf_s(L"FormatMessage failed with %d\n", GetLastError());
-		ExitProcess(GetLastError());
-	}
-
-	//  ...now display this string.
-	wprintf_s(L"ERROR: API        = %s.\n", (char *)pszAPI);
-	wprintf_s(L"       error code = %08X.\n", dwError);
-	wprintf_s(L"       message    = %s.\n", (char *)lpvMessageBuffer);
-
-	//  Free the buffer allocated by the system.
-	LocalFree(lpvMessageBuffer);
 }
 
 void DisplayAccessMask(ACCESS_MASK Mask)
 {
-	wprintf_s(L"Effective Allowed Access Mask : %8X\n", Mask);
+	cout << "Effective Allowed Access Mask : " << hex << uppercase 
+		<< setfill('0') << setw(8) << Mask << dec << endl;
 	if (((Mask & GENERIC_ALL) == GENERIC_ALL)
 		|| ((Mask & FILE_ALL_ACCESS) == FILE_ALL_ACCESS))
 	{
-		wprintf_s(L"Full Control\n");
+		cout << "Full Control" << endl;
 		return;
 	}
 	if (((Mask & GENERIC_READ) == GENERIC_READ)
 		|| ((Mask & FILE_GENERIC_READ) == FILE_GENERIC_READ))
-		wprintf_s(L"Read\n");
+		cout << "Read" << endl;
 	if (((Mask & GENERIC_WRITE) == GENERIC_WRITE)
 		|| ((Mask & FILE_GENERIC_WRITE) == FILE_GENERIC_WRITE))
-		wprintf_s(L"Write\n");
+		cout << "Write" << endl;
 	if (((Mask & GENERIC_EXECUTE) == GENERIC_EXECUTE)
 		|| ((Mask & FILE_GENERIC_EXECUTE) == FILE_GENERIC_EXECUTE))
-		wprintf_s(L"Execute\n");
-
+		cout << "Execute" << endl;
 }
 
-void GetAccess(AUTHZ_CLIENT_CONTEXT_HANDLE hAuthzClient, PSECURITY_DESCRIPTOR psd)
+DWORD GetAccess(AUTHZ_CLIENT_CONTEXT_HANDLE hAuthzClient, PSECURITY_DESCRIPTOR psd, PAUTHZ_ACCESS_REPLY pAccessReply)
 {
 	AUTHZ_ACCESS_REQUEST AccessRequest = { 0 };
 	AUTHZ_ACCESS_REPLY AccessReply = { 0 };
-	BYTE     Buffer[1024];
-	BOOL bRes = FALSE;  // assume error
+	BYTE Buffer[1024];
+	DWORD dwRetCode = ERROR_SUCCESS;
 
 						//  Do AccessCheck.
 	AccessRequest.DesiredAccess = MAXIMUM_ALLOWED;
@@ -141,7 +106,6 @@ void GetAccess(AUTHZ_CLIENT_CONTEXT_HANDLE hAuthzClient, PSECURITY_DESCRIPTOR ps
 	AccessReply.GrantedAccessMask = (PACCESS_MASK)(Buffer);
 	AccessReply.Error = (PDWORD)(Buffer + sizeof(ACCESS_MASK));
 
-
 	if (!AuthzAccessCheck(0,
 		hAuthzClient,
 		&AccessRequest,
@@ -150,64 +114,63 @@ void GetAccess(AUTHZ_CLIENT_CONTEXT_HANDLE hAuthzClient, PSECURITY_DESCRIPTOR ps
 		NULL,
 		0,
 		&AccessReply,
-		NULL)) {
-		wprintf_s(_T("AuthzAccessCheck failed with %d\n"), GetLastError());
+		NULL)) 
+	{
+		dwRetCode = GetLastError();
+		tcerr << _T("AuthzAccessCheck failed with code ") << dwRetCode << endl;
 	}
-	else
-		DisplayAccessMask(*(PACCESS_MASK)(AccessReply.GrantedAccessMask));
-
-	return;
+	else {
+		*pAccessReply = AccessReply;
+		//DisplayAccessMask(*(PACCESS_MASK)(AccessReply.GrantedAccessMask));
+	}
+	return dwRetCode;
 }
 
-BOOL GetEffectiveRightsForUser(AUTHZ_RESOURCE_MANAGER_HANDLE hManager,
+DWORD GetEffectiveRightsForUser(
+	AUTHZ_RESOURCE_MANAGER_HANDLE hManager,
 	PSECURITY_DESCRIPTOR psd,
-	LPTSTR lpszUserName)
+	LPTSTR lpszUserName, 
+	PAUTHZ_ACCESS_REPLY pAccessReply)
 {
+	DWORD dwRetCode = ERROR_SUCCESS;
 	PSID pSid = NULL;
 	BOOL bResult = FALSE;
 	LUID unusedId = { 0 };
-	AUTHZ_CLIENT_CONTEXT_HANDLE hAuthzClientContext = NULL;
+	AUTHZ_CLIENT_CONTEXT_HANDLE hCtx = NULL;
 
-	pSid = ConvertNameToBinarySid(lpszUserName);
+	pSid = ConvertNameToBinarySid(lpszUserName, &dwRetCode);
 	if (pSid) {
-		bResult = AuthzInitializeContextFromSid(
-			0,
-			pSid,
-			hManager,
-			NULL,
-			unusedId,
-			NULL,
-			&hAuthzClientContext);
-		if (bResult) {
-			GetAccess(hAuthzClientContext, psd);
-			AuthzFreeContext(hAuthzClientContext);
+		if (AuthzInitializeContextFromSid(0, pSid, hManager, NULL, unusedId, NULL, &hCtx)) {
+			dwRetCode = GetAccess(hCtx, psd, pAccessReply);
+			AuthzFreeContext(hCtx);
 		}
 		else {
-			wprintf_s(_T("AuthzInitializeContextFromSid failed with %d\n"), GetLastError());
+			dwRetCode = GetLastError();
+			tcerr << _T("AuthzInitializeContextFromSid failed with code ") << dwRetCode << endl;
 		}
-	}
-	if (pSid != NULL) {
 		LocalFree(pSid);
 		pSid = NULL;
 	}
 
-	return bResult;
+	return dwRetCode;
 }
 
-void UseAuthzSolution(PSECURITY_DESCRIPTOR psd, LPTSTR lpszUserName)
+DWORD UseAuthzSolution(PSECURITY_DESCRIPTOR psd, LPTSTR lpszUserName, PAUTHZ_ACCESS_REPLY pAccessReply)
 {
+	DWORD dwRetCode = ERROR_SUCCESS;
 	AUTHZ_RESOURCE_MANAGER_HANDLE hManager;
-	BOOL bResult = FALSE;
 
-	bResult = AuthzInitializeResourceManager(AUTHZ_RM_FLAG_NO_AUDIT,
-		NULL, NULL, NULL, NULL, &hManager);
-	if (bResult)
+	if (AuthzInitializeResourceManager(AUTHZ_RM_FLAG_NO_AUDIT, NULL, NULL, NULL, NULL, &hManager))
 	{
-		bResult = GetEffectiveRightsForUser(hManager, psd, lpszUserName);
+		dwRetCode = GetEffectiveRightsForUser(hManager, psd, lpszUserName, pAccessReply);
 		AuthzFreeResourceManager(hManager);
 	}
-	else
-		wprintf_s(_T("AuthzInitializeResourceManager failed with %d\n"), GetLastError());
+	else {
+		dwRetCode = GetLastError();
+		tcerr << _T("AuthzInitializeResourceManager failed with code ") << dwRetCode << endl;
+	}
+
+	return dwRetCode;
 }
 
 LPTSTR GetObjectOwner(LPTSTR pObjectName, SE_OBJECT_TYPE objType, LPDWORD lpdwSize)
