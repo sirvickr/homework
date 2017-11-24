@@ -18,7 +18,7 @@ struct AgentRequest {
 };
 
 struct AgentReply {
-	BOOL valid;
+	int errorCode; // > 0 - сетевая ошибка клиента, 0 - успех, > 0 - код ошибки сервера
 	DWORD reqType;
 	union  {
 		OSVERSIONINFOEX osVer;
