@@ -72,11 +72,11 @@ BOOL CClientApp::InitInstance()
 
 	CClientDlg dlg;
 	m_pMainWnd = &dlg;
-	dlg.SetHost(CString("CENTURION"));
-	//dlg.SetHost(CString("localhost"));
+	dlg.SetHost(CString("localhost"));
 	dlg.SetPort(CString("5001"));
-	dlg.SetObject(CString("D:\\zhuk.png"));
-	dlg.SetUser(CString("UserName"));
+	dlg.SetObject(CString("C:\Windows\explorer.exe"));
+	dlg.SetDisk(CString("C:"));
+	//dlg.SetUser(CString("UserName"));
 	
 	//dlg.SetAccExec(TRUE);
 

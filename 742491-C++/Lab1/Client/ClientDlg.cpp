@@ -37,7 +37,8 @@ void CClientDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_HOST, m_csHost);
 	DDX_Text(pDX, IDC_EDIT_PORT, m_csPort);
 	DDX_Text(pDX, IDC_EDIT_OBJECT, m_csObject);
-	DDX_Text(pDX, IDC_EDIT_USER, m_csUser);
+	DDX_Text(pDX, IDC_EDIT_DISK, m_csDisk);
+	DDX_Text(pDX, IDC_EDIT_OWNER, m_csUser);
 	DDX_Check(pDX, IDC_CHECK_READ, m_bAccRead);
 	DDX_Check(pDX, IDC_CHECK_WRITE, m_bAccWrite);
 	DDX_Check(pDX, IDC_CHECK_EXEC, m_bAccExec);
@@ -72,6 +73,16 @@ void CClientDlg::SetObject(const CString &value)
 CString CClientDlg::GetObject()
 {
 	return m_csObject;
+}
+
+void CClientDlg::SetDisk(const CString &value)
+{
+	m_csDisk = value;
+}
+
+CString CClientDlg::GetDisk()
+{
+	return m_csDisk;
 }
 
 void CClientDlg::SetUser(const CString &value)
@@ -142,6 +153,7 @@ BOOL CClientDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
+	CheckRadioButton(IDC_RADIO1, IDC_RADIO8, IDC_RADIO1);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -203,14 +215,14 @@ void CClientDlg::OnBnClickedCmdconnect()
 		LPCTSTR userName = NULL;
 		AgentRequest request;
 		request.reqSize = sizeof(request.reqSize) + sizeof(request.reqType);
-		request.reqType = reqAccessRights;
+		request.reqType = GetCheckedRadioButton(IDC_RADIO1, IDC_RADIO8) - IDC_RADIO1;
 
 		switch (request.reqType) {
 		case reqDriveType:
-			objectPath = (LPCTSTR)GetObject();
+			objectPath = (LPCTSTR)GetDisk();
 			break;
 		case reqFreeSpace:
-			objectPath = (LPCTSTR)GetObject();
+			objectPath = (LPCTSTR)GetDisk();
 			break;
 		case reqAccessRights:
 			objectPath = (LPCTSTR)GetObject();
@@ -227,57 +239,103 @@ void CClientDlg::OnBnClickedCmdconnect()
 		
 		AgentReply reply = client->Request((LPCTSTR)GetHost(), (LPCTSTR)GetPort(), request, objectPath);
 	
-		ostr << TEXT("Код возврата: ") << reply.errorCode << TEXT("\n") << endl;
-
 		if(reply.errorCode == 0) {
 #if 1
 			switch(reply.reqType) {
 			case reqOsVer:
-				reply.vf.osVer.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-				reply.vf.osVer.szCSDVersion[63] = TEXT('\0');
-				ostr << "OS version " << reply.vf.osVer.dwMajorVersion
-					<< "." << reply.vf.osVer.dwMinorVersion
-					<< "." << reply.vf.osVer.dwBuildNumber
-					<< endl;
-				ostr << " dwPlatformId " << reply.vf.osVer.dwPlatformId << endl;
-				ostr << TEXT(" sp \"") << reply.vf.osVer.szCSDVersion << TEXT("\"") << endl;
-				ostr << " ServicePack " << reply.vf.osVer.wServicePackMajor 
-					<< "." << reply.vf.osVer.wServicePackMinor << endl;
-				ostr << " wSuiteMask " << hex << uppercase << setfill(TEXT('0')) 
-					<< setw(8) << reply.vf.osVer.wSuiteMask << dec << endl;
-				ostr << " wProductType " << DWORD(reply.vf.osVer.wProductType) << endl;
+				ostr << reply.vf.osVer.dwMajorVersion << "." << reply.vf.osVer.dwMinorVersion << "." << reply.vf.osVer.dwBuildNumber;
+				SetDlgItemText(IDC_EDIT_OSVER, ostr.str().c_str());
+
+				SetDlgItemInt(IDC_EDIT_PLATFORM, reply.vf.osVer.dwPlatformId);
+
+				SetDlgItemText(IDC_EDIT_SPSTR, reply.vf.osVer.szCSDVersion);
+
+				ostr.str(TEXT(""));
+				ostr << reply.vf.osVer.wServicePackMajor << "." << reply.vf.osVer.wServicePackMinor;
+				SetDlgItemText(IDC_EDIT_SPNUM, ostr.str().c_str());
+
+				ostr.str(TEXT(""));
+				ostr << hex << uppercase << setfill(TEXT('0')) << setw(8) << reply.vf.osVer.wSuiteMask << dec;
+				SetDlgItemText(IDC_EDIT_SITE, ostr.str().c_str());
+
+				ostr.str(TEXT(""));
+				ostr << " wProductType " << DWORD(reply.vf.osVer.wProductType);
+				SetDlgItemText(IDC_EDIT_SITE, ostr.str().c_str());
 				break;
 			case reqSysTime:
-				ostr << "GetSystemTime: " << reply.vf.sysTime.wYear
-					<< "-" << reply.vf.sysTime.wMonth
-					<< "-" << reply.vf.sysTime.wDay
-					<< " (" << reply.vf.sysTime.wDayOfWeek << ")"
-					<< " " << reply.vf.sysTime.wHour
-					<< ":" << reply.vf.sysTime.wMinute
-					<< ":" << reply.vf.sysTime.wSecond
-					<< "." << reply.vf.sysTime.wMilliseconds
-				<< endl;
+				ostr << reply.vf.sysTime.wHour << ":" << reply.vf.sysTime.wMinute << ":" << reply.vf.sysTime.wSecond;
+				SetDlgItemText(IDC_EDIT_SYSTIME, ostr.str().c_str());
+				break;
 			case reqTickCount:
-				ostr << "GetTickCount: " << reply.vf.tickCount << endl;
+				SetDlgItemInt(IDC_EDIT_TICKS, reply.vf.tickCount);
 				break;
 			case reqMemStatus:
-				ostr << "percent of memory in use " << reply.vf.memStatus.dwMemoryLoad << endl;
-				ostr << "total KB of physical memory " << reply.vf.memStatus.ullTotalPhys << endl;
-				ostr << "free  KB of physical memory " << reply.vf.memStatus.ullAvailPhys << endl;
-				ostr << "total KB of paging file " << reply.vf.memStatus.ullTotalPageFile << endl;
-				ostr << "free  KB of paging file " << reply.vf.memStatus.ullAvailPageFile << endl;
-				ostr << "total KB of virtual memory " << reply.vf.memStatus.ullTotalVirtual << endl;
-				ostr << "free  KB of virtual memory " << reply.vf.memStatus.ullAvailVirtual << endl;
-				ostr << "free  KB of extended memory " << reply.vf.memStatus.ullAvailExtendedVirtual << endl;
+				ostr.str(TEXT(""));
+				ostr << reply.vf.memStatus.dwMemoryLoad;
+				SetDlgItemText(IDC_EDIT_MEMLOAD, ostr.str().c_str());
+				ostr.str(TEXT(""));
+				ostr << reply.vf.memStatus.ullTotalPhys;
+				SetDlgItemText(IDC_EDIT_MEMTOTALPHYS, ostr.str().c_str());
+				ostr.str(TEXT(""));
+				ostr << reply.vf.memStatus.ullAvailPhys;
+				SetDlgItemText(IDC_EDIT_MEMAVAILPHYS, ostr.str().c_str());
+				ostr.str(TEXT(""));
+				ostr << reply.vf.memStatus.ullTotalPageFile;
+				SetDlgItemText(IDC_EDIT_MEMTOTALPAGE, ostr.str().c_str());
+				ostr.str(TEXT(""));
+				ostr << reply.vf.memStatus.ullAvailPageFile;
+				SetDlgItemText(IDC_EDIT_MEMAVAILPAGE, ostr.str().c_str());
+				ostr.str(TEXT(""));
+				ostr << reply.vf.memStatus.ullTotalVirtual;
+				SetDlgItemText(IDC_EDIT_MEMTOTALVIRT, ostr.str().c_str());
+				ostr.str(TEXT(""));
+				ostr << reply.vf.memStatus.ullAvailVirtual;
+				SetDlgItemText(IDC_EDIT_MEMAVAILVIRT, ostr.str().c_str());
+				ostr.str(TEXT(""));
+				ostr << reply.vf.memStatus.ullAvailExtendedVirtual;
+				SetDlgItemText(IDC_EDIT_MEMAVAILVIRTEXT, ostr.str().c_str());
 				break;
 			case reqDriveType:
-				ostr << "GetDriveType: " << reply.vf.driveType << endl;
-				SetDlgItemText(IDC_EDIT_HOST, _itow(reply.vf.driveType)));
+				ostr << reply.vf.driveType << " (";
+				switch (reply.vf.driveType) {
+				case DRIVE_UNKNOWN:
+					ostr << TEXT("неизвестный тип");
+					break;
+				case DRIVE_NO_ROOT_DIR:
+					ostr << TEXT("неверный путь: ") << objectPath;
+					break;
+				case DRIVE_REMOVABLE:
+					ostr << TEXT("съемное устройство");
+					break;
+				case DRIVE_FIXED:
+					ostr << TEXT("жесткий диск");
+					break;
+				case DRIVE_REMOTE:
+					ostr << TEXT("сетевой диск");
+					break;
+				case DRIVE_CDROM:
+					ostr << TEXT("CD-ROM");
+					break;
+				case DRIVE_RAMDISK:
+					ostr << TEXT("виртуальный диск");
+					break;
+				default:
+					ostr << TEXT("неизвестный код");
+					break;
+				}
+				ostr << ")";
+				SetDlgItemText(IDC_EDIT_DRIVE, ostr.str().c_str());
 				break;
 			case reqFreeSpace:
-				ostr << "total " << reply.vf.freeSpace.totalNumberOfBytes.QuadPart
-					<< " free " << reply.vf.freeSpace.totalNumberOfFreeBytes.QuadPart
-					<< " (" << reply.vf.freeSpace.freeBytesAvailable.QuadPart << ")" << endl;
+				ostr.str(TEXT(""));
+				ostr << reply.vf.freeSpace.totalNumberOfBytes.QuadPart;
+				SetDlgItemText(IDC_EDIT_TOTALBYTES, ostr.str().c_str());
+				ostr.str(TEXT(""));
+				ostr << reply.vf.freeSpace.totalNumberOfFreeBytes.QuadPart;
+				SetDlgItemText(IDC_EDIT_TOTALFREEBYTES, ostr.str().c_str());
+				ostr.str(TEXT(""));
+				ostr << reply.vf.freeSpace.freeBytesAvailable.QuadPart;
+				SetDlgItemText(IDC_EDIT_TOTALAVAILBYTES, ostr.str().c_str());
 				break;
 			case reqAccessRights:
 				ostr << "Effective Allowed Access Mask: " << hex << uppercase 
@@ -313,18 +371,16 @@ void CClientDlg::OnBnClickedCmdconnect()
 				}
 				break;
 			case reqObjectOwn:
-				ostr << TEXT("owner.size = ") << reply.vf.objectOwn.size << endl;
-				reply.vf.objectOwn.name[reply.vf.objectOwn.size] = TEXT('\0');
-				ostr << TEXT("owner.name = \"") << reply.vf.objectOwn.name << TEXT("\"") << endl;
+				SetDlgItemText(IDC_EDIT_OWNER, reply.vf.objectOwn.name);
 				break;
 			default:
 				ostr << "Unknown request: " << reply.reqType << endl;
 			}
 #endif
 		} else {
-			ostr << "Код ошибки: " << reply.errorCode << endl;
+			ostr << TEXT("Код ошибки: ") << reply.errorCode << endl;
+			MessageBox(ostr.str().c_str(), TEXT("Результат запроса"), MB_OK);
 		}
 
-		MessageBox(ostr.str().c_str(), TEXT("Результат запроса"), MB_OK);
 	}
 }

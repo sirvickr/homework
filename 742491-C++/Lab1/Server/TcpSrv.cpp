@@ -525,7 +525,7 @@ DWORD WINAPI TcpSrv::WorkerThread(LPVOID lpParam)
 				memcpy(lpIOContext->wsabuf.buf, &reply, dwIoSize);
 				break;
 			case reqSysTime:
-				GetSystemTime(&reply.vf.sysTime);
+				GetLocalTime(&reply.vf.sysTime);
 				cout << "GetSystemTime: " << reply.vf.sysTime.wYear
 					<< "-" << reply.vf.sysTime.wMonth
 					<< "-" << reply.vf.sysTime.wDay

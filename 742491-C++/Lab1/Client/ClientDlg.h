@@ -26,6 +26,9 @@ public:
 	void SetObject(const CString &value);
 	CString GetObject();
 
+	void SetDisk(const CString &value);
+	CString GetDisk();
+
 	void SetUser(const CString &value);
 	CString GetUser();
 
@@ -50,6 +53,7 @@ protected:
 	CString m_csHost;
 	CString m_csPort;
 	CString m_csObject;
+	CString m_csDisk;
 	CString m_csUser;
 	CString m_csReplyText;
 
