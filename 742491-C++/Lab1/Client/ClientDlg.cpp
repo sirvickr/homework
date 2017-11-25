@@ -7,32 +7,18 @@
 #include "ClientDlg.h"
 #include "TcpClient.h"
 #include "afxdialogex.h"
-#include <sstream>
-#include <iostream>
-#include <iomanip>
-
-typedef std::basic_string<TCHAR> tstring;
-typedef std::basic_ostream<TCHAR> tostream;
-typedef std::basic_istream<TCHAR> tistream;
-typedef std::basic_ostringstream<TCHAR> tostringstream;
-typedef std::basic_istringstream<TCHAR> tistringstream;
-
-#if defined(UNICODE) || defined(_UNICODE)
-#define tcout std::wcout
-#define tcerr std::wcerr
-#else
-#define tcout std::cout
-#define tcerr std::cerr
-#endif
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
+using namespace std;
+
 // CClientDlg dialog
 
 CClientDlg::CClientDlg(CWnd* pParent /*=NULL*/)
-	: CDialogEx(CClientDlg::IDD, pParent), client(NULL)
+: CDialogEx(CClientDlg::IDD, pParent), client(NULL)
+, m_bAccRead(false), m_bAccWrite(false), m_bAccExec(false)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	client = new CTcpClient();
@@ -48,6 +34,94 @@ CClientDlg::~CClientDlg()
 void CClientDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Text(pDX, IDC_EDIT_HOST, m_csHost);
+	DDX_Text(pDX, IDC_EDIT_PORT, m_csPort);
+	DDX_Text(pDX, IDC_EDIT_OBJECT, m_csObject);
+	DDX_Text(pDX, IDC_EDIT_USER, m_csUser);
+	DDX_Check(pDX, IDC_CHECK_READ, m_bAccRead);
+	DDX_Check(pDX, IDC_CHECK_WRITE, m_bAccWrite);
+	DDX_Check(pDX, IDC_CHECK_EXEC, m_bAccExec);
+	//DDX_Text(pDX, IDC_TEXT_REPLY, m_csReplyText);
+}
+
+void CClientDlg::SetHost(const CString &value)
+{
+	m_csHost = value;
+}
+
+CString CClientDlg::GetHost()
+{
+	return m_csHost;
+}
+
+void CClientDlg::SetPort(const CString &value)
+{
+	m_csPort = value;
+}
+
+CString CClientDlg::GetPort()
+{
+	return m_csPort;
+}
+
+void CClientDlg::SetObject(const CString &value)
+{
+	m_csObject = value;
+}
+
+CString CClientDlg::GetObject()
+{
+	return m_csObject;
+}
+
+void CClientDlg::SetUser(const CString &value)
+{
+	m_csUser = value;
+}
+
+CString CClientDlg::GetUser()
+{
+	return m_csUser;
+}
+
+void CClientDlg::SetReplyText(const CString &value)
+{
+	m_csReplyText = value;
+}
+
+CString CClientDlg::GetReplyText()
+{
+	return m_csReplyText;
+}
+
+void CClientDlg::SetAccRead(BOOL value) 
+{
+	m_bAccRead = value;
+}
+
+BOOL CClientDlg::GetAccRead()
+{
+	return m_bAccRead;
+}
+
+void CClientDlg::SetAccWrite(BOOL value)
+{
+	m_bAccWrite = value;
+}
+
+BOOL CClientDlg::GetAccWrite()
+{
+	return m_bAccWrite;
+}
+
+void CClientDlg::SetAccExec(BOOL value)
+{
+	m_bAccExec = value;
+}
+
+BOOL CClientDlg::GetAccExec()
+{
+	return m_bAccExec;
 }
 
 BEGIN_MESSAGE_MAP(CClientDlg, CDialogEx)
@@ -55,7 +129,6 @@ BEGIN_MESSAGE_MAP(CClientDlg, CDialogEx)
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(CmdConnect, &CClientDlg::OnBnClickedCmdconnect)
 END_MESSAGE_MAP()
-
 
 // CClientDlg message handlers
 
@@ -111,7 +184,7 @@ HCURSOR CClientDlg::OnQueryDragIcon()
 
 void CClientDlg::OnBnClickedCmdconnect()
 {
-	using namespace std;
+	UpdateData();
 	tostringstream ostr;
 	const size_t BuffSize = 512;
 	//TCHAR buff[BuffSize];
@@ -126,113 +199,130 @@ void CClientDlg::OnBnClickedCmdconnect()
 		reqObjectAcl,
 		reqObjectOwn,
 		*/
-		const TCHAR* objectPath = TEXT("D:\\zhuk.png");
+		LPCTSTR objectPath = NULL;
+		LPCTSTR userName = NULL;
 		AgentRequest request;
-		request.reqType = reqObjectOwn;
-		if(request.reqType == reqObjectOwn) {
-			request.pathSize = wcslen(objectPath);
-		} else {
-			request.pathSize = 0;
+		request.reqSize = sizeof(request.reqSize) + sizeof(request.reqType);
+		request.reqType = reqAccessRights;
+
+		switch (request.reqType) {
+		case reqDriveType:
+			objectPath = (LPCTSTR)GetObject();
+			break;
+		case reqFreeSpace:
+			objectPath = (LPCTSTR)GetObject();
+			break;
+		case reqAccessRights:
+			objectPath = (LPCTSTR)GetObject();
+			userName = (LPCTSTR)GetUser();
+			break;
+		case reqObjectOwn:
+			objectPath = (LPCTSTR)GetObject();
+			break;
+		default:
+			break;
 		}
-
-		AgentReply reply;
-		memset(&reply, 0x00, sizeof(reply));
-
-		reply.reqType = request.reqType;
+		if(objectPath)
+			request.reqSize += wcslen(objectPath) * sizeof(TCHAR);
 		
-		int nRet = client->Request(reply);
+		AgentReply reply = client->Request((LPCTSTR)GetHost(), (LPCTSTR)GetPort(), request, objectPath);
 	
-		ostr << TEXT("Код возврата: ") << nRet << TEXT("\n") << endl;
+		ostr << TEXT("Код возврата: ") << reply.errorCode << TEXT("\n") << endl;
 
-		if(0 == nRet) {
+		if(reply.errorCode == 0) {
 #if 1
 			switch(reply.reqType) {
 			case reqOsVer:
 				reply.vf.osVer.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-				if (reply.valid) {
-					reply.vf.osVer.szCSDVersion[63] = TEXT('\0');
-					ostr << "OS version " << reply.vf.osVer.dwMajorVersion
-						<< "." << reply.vf.osVer.dwMinorVersion
-						<< "." << reply.vf.osVer.dwBuildNumber
-						<< endl;
-					ostr << " dwPlatformId " << reply.vf.osVer.dwPlatformId << endl;
-					ostr << TEXT(" sp \"") << reply.vf.osVer.szCSDVersion << TEXT("\"") << endl;
-					ostr << " ServicePack " << reply.vf.osVer.wServicePackMajor 
-						<< "." << reply.vf.osVer.wServicePackMinor << endl;
-					ostr << " wSuiteMask " << hex << uppercase << setfill(TEXT('0')) 
-						<< setw(8) << reply.vf.osVer.wSuiteMask << dec << endl;
-					ostr << " wProductType " << DWORD(reply.vf.osVer.wProductType) << endl;
-				}
-				else {
-					ostr << "GetVersionEx failed: " << reply.valid << endl;
-				}
+				reply.vf.osVer.szCSDVersion[63] = TEXT('\0');
+				ostr << "OS version " << reply.vf.osVer.dwMajorVersion
+					<< "." << reply.vf.osVer.dwMinorVersion
+					<< "." << reply.vf.osVer.dwBuildNumber
+					<< endl;
+				ostr << " dwPlatformId " << reply.vf.osVer.dwPlatformId << endl;
+				ostr << TEXT(" sp \"") << reply.vf.osVer.szCSDVersion << TEXT("\"") << endl;
+				ostr << " ServicePack " << reply.vf.osVer.wServicePackMajor 
+					<< "." << reply.vf.osVer.wServicePackMinor << endl;
+				ostr << " wSuiteMask " << hex << uppercase << setfill(TEXT('0')) 
+					<< setw(8) << reply.vf.osVer.wSuiteMask << dec << endl;
+				ostr << " wProductType " << DWORD(reply.vf.osVer.wProductType) << endl;
 				break;
 			case reqSysTime:
-				if(reply.valid) {
-					ostr << "GetSystemTime: " << reply.vf.sysTime.wYear
-						<< "-" << reply.vf.sysTime.wMonth
-						<< "-" << reply.vf.sysTime.wDay
-						<< " (" << reply.vf.sysTime.wDayOfWeek << ")"
-						<< " " << reply.vf.sysTime.wHour
-						<< ":" << reply.vf.sysTime.wMinute
-						<< ":" << reply.vf.sysTime.wSecond
-						<< "." << reply.vf.sysTime.wMilliseconds
-					<< endl;
-				}
-				break;
+				ostr << "GetSystemTime: " << reply.vf.sysTime.wYear
+					<< "-" << reply.vf.sysTime.wMonth
+					<< "-" << reply.vf.sysTime.wDay
+					<< " (" << reply.vf.sysTime.wDayOfWeek << ")"
+					<< " " << reply.vf.sysTime.wHour
+					<< ":" << reply.vf.sysTime.wMinute
+					<< ":" << reply.vf.sysTime.wSecond
+					<< "." << reply.vf.sysTime.wMilliseconds
+				<< endl;
 			case reqTickCount:
-				if(reply.valid) {
-					ostr << "GetTickCount: " << reply.vf.tickCount << endl;
-				}
+				ostr << "GetTickCount: " << reply.vf.tickCount << endl;
 				break;
 			case reqMemStatus:
-				if(reply.valid) {
-					ostr << "percent of memory in use " << reply.vf.memStatus.dwMemoryLoad << endl;
-					ostr << "total KB of physical memory " << reply.vf.memStatus.ullTotalPhys << endl;
-					ostr << "free  KB of physical memory " << reply.vf.memStatus.ullAvailPhys << endl;
-					ostr << "total KB of paging file " << reply.vf.memStatus.ullTotalPageFile << endl;
-					ostr << "free  KB of paging file " << reply.vf.memStatus.ullAvailPageFile << endl;
-					ostr << "total KB of virtual memory " << reply.vf.memStatus.ullTotalVirtual << endl;
-					ostr << "free  KB of virtual memory " << reply.vf.memStatus.ullAvailVirtual << endl;
-					ostr << "free  KB of extended memory " << reply.vf.memStatus.ullAvailExtendedVirtual << endl;
-				}
-				else {
-					ostr << "GlobalMemoryStatusEx failed: " << reply.valid << endl;
-				}
+				ostr << "percent of memory in use " << reply.vf.memStatus.dwMemoryLoad << endl;
+				ostr << "total KB of physical memory " << reply.vf.memStatus.ullTotalPhys << endl;
+				ostr << "free  KB of physical memory " << reply.vf.memStatus.ullAvailPhys << endl;
+				ostr << "total KB of paging file " << reply.vf.memStatus.ullTotalPageFile << endl;
+				ostr << "free  KB of paging file " << reply.vf.memStatus.ullAvailPageFile << endl;
+				ostr << "total KB of virtual memory " << reply.vf.memStatus.ullTotalVirtual << endl;
+				ostr << "free  KB of virtual memory " << reply.vf.memStatus.ullAvailVirtual << endl;
+				ostr << "free  KB of extended memory " << reply.vf.memStatus.ullAvailExtendedVirtual << endl;
 				break;
 			case reqDriveType:
-				if(reply.valid) {
-					ostr << "GetDriveType: " << reply.vf.driveType << endl;
-				}
+				ostr << "GetDriveType: " << reply.vf.driveType << endl;
+				SetDlgItemText(IDC_EDIT_HOST, _itow(reply.vf.driveType)));
 				break;
 			case reqFreeSpace:
-				if (reply.valid) {
-					ostr << "total " << reply.vf.freeSpace.totalNumberOfBytes.QuadPart
-						<< " free " << reply.vf.freeSpace.totalNumberOfFreeBytes.QuadPart
-						<< " (" << reply.vf.freeSpace.freeBytesAvailable.QuadPart << ")" << endl;
-				}
-				else {
-					ostr << "GlobalMemoryStatusEx failed: " << reply.valid << endl;
-				}
+				ostr << "total " << reply.vf.freeSpace.totalNumberOfBytes.QuadPart
+					<< " free " << reply.vf.freeSpace.totalNumberOfFreeBytes.QuadPart
+					<< " (" << reply.vf.freeSpace.freeBytesAvailable.QuadPart << ")" << endl;
 				break;
-			case reqObjectAcl:
+			case reqAccessRights:
+				ostr << "Effective Allowed Access Mask: " << hex << uppercase 
+					<< setfill(_T('0')) << setw(8) << reply.vf.accessMask << dec;
+				if (((reply.vf.accessMask & GENERIC_ALL) == GENERIC_ALL)
+					|| ((reply.vf.accessMask & FILE_ALL_ACCESS) == FILE_ALL_ACCESS))
+				{
+					ostr << " ( Full Control )" << endl;
+					CheckDlgButton(IDC_CHECK_READ, TRUE);
+					CheckDlgButton(IDC_CHECK_WRITE, TRUE);
+					CheckDlgButton(IDC_CHECK_EXEC, TRUE);
+				} else {
+					ostr << " (";
+					if (((reply.vf.accessMask & GENERIC_READ) == GENERIC_READ)
+						|| ((reply.vf.accessMask & FILE_GENERIC_READ) == FILE_GENERIC_READ))
+					{
+						ostr << " Read";
+						CheckDlgButton(IDC_CHECK_READ, TRUE);
+					}
+					if (((reply.vf.accessMask & GENERIC_WRITE) == GENERIC_WRITE)
+						|| ((reply.vf.accessMask & FILE_GENERIC_WRITE) == FILE_GENERIC_WRITE))
+					{
+						ostr << " Write";
+						CheckDlgButton(IDC_CHECK_WRITE, TRUE);
+					}
+					if (((reply.vf.accessMask & GENERIC_EXECUTE) == GENERIC_EXECUTE)
+						|| ((reply.vf.accessMask & FILE_GENERIC_EXECUTE) == FILE_GENERIC_EXECUTE))
+					{
+						ostr << " Execute";
+						CheckDlgButton(IDC_CHECK_READ, TRUE);
+					}
+					ostr << " )" << endl;
+				}
 				break;
 			case reqObjectOwn:
-				if (reply.valid) {
-					ostr << TEXT("owner.size = ") << reply.vf.objectOwn.size << endl;
-					reply.vf.objectOwn.name[reply.vf.objectOwn.size] = TEXT('\0');
-					ostr << TEXT("owner.name = \"") << reply.vf.objectOwn.name << TEXT("\"") << endl;
-				}
-				else {
-					ostr << "GlobalMemoryStatusEx failed: " << reply.valid << endl;
-				}
+				ostr << TEXT("owner.size = ") << reply.vf.objectOwn.size << endl;
+				reply.vf.objectOwn.name[reply.vf.objectOwn.size] = TEXT('\0');
+				ostr << TEXT("owner.name = \"") << reply.vf.objectOwn.name << TEXT("\"") << endl;
 				break;
 			default:
 				ostr << "Unknown request: " << reply.reqType << endl;
 			}
 #endif
 		} else {
-			ostr << "Сетевая ошибка: " << nRet << endl;
+			ostr << "Код ошибки: " << reply.errorCode << endl;
 		}
 
 		MessageBox(ostr.str().c_str(), TEXT("Результат запроса"), MB_OK);
