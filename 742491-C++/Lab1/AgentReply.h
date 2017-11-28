@@ -12,13 +12,20 @@ enum RequestType {
 };
 
 struct AgentRequest {
-	DWORD reqSize;
 	DWORD reqType;
-	TCHAR objectPath[1];
+	DWORD headSize;
+	DWORD pathSize;
+	DWORD userSize;
+};
+
+struct FreeSpaceReply {
+	ULARGE_INTEGER freeBytesAvailable;
+	ULARGE_INTEGER totalNumberOfBytes;
+	ULARGE_INTEGER totalNumberOfFreeBytes;
 };
 
 struct AgentReply {
-	int errorCode; // > 0 - сетевая ошибка клиента, 0 - успех, > 0 - код ошибки сервера
+	int errorCode; // < 0 - сетевая ошибка клиента, 0 - успех, > 0 - код ошибки сервера
 	DWORD reqType;
 	union  {
 		OSVERSIONINFOEX osVer;
@@ -26,15 +33,8 @@ struct AgentReply {
 		DWORD tickCount;
 		MEMORYSTATUSEX memStatus;
 		UINT driveType;
-		struct {
-			ULARGE_INTEGER freeBytesAvailable;
-			ULARGE_INTEGER totalNumberOfBytes;
-			ULARGE_INTEGER totalNumberOfFreeBytes;
-		} freeSpace;
+		FreeSpaceReply freeSpace;
 		ACCESS_MASK accessMask;
-		struct {
-			DWORD size;
-			TCHAR name[1];
-		} objectOwn;
+		TCHAR objectOwner[1];
 	} vf;
 };
