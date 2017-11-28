@@ -36,6 +36,12 @@
     <ClInclude Include="TcpClient.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\unidefs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CryptoAPI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -48,6 +54,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="TcpClient.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CryptoAPI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "TcpSrv.h"
+#include "../CryptoAPI/CryptoAPI.h"
 
 using namespace std;
 

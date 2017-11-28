@@ -1,5 +1,8 @@
 #include "stdafx.h"
 #include "TcpClient.h"
+#include "../CryptoAPI/CryptoAPI.h"
+
+using namespace std;
 
 CTcpClient::CTcpClient(void)
 : g_bEndClient(FALSE)
@@ -7,8 +10,8 @@ CTcpClient::CTcpClient(void)
 	WSADATA wsaData;
 	WSAStartup(WINSOCK_VERSION, &wsaData);
 
-	//sock = INVALID_SOCKET;
-	//sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	m_cbContent = DEFAULT_BUFLEN - sizeof(DWORD);
+	m_pbSendBuf = new char[sizeof(DWORD) + m_cbContent];
 }
 
 CTcpClient::~CTcpClient(void)
@@ -16,161 +19,444 @@ CTcpClient::~CTcpClient(void)
 	/*if(sock != INVALID_SOCKET) {
 		closesocket(sock);
 	}*/
+	if (m_pbDecoded) {
+		free(m_pbDecoded);
+		m_pbDecoded = NULL;
+		m_cbDecoded = 0;
+	}
 	WSACleanup();
 }
 
-AgentReply CTcpClient::Request(LPCTSTR lpszServer, LPCTSTR lpszPort, const AgentRequest &request, LPCTSTR objPath)
+SOCKET CTcpClient::Connect(LPCTSTR lpszServer, LPCTSTR lpszPort)
 {
-	const size_t DEFAULT_BUFLEN = 1024;
-
-	AgentReply reply;
-	memset(&reply, 0x00, sizeof(reply));
-
 	SOCKET sock = INVALID_SOCKET;
+	ADDRINFOW *result = NULL;
+	ADDRINFOW *ptr = NULL;
+	ADDRINFOW hints;
+	int iResult;
 
-    ADDRINFOW *result = NULL;
-    ADDRINFOW *ptr = NULL;
-    ADDRINFOW hints;
+	ZeroMemory(&hints, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
 
-	char recvbuf[DEFAULT_BUFLEN];
-    int iResult;
-    int recvbuflen = DEFAULT_BUFLEN;
+	// Получаем адрес и порт сервера
+	iResult = GetAddrInfo(lpszServer, lpszPort, &hints, &result);
+	if (iResult != 0) {
+		printf("getaddrinfo failed with error: %d\n", iResult);
+		return INVALID_SOCKET;
+	}
 
-    ZeroMemory( &hints, sizeof(hints) );
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
+	// Попытка подключиться к одному из адресов
+	for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
 
-    // Получаем адрес и порт сервера
-    iResult = GetAddrInfo(lpszServer, lpszPort, &hints, &result);
-    if ( iResult != 0 ) {
-        printf("getaddrinfo failed with error: %d\n", iResult);
-        return reply;
-    }
-
-    // Попытка подключиться к одному из адресов
-    for(ptr=result; ptr != NULL ;ptr=ptr->ai_next) {
-
-        // Создаем сокет
-        sock = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
-        if (sock == INVALID_SOCKET) {
-            printf("socket failed with error: %ld\n", WSAGetLastError());
-            return reply;
-        }
-
-        // Подключаемся к серверу
-        iResult = connect( sock, ptr->ai_addr, (int)ptr->ai_addrlen);
-        if (iResult == SOCKET_ERROR) {
-            closesocket(sock);
-            sock = INVALID_SOCKET;
-            continue;
-        }
-        break;
-    }
-
-    FreeAddrInfo(result);
-
-    if (sock == INVALID_SOCKET) {
-        printf("Unable to connect to server!\n");
-        return reply;
-    }
-
-	DWORD headSize = sizeof(request.reqSize) + sizeof(request.reqType);
-#if 1
-	DWORD pathSize = objPath ? wcslen(objPath) * sizeof(TCHAR) : 0;
-	DWORD sendSize = headSize + pathSize;
-	char *sendBuf = new char[sendSize];
-	if(sendBuf) {
-		memcpy(sendBuf, &request, headSize);
-		if(objPath) {
-			memcpy(sendBuf + headSize, objPath, pathSize);
+		// Создаем сокет
+		sock = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
+		if (sock == INVALID_SOCKET) {
+			printf("socket failed with error: %ld\n", WSAGetLastError());
+			break;
 		}
 
-		iResult = send( sock, sendBuf, sendSize, 0 );
+		// Подключаемся к серверу
+		iResult = connect(sock, ptr->ai_addr, (int)ptr->ai_addrlen);
 		if (iResult == SOCKET_ERROR) {
-			printf("send failed with error: %d\n", WSAGetLastError());
 			closesocket(sock);
-			return reply;
+			sock = INVALID_SOCKET;
+			continue;
 		}
+		break;
+	} // for()
+
+	FreeAddrInfo(result);
+
+	return sock;
+}
+
+int CTcpClient::SendRequest(SOCKET sock, const AgentRequest &request, LPCTSTR objPath, LPCTSTR userName)
+{
+	int iResult = ERROR_SUCCESS;
+#if 1
+	DWORD dwIoSize = request.headSize + request.pathSize + request.userSize;
+
+	if (m_cbContent < dwIoSize) {
+		m_cbContent = dwIoSize;
+		delete[] m_pbSendBuf;
+		m_pbSendBuf = new char[sizeof(DWORD) + m_cbContent];
+		if (!m_pbSendBuf)
+			return -1;
+	}
+	// оставляем место для размера отправляемых данных
+	PCHAR pszContent = m_pbSendBuf + sizeof(DWORD);
+
+	memcpy(pszContent, &request, request.headSize);
+	if (objPath) {
+		memcpy(pszContent + request.headSize, objPath, request.pathSize);
+	}
+	if (userName) {
+		memcpy(pszContent + request.headSize + request.pathSize, userName, request.userSize);
+	}
+	// шифрование перед отправкой (всё сообщение, кроме первых 4 байт (DWORD, размер))
+	{
+		DWORD cbEncodedBlob;
+		LPBYTE pbEncodedBlob;
+		iResult = (int)Encrypt((LPBYTE)pszContent, dwIoSize, &pbEncodedBlob, &cbEncodedBlob);
+		cout << ">>> Encoded: " << cbEncodedBlob << " bytes";
+
+		if (ERROR_SUCCESS == iResult) {
+			if (m_cbContent < cbEncodedBlob) {
+				m_cbContent = cbEncodedBlob;
+				delete[] m_pbSendBuf;
+				m_pbSendBuf = new char[sizeof(DWORD) + m_cbContent];
+				// оставляем место для размера отправляемых данных
+				pszContent = m_pbSendBuf + sizeof(DWORD);
+			}
+			*((DWORD*)m_pbSendBuf) = cbEncodedBlob;
+			memcpy(pszContent, pbEncodedBlob, cbEncodedBlob);
+			free(pbEncodedBlob);
+			iResult = send(sock, m_pbSendBuf, sizeof(DWORD) + cbEncodedBlob, 0);
+			cout << " (sent " << iResult << " bytes)";
+		} else {
+			cout << " (failure)";
+		}
+		cout << endl;
+
+	}
+#else
+	DWORD reqSize = request.headSize + request.pathSize + request.userSize;
+
+	char *sendBuf = new char[reqSize];
+	if (sendBuf) {
+		memcpy(sendBuf, &request, request.headSize);
+		if (objPath) {
+			memcpy(sendBuf + request.headSize, objPath, request.pathSize);
+		}
+		if (userName) {
+			memcpy(sendBuf + request.headSize + request.pathSize, userName, request.userSize);
+		}
+
+		iResult = send(sock, sendBuf, reqSize, 0);
 
 		delete[] sendBuf;
 		sendBuf = NULL;
 	}
-#else
-	// Отправляем заголовок
-    iResult = send( sock, (char*)&request, headSize, 0 );
-    if (iResult == SOCKET_ERROR) {
-        printf("send failed with error: %d\n", WSAGetLastError());
-        closesocket(sock);
-        return reply;
-    }
-	if(objPath) {
-		DWORD pathSize = wcslen(objPath) * sizeof(TCHAR);
-		tcout << TEXT("objPath = ") << objPath << std::endl;
-		// Отправляем имя объекта
-		iResult = send( sock, (char*)objPath, pathSize, 0 );
-		if (iResult == SOCKET_ERROR) {
-			printf("send failed with error: %d\n", WSAGetLastError());
-			closesocket(sock);
-			return reply;
-		}
-	}
 #endif
 
-    printf("Bytes Sent: %ld\n", iResult);
+	tcout << _T("Bytes Sent: ") << iResult << endl;
 
-    // отключить передачу данных в сокете
-	// (после этого recv() почему-то возвращает -1, хотя прием не отключен)
-    /*iResult = shutdown(sock, SD_SEND);
-    if (iResult == SOCKET_ERROR) {
-        printf("shutdown failed with error: %d\n", WSAGetLastError());
-        closesocket(sock);
-        return reply;
-    }*/
+	return iResult;
+}
 
+AgentReply* CTcpClient::RecvReply(SOCKET sock)
+{
+	int iResult;
+
+	int recvbuflen = DEFAULT_BUFLEN;
 	DWORD errCode = 0;
 	int iReceived = 0;
-    // Принимаем, пока не получим все запрошенные данные или сервер не оборвет соединение
-    do {
-        iResult = recv(sock, recvbuf, recvbuflen, 0);
-        if ( iResult > 0 ) {
+	// Принимаем, пока не получим все запрошенные данные или сервер не оборвет соединение
+	char *pInput = recvbuf;
+	do {
+		iResult = recv(sock, pInput, recvbuflen, 0);
+		if (iResult > 0) {
 			iReceived += iResult;
-            printf("Bytes received: %d/%d\n", iResult, iReceived);
-		} else if ( iResult == 0 ) {
-            printf("Connection closed\n");
-			break;
-		} else {
-			errCode =  WSAGetLastError();
-            printf("recv failed with error: %d\n",iResult);
+			DWORD dwIoSize = *((DWORD*)recvbuf);
+			printf("Bytes received: %d/%d (message size %u)\n", iResult, iReceived, dwIoSize);
+
+			if (m_pbDecoded) {
+				free(m_pbDecoded);
+				m_pbDecoded = NULL;
+				m_cbDecoded = 0;
+			}
+			iResult = Decrypt(&m_pbDecoded, &m_cbDecoded, (LPBYTE)(recvbuf + sizeof(DWORD)), dwIoSize);
+			if (iResult != ERROR_SUCCESS) {
+				tcerr << _T("Ошибка декодирования: ") << iResult << endl;
+				break;
+			}
+		}
+		else if (iResult == 0) {
+			printf("Connection closed\n");
 			break;
 		}
-    } while( iReceived < headSize ); // TODO  ориентироваться на size в заголовке
+		else {
+			errCode = WSAGetLastError();
+			printf("recv failed with error: %d\n", iResult);
+			break;
+		}
+	} while (iReceived < 12);
 
-    // Очистка
-    shutdown(sock, SD_BOTH);
-    closesocket(sock);
-
-	memcpy(&reply, recvbuf, iReceived);
-
-	return reply;
+	return (AgentReply*)(m_pbDecoded);
 }
 
-BOOL CTcpClient::CreateConnectedSocket(int nThreadNum)
+int CTcpClient::MakeRequest(AgentReply &result, LPCTSTR lpszServer, LPCTSTR lpszPort, DWORD reqType, LPCTSTR objPath, LPCTSTR userName)
 {
-	return FALSE;
+	int iResult = -1;
+
+	SOCKET sock = Connect(lpszServer, lpszPort);
+	if (sock == INVALID_SOCKET) {
+		printf("Unable to connect to server!\n");
+		return iResult;
+	}
+
+	iResult = SendRequest(sock, PrepareRequest(reqType, objPath, userName), objPath, userName);
+	if (iResult == SOCKET_ERROR) {
+		tcerr << _T("send failed with error: ") << WSAGetLastError() << endl;
+		closesocket(sock);
+		return iResult;
+	}
+
+	result = *RecvReply(sock);
+
+	// Очистка
+	shutdown(sock, SD_BOTH);
+	closesocket(sock);
+
+	return iResult;
 }
 
-BOOL CTcpClient::SendBuffer(int nThreadNum, char *outbuf)
+int CTcpClient::GetOsVer(OSVERSIONINFOEX& result, LPCTSTR lpszServer, LPCTSTR lpszPort)
 {
-	return FALSE;
+	int iResult = -1;
+
+	SOCKET sock = Connect(lpszServer, lpszPort);
+	if (sock == INVALID_SOCKET) {
+		printf("Unable to connect to server!\n");
+		return iResult;
+	}
+
+	iResult = SendRequest(sock, PrepareRequest(reqOsVer));
+	if (iResult == SOCKET_ERROR) {
+		tcerr << _T("send failed with error: ") << WSAGetLastError() << endl;
+		closesocket(sock);
+		return iResult;
+	}
+
+	AgentReply* reply = RecvReply(sock);
+
+	result = reply->vf.osVer;
+	iResult = reply->errorCode;
+
+	// Очистка
+	shutdown(sock, SD_BOTH);
+	closesocket(sock);
+
+	return iResult;
 }
 
-BOOL CTcpClient::RecvBuffer(int nThreadNum, char *inbuf)
-{
-	return FALSE;
+int CTcpClient::GetSysTime(SYSTEMTIME &result, LPCTSTR lpszServer, LPCTSTR lpszPort) {
+	int iResult = -1;
+
+	SOCKET sock = Connect(lpszServer, lpszPort);
+	if (sock == INVALID_SOCKET) {
+		printf("Unable to connect to server!\n");
+		return iResult;
+	}
+
+	iResult = SendRequest(sock, PrepareRequest(reqSysTime));
+	if (iResult == SOCKET_ERROR) {
+		tcerr << _T("send failed with error: ") << WSAGetLastError() << endl;
+		closesocket(sock);
+		return iResult;
+	}
+
+	AgentReply* reply = RecvReply(sock);
+
+	result = reply->vf.sysTime;
+	iResult = reply->errorCode;
+
+	// Очистка
+	shutdown(sock, SD_BOTH);
+	closesocket(sock);
+
+	return iResult;
 }
 
-DWORD WINAPI CTcpClient::EchoThread(LPVOID lpParameter)
+int CTcpClient::GetTickCount(DWORD &result, LPCTSTR lpszServer, LPCTSTR lpszPort)
 {
-	return 0;
+	int iResult = -1;
+
+	SOCKET sock = Connect(lpszServer, lpszPort);
+	if (sock == INVALID_SOCKET) {
+		printf("Unable to connect to server!\n");
+		return iResult;
+	}
+
+	iResult = SendRequest(sock, PrepareRequest(reqTickCount));
+	if (iResult == SOCKET_ERROR) {
+		tcerr << _T("send failed with error: ") << WSAGetLastError() << endl;
+		closesocket(sock);
+		return iResult;
+	}
+
+	AgentReply* reply = RecvReply(sock);
+
+	result = reply->vf.tickCount;
+	iResult = reply->errorCode;
+
+	// Очистка
+	shutdown(sock, SD_BOTH);
+	closesocket(sock);
+
+	return iResult;
+}
+
+int CTcpClient::GetMemStatus(MEMORYSTATUSEX &result, LPCTSTR lpszServer, LPCTSTR lpszPort)
+{
+	int iResult = -1;
+
+	SOCKET sock = Connect(lpszServer, lpszPort);
+	if (sock == INVALID_SOCKET) {
+		printf("Unable to connect to server!\n");
+		return iResult;
+	}
+
+	iResult = SendRequest(sock, PrepareRequest(reqMemStatus));
+	if (iResult == SOCKET_ERROR) {
+		tcerr << _T("send failed with error: ") << WSAGetLastError() << endl;
+		closesocket(sock);
+		return iResult;
+	}
+
+	AgentReply* reply = RecvReply(sock);
+
+	result = reply->vf.memStatus;
+	iResult = reply->errorCode;
+
+	// Очистка
+	shutdown(sock, SD_BOTH);
+	closesocket(sock);
+
+	return iResult;
+}
+
+int CTcpClient::GetDriveType(UINT &result, LPCTSTR lpszServer, LPCTSTR lpszPort, LPCTSTR objPath)
+{
+	int iResult = -1;
+
+	SOCKET sock = Connect(lpszServer, lpszPort);
+	if (sock == INVALID_SOCKET) {
+		printf("Unable to connect to server!\n");
+		return iResult;
+	}
+
+	iResult = SendRequest(sock, PrepareRequest(reqDriveType, objPath), objPath);
+	if (iResult == SOCKET_ERROR) {
+		tcerr << _T("send failed with error: ") << WSAGetLastError() << endl;
+		closesocket(sock);
+		return iResult;
+	}
+
+	AgentReply* reply = RecvReply(sock);
+
+	result = reply->vf.driveType;
+	iResult = reply->errorCode;
+
+	// Очистка
+	shutdown(sock, SD_BOTH);
+	closesocket(sock);
+
+	return iResult;
+}
+
+int CTcpClient::GetDiskFreeSpace(FreeSpaceReply &result, LPCTSTR lpszServer, LPCTSTR lpszPort, LPCTSTR objPath)
+{
+	int iResult = -1;
+
+	SOCKET sock = Connect(lpszServer, lpszPort);
+	if (sock == INVALID_SOCKET) {
+		printf("Unable to connect to server!\n");
+		return iResult;
+	}
+
+	iResult = SendRequest(sock, PrepareRequest(reqFreeSpace, objPath), objPath);
+	if (iResult == SOCKET_ERROR) {
+		tcerr << _T("send failed with error: ") << WSAGetLastError() << endl;
+		closesocket(sock);
+		return iResult;
+	}
+
+	AgentReply* reply = RecvReply(sock);
+
+	result = reply->vf.freeSpace;
+	iResult = reply->errorCode;
+
+	// Очистка
+	shutdown(sock, SD_BOTH);
+	closesocket(sock);
+
+	return iResult;
+}
+
+int CTcpClient::GetAccessRights(ACCESS_MASK &result, LPCTSTR lpszServer, LPCTSTR lpszPort, LPCTSTR objPath, LPCTSTR userName)
+{
+	int iResult = -1;
+
+	SOCKET sock = Connect(lpszServer, lpszPort);
+	if (sock == INVALID_SOCKET) {
+		printf("Unable to connect to server!\n");
+		return iResult;
+	}
+
+	iResult = SendRequest(sock, PrepareRequest(reqAccessRights, objPath, userName), objPath, userName);
+	if (iResult == SOCKET_ERROR) {
+		tcerr << _T("send failed with error: ") << WSAGetLastError() << endl;
+		closesocket(sock);
+		return iResult;
+	}
+
+	AgentReply* reply = RecvReply(sock);
+
+	result = reply->vf.accessMask;
+	iResult = reply->errorCode;
+
+	// Очистка
+	shutdown(sock, SD_BOTH);
+	closesocket(sock);
+
+	return iResult;
+}
+
+int CTcpClient::GetObjectOwner(LPTSTR lpszResult, DWORD maxResultSize, LPCTSTR lpszServer, LPCTSTR lpszPort, LPCTSTR objPath)
+{
+	if (!lpszResult) {
+		return -1;
+	}
+
+	int iResult = -1;
+
+	SOCKET sock = Connect(lpszServer, lpszPort);
+	if (sock == INVALID_SOCKET) {
+		printf("Unable to connect to server!\n");
+		return iResult;
+	}
+
+	iResult = SendRequest(sock, PrepareRequest(reqObjectOwn, objPath), objPath);
+	if (iResult == SOCKET_ERROR) {
+		tcerr << _T("send failed with error: ") << WSAGetLastError() << endl;
+		closesocket(sock);
+		return iResult;
+	}
+
+	AgentReply* reply = RecvReply(sock);
+
+	wcscpy_s(lpszResult, maxResultSize, reply->vf.objectOwner);
+	iResult = reply->errorCode;
+
+	// Очистка
+	shutdown(sock, SD_BOTH);
+	closesocket(sock);
+
+	return iResult;
+}
+
+AgentRequest CTcpClient::PrepareRequest(DWORD reqType, LPCTSTR objPath, LPCTSTR userName)
+{
+	AgentRequest request;
+	memset(&request, 0x00, sizeof(request));
+	request.reqType = reqType;
+	request.headSize = sizeof(request.reqType) + sizeof(request.headSize) + sizeof(request.pathSize) + sizeof(request.userSize);
+	if (objPath)
+		request.pathSize = (wcslen(objPath) + 1) * sizeof(TCHAR);
+	if (userName)
+		request.userSize = (wcslen(userName) + 1) * sizeof(TCHAR);
+	return request;
 }

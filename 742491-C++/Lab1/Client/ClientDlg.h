@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include "afxwin.h"
 
 class CTcpClient;
 
@@ -49,6 +50,8 @@ protected:
 
 // Implementation
 protected:
+	static constexpr LPTSTR IniFile = _T("config.ini");
+	TCHAR szIniFileName[MAX_PATH];
 	HICON m_hIcon;
 	CString m_csHost;
 	CString m_csPort;
@@ -71,4 +74,8 @@ public:
 
 private:
 	CTcpClient* client;
+	CListBox m_lstHosts;
+public:
+	afx_msg void OnBnClickedOk();
+	afx_msg void OnLbnSelchangeListHosts();
 };

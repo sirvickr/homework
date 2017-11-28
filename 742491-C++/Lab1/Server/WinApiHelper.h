@@ -14,6 +14,6 @@ DWORD GetEffectiveRightsForUser(
 DWORD UseAuthzSolution(PSECURITY_DESCRIPTOR psd, LPTSTR lpszUserName, PAUTHZ_ACCESS_REPLY pAccessReply);
 
 LPTSTR GetObjectOwner(
-	LPTSTR pObjectName,
+	LPCTSTR pObjectName,
 	SE_OBJECT_TYPE objType = SE_FILE_OBJECT,
 	LPDWORD lpdwSize = NULL);

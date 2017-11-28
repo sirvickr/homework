@@ -72,14 +72,36 @@ BOOL CClientApp::InitInstance()
 
 	CClientDlg dlg;
 	m_pMainWnd = &dlg;
-	dlg.SetHost(CString("localhost"));
-	dlg.SetPort(CString("5001"));
-	dlg.SetObject(CString("C:\Windows\explorer.exe"));
+#if 0
+	// определим местонахождение исполняемого файла и 
+	// установим имя ini-файла, а также значения по умолчанию 
+	// для m_szSrcPath и m_szDstPath
+	const LPTSTR IniFile = _T("config.ini");
+	TCHAR szIniFileName[MAX_PATH];
+	TCHAR szHostName[MAX_PATH] = _T("");
+	TCHAR szPortNumber[MAX_PATH] = _T("");
+	szIniFileName[0] = _T('\0');
+	DWORD dwLen = GetModuleFileName(NULL, szIniFileName, MAX_PATH);
+	if (dwLen) {
+		for (int i = int(dwLen - 1); i >= 0; i--) {
+			if (szIniFileName[i] == _T('\\')) {
+				szIniFileName[i + 1] = _T('\0');
+				wcscat_s<MAX_PATH>(szIniFileName, IniFile);
+
+				GetPrivateProfileString(_T("common"), _T("host"), _T("localhost"), szHostName, MAX_PATH, szIniFileName);
+				GetPrivateProfileString(_T("common"), _T("port"), _T("5001"), szPortNumber, MAX_PATH, szIniFileName);
+
+				break;
+			}
+		}
+	}
+
+	dlg.SetHost(szHostName);
+	dlg.SetPort(szPortNumber);
+	dlg.SetObject(CString("C:\\Windows\\explorer.exe"));
 	dlg.SetDisk(CString("C:"));
 	//dlg.SetUser(CString("UserName"));
-	
-	//dlg.SetAccExec(TRUE);
-
+#endif
 	INT_PTR nResponse = dlg.DoModal();
 	if (nResponse == IDOK)
 	{

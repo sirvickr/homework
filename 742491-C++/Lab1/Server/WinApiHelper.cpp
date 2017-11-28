@@ -179,7 +179,7 @@ DWORD UseAuthzSolution(PSECURITY_DESCRIPTOR psd, LPTSTR lpszUserName, PAUTHZ_ACC
 	return dwRetCode;
 }
 
-LPTSTR GetObjectOwner(LPTSTR pObjectName, SE_OBJECT_TYPE objType, LPDWORD lpdwSize)
+LPTSTR GetObjectOwner(LPCTSTR pObjectName, SE_OBJECT_TYPE objType, LPDWORD lpdwSize)
 {
 	DWORD dwRtnCode = 0;
 	PSID pSidOwner = NULL;
