@@ -98,8 +98,6 @@ void CMainService::OnStart(DWORD dwArgc, LPTSTR *lpszArgv)
 		ZipDir(m_szSrcPath, m_szDstPath, _T("*"));
 	}
 	
-	Test(m_szDstPath);
-
 	memset(&DirInfo, 0x00, sizeof(DIRECTORY_INFO));
 
 	// Открыть исходную директорию (получить дескриптор)
@@ -360,22 +358,8 @@ void CMainService::BackupDir(LPCTSTR szSourceDir, LPCTSTR szTargetDir, LPCTSTR s
 	FindClose(hFind);
 }
 
-static const char *s_pComment = "Empty comment";
-static const char *s_Test_archive_filename = "backup.zip";
-
-// The string to compress.
-static const char *s_pTest_str =
-"MISSION CONTROL I wouldn't worry too much about the computer. First of all, there is still a chance that he is right, despite your tests, and" \
-"if it should happen again, we suggest eliminating this possibility by allowing the unit to remain in place and seeing whether or not it" \
-"actually fails. If the computer should turn out to be wrong, the situation is still not alarming. The type of obsessional error he may be" \
-"guilty of is not unknown among the latest generation of HAL 9000 computers. It has almost always revolved around a single detail, such as" \
-"the one you have described, and it has never interfered with the integrity or reliability of the computer's performance in other areas." \
-"No one is certain of the cause of this kind of malfunctioning. It may be over-programming, but it could also be any number of reasons. In any" \
-"event, it is somewhat analogous to human neurotic behavior. Does this answer your query?  Zero-five-three-Zero, MC, transmission concluded.";
-
 void CMainService::ZipDir(LPCTSTR szSourceDir, LPCTSTR szTargetDir, LPCTSTR szSourceMask)
 {
-	char archive_filename[64];
 	char main_archive_filename[MAX_PATH] = "";
 
 	if (szTargetDir) {
@@ -383,8 +367,13 @@ void CMainService::ZipDir(LPCTSTR szSourceDir, LPCTSTR szTargetDir, LPCTSTR szSo
 		int path_length = wcslen(szTargetDir);
 		if (path_length) {
 			WideCharToMultiByte(CP_ACP, 0, szTargetDir, -1, main_archive_filename, path_length + 1, NULL, NULL);
-			if (main_archive_filename[path_length - 1] != '\\') {
-				strcat(main_archive_filename, "\\");
+			for (int i = 0; i < path_length; ++i) {
+				if (main_archive_filename[path_length - 1] == '\\') {
+					main_archive_filename[path_length - 1] = '/';
+				}
+			}
+			if (main_archive_filename[path_length - 1] != '/') {
+				strcat(main_archive_filename, "/");
 			}
 		}
 	}
@@ -405,46 +394,43 @@ void CMainService::ZipDir(char* zipName, LPCTSTR szSourceDir, LPCTSTR szTargetDi
 	LARGE_INTEGER filesize;
 
 	mz_bool status;
-	size_t uncomp_size;
-	mz_zip_archive zip_archive;
-	//void *p;
 
 	//CreateDirectory(szTargetDir, NULL);
 
 	TCHAR szMask[MAX_PATH];
-	_stprintf(szMask, _T("%s\\%s"), szSourceDir, szSourceMask);
+	_stprintf(szMask, _T("%s/%s"), szSourceDir, szSourceMask);
 	HANDLE hFind = FindFirstFile(szMask, &ffd);
-	if (INVALID_HANDLE_VALUE == hFind)
-	{
+	if (INVALID_HANDLE_VALUE == hFind) {
 		WriteEventLogEntry(_T("Main: BackupDir: FindFirstFile failed"), EVENTLOG_ERROR_TYPE);
 		return;
 	}
-	do
-	{
-		if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-		{
-			if (_tcscmp(_T("."), ffd.cFileName) && _tcscmp(_T(".."), ffd.cFileName))
-			{
-				/* Add a directory entry for testing
-				status = mz_zip_add_mem_to_archive_file_in_place(main_archive_filename, "directory/", NULL, 0, "no comment", (uint16_t)strlen("no comment"), MZ_BEST_COMPRESSION);
-				if (!status)
-				{
-				printf("mz_zip_add_mem_to_archive_file_in_place failed!\n");
-				return EXIT_FAILURE;
-				}*/
-				_stprintf(szTarget, _T("%s\\%s"), szTargetDir, ffd.cFileName);
-				_stprintf(szSource, _T("%s\\"), szSourceDir);
+	do {
+		if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+			if (_tcscmp(_T("."), ffd.cFileName) && _tcscmp(_T(".."), ffd.cFileName)) {
+				if (szTargetDir && _tcslen(szTargetDir))
+					_stprintf(szTarget, _T("%s/%s"), szTargetDir, ffd.cFileName);
+				else
+					_stprintf(szTarget, _T("%s/"), ffd.cFileName);
+				_stprintf(szSource, _T("%s/"), szSourceDir);
 				_tcscat(szSource, ffd.cFileName);
+
+				// Add a directory entry
+				WideCharToMultiByte(CP_ACP, 0, szTarget, -1, archive_filename, _tcslen(szTarget) + 1, NULL, NULL);
+				status = mz_zip_add_mem_to_archive_file_in_place(zipName, "images/", NULL, 0, "no comment", (uint16_t)strlen("no comment"), MZ_BEST_COMPRESSION);
+				if (!status) {
+					WriteEventLogEntry(_T("Main: ZipDir: mz_zip_add_mem_to_archive_file_in_place(dir) failed"), EVENTLOG_ERROR_TYPE);
+				}
 				ZipDir(zipName, szSource, szTarget, szSourceMask);
 			}
 		}
-		else
-		{
+		else {
 			filesize.LowPart = ffd.nFileSizeLow;
 			filesize.HighPart = ffd.nFileSizeHigh;
-			_stprintf(szSource, _T("%s\\%s"), szSourceDir, ffd.cFileName);
-			_stprintf(szTarget, _T("%s\\%s"), szTargetDir, ffd.cFileName);
-#if 1
+			_stprintf(szSource, _T("%s/%s"), szSourceDir, ffd.cFileName);
+			if (szTargetDir && _tcslen(szTargetDir))
+				_stprintf(szTarget, _T("%s/%s"), szTargetDir, ffd.cFileName);
+			else
+				_tcscpy(szTarget, ffd.cFileName);
 			// прочитать файл в буфер
 			data_size = static_cast<size_t>(filesize.QuadPart);
 			if (buff_size < data_size) {
@@ -455,178 +441,18 @@ void CMainService::ZipDir(char* zipName, LPCTSTR szSourceDir, LPCTSTR szTargetDi
 			}
 			if (file_buff) {
 				WideCharToMultiByte(CP_ACP, 0, szTarget, -1, archive_filename, _tcslen(szTarget) + 1, NULL, NULL);
-				//sprintf(archive_filename, "directory/%u.txt", i);
-				strcpy(file_buff, s_pTest_str);
-				status = mz_zip_add_mem_to_archive_file_in_place(zipName, archive_filename, file_buff, strlen(file_buff) + 1, s_pComment, (uint16_t)strlen(s_pComment), MZ_BEST_COMPRESSION);
-				if (!status)
-				{
-					printf("mz_zip_add_mem_to_archive_file_in_place failed!\n");
-					return;
+				FILE* file = _tfopen(szSource, _T("rb"));
+				if (file) {
+					size_t n = fread(file_buff, 1, data_size, file);
+					fclose(file);
+					file = nullptr;
+					status = mz_zip_add_mem_to_archive_file_in_place(zipName, archive_filename, file_buff, data_size, s_pComment, (uint16_t)strlen(s_pComment), MZ_BEST_COMPRESSION);
+					if (!status) {
+						WriteEventLogEntry(_T("Main: ZipDir: mz_zip_add_mem_to_archive_file_in_place(file) failed"), EVENTLOG_ERROR_TYPE);
+					}
 				}
 			}
-#else
-			CopyFile(szSource, szTarget, FALSE);
-#endif
 		}
 	} while (FindNextFile(hFind, &ffd) != 0);
 	FindClose(hFind);
-
-}
-
-int CMainService::Test(LPCTSTR lpszPath)
-{
-	int i, sort_iter;
-	mz_bool status;
-	size_t uncomp_size;
-	mz_zip_archive zip_archive;
-	void *p;
-	const int N = 2;// 50;
-	char data[2048];
-	char archive_filename[64];
-	char main_archive_filename[MAX_PATH] = "";
-
-	if (lpszPath) {
-		int path_length = wcslen(lpszPath);
-		if (path_length) {
-			WideCharToMultiByte(CP_ACP, 0, lpszPath, -1, main_archive_filename, path_length + 1, NULL, NULL);
-			if (main_archive_filename[path_length - 1] != '\\') {
-				strcat(main_archive_filename, "\\");
-			}
-		}
-	}
-	strcat(main_archive_filename, s_Test_archive_filename);
-
-	assert((strlen(s_pTest_str) + 64) < sizeof(data));
-
-	printf("miniz.c version: %s\n", MZ_VERSION);
-
-	// Delete the test archive, so it doesn't keep growing as we run this test
-	remove(main_archive_filename);
-
-	// Append a bunch of text files to the test archive
-	for (i = (N - 1); i >= 0; --i)
-	{
-		sprintf(archive_filename, "%u.txt", i);
-		sprintf(data, "%u %s %u", (N - 1) - i, s_pTest_str, i);
-
-		// Add a new file to the archive. Note this is an IN-PLACE operation, so if it fails your archive is probably hosed (its central directory may not be complete) but it should be recoverable using zip -F or -FF. So use caution with this guy.
-		// A more robust way to add a file to an archive would be to read it into memory, perform the operation, then write a new archive out to a temp file and then delete/rename the files.
-		// Or, write a new archive to disk to a temp file, then delete/rename the files. For this test this API is fine.
-		status = mz_zip_add_mem_to_archive_file_in_place(main_archive_filename, archive_filename, data, strlen(data) + 1, s_pComment, (uint16_t)strlen(s_pComment), MZ_BEST_COMPRESSION);
-		if (!status)
-		{
-			printf("mz_zip_add_mem_to_archive_file_in_place failed!\n");
-			return EXIT_FAILURE;
-		}
-	}
-
-	// Add a directory entry for testing
-	status = mz_zip_add_mem_to_archive_file_in_place(main_archive_filename, "directory/", NULL, 0, "no comment", (uint16_t)strlen("no comment"), MZ_BEST_COMPRESSION);
-	if (!status)
-	{
-		printf("mz_zip_add_mem_to_archive_file_in_place failed!\n");
-		return EXIT_FAILURE;
-	}
-
-	/// Append a bunch of text files to the test archive
-	for (i = (N - 1); i >= 0; --i)
-	{
-		sprintf(archive_filename, "directory/%u.txt", i);
-		sprintf(data, "%u %s %u", (N - 1) - i, s_pTest_str, i);
-
-		// Add a new file to the archive. Note this is an IN-PLACE operation, so if it fails your archive is probably hosed (its central directory may not be complete) but it should be recoverable using zip -F or -FF. So use caution with this guy.
-		// A more robust way to add a file to an archive would be to read it into memory, perform the operation, then write a new archive out to a temp file and then delete/rename the files.
-		// Or, write a new archive to disk to a temp file, then delete/rename the files. For this test this API is fine.
-		status = mz_zip_add_mem_to_archive_file_in_place(main_archive_filename, archive_filename, data, strlen(data) + 1, s_pComment, (uint16_t)strlen(s_pComment), MZ_BEST_COMPRESSION);
-		if (!status)
-		{
-			printf("mz_zip_add_mem_to_archive_file_in_place failed!\n");
-			return EXIT_FAILURE;
-		}
-	}
-
-	// Now try to open the archive.
-	memset(&zip_archive, 0, sizeof(zip_archive));
-
-	status = mz_zip_reader_init_file(&zip_archive, main_archive_filename, 0);
-	if (!status)
-	{
-		printf("mz_zip_reader_init_file() failed!\n");
-		return EXIT_FAILURE;
-	}
-
-	// Get and print information about each file in the archive.
-	for (i = 0; i < (int)mz_zip_reader_get_num_files(&zip_archive); i++)
-	{
-		mz_zip_archive_file_stat file_stat;
-		if (!mz_zip_reader_file_stat(&zip_archive, i, &file_stat))
-		{
-			printf("mz_zip_reader_file_stat() failed!\n");
-			mz_zip_reader_end(&zip_archive);
-			return EXIT_FAILURE;
-		}
-
-		printf("Filename: \"%s\", Comment: \"%s\", Uncompressed size: %u, Compressed size: %u, Is Dir: %u\n", file_stat.m_filename, file_stat.m_comment, (uint32_t)file_stat.m_uncomp_size, (uint32_t)file_stat.m_comp_size, mz_zip_reader_is_file_a_directory(&zip_archive, i));
-
-		if (!strcmp(file_stat.m_filename, "directory/"))
-		{
-			if (!mz_zip_reader_is_file_a_directory(&zip_archive, i))
-			{
-				printf("mz_zip_reader_is_file_a_directory() didn't return the expected results!\n");
-				mz_zip_reader_end(&zip_archive);
-				return EXIT_FAILURE;
-			}
-		}
-	}
-
-	// Close the archive, freeing any resources it was using
-	mz_zip_reader_end(&zip_archive);
-
-	// Now verify the compressed data
-	for (sort_iter = 0; sort_iter < 2; sort_iter++)
-	{
-		memset(&zip_archive, 0, sizeof(zip_archive));
-		status = mz_zip_reader_init_file(&zip_archive, main_archive_filename, sort_iter ? MZ_ZIP_FLAG_DO_NOT_SORT_CENTRAL_DIRECTORY : 0);
-		if (!status)
-		{
-			printf("mz_zip_reader_init_file() failed!\n");
-			return EXIT_FAILURE;
-		}
-
-		for (i = 0; i < N; i++)
-		{
-			sprintf(archive_filename, "%u.txt", i);
-			sprintf(data, "%u %s %u", (N - 1) - i, s_pTest_str, i);
-
-			// Try to extract all the files to the heap.
-			p = mz_zip_reader_extract_file_to_heap(&zip_archive, archive_filename, &uncomp_size, 0);
-			if (!p)
-			{
-				printf("mz_zip_reader_extract_file_to_heap() failed!\n");
-				mz_zip_reader_end(&zip_archive);
-				return EXIT_FAILURE;
-			}
-
-			// Make sure the extraction really succeeded.
-			if ((uncomp_size != (strlen(data) + 1)) || (memcmp(p, data, strlen(data))))
-			{
-				printf("mz_zip_reader_extract_file_to_heap() failed to extract the proper data\n");
-				mz_free(p);
-				mz_zip_reader_end(&zip_archive);
-				return EXIT_FAILURE;
-			}
-
-			printf("Successfully extracted file \"%s\", size %u\n", archive_filename, (uint32_t)uncomp_size);
-			printf("File data: \"%s\"\n", (const char *)p);
-
-			// We're done.
-			mz_free(p);
-		}
-
-		// Close the archive, freeing any resources it was using
-		mz_zip_reader_end(&zip_archive);
-	}
-
-	printf("Success.\n");
-	return EXIT_SUCCESS;
 }

@@ -37,8 +37,6 @@ protected:
 	void ZipDir(char* zipName, LPCTSTR szSourceDir, LPCTSTR szTargetDir, LPCTSTR szSourceMask);
 	void ZipDir(LPCTSTR szSourceDir, LPCTSTR szTargetDir, LPCTSTR szSourceMask);
 
-	int Test(LPCTSTR lpszPath);
-
 private:
 
 	struct Pattern {
@@ -55,11 +53,6 @@ private:
 	TCHAR m_szSrcPath[MAX_PATH];
 	// имя директории, в которую выполняется резервирование
 	TCHAR m_szDstPath[MAX_PATH];
-	// память для архиватора
-	size_t buff_size = 1024 * 1024;
-	size_t data_size = 1024 * 1024;
-	char* file_buff = nullptr;
-	char archive_filename[MAX_PATH];
 
 	DIRECTORY_INFO DirInfo; // параметры исходной директории
 	HANDLE  hCompPort = NULL; // дескриптор "порта завершения"
@@ -70,4 +63,13 @@ private:
 		| FILE_NOTIFY_CHANGE_LAST_WRITE
 		| FILE_NOTIFY_CHANGE_CREATION
 		;
+
+	// архиватор
+	static constexpr PCHAR s_pComment = "Empty comment";
+	static constexpr PCHAR s_Test_archive_filename = "backup.zip";
+	// память для содержимого файлов
+	size_t buff_size = 1024 * 1024;
+	size_t data_size = 1024 * 1024;
+	char* file_buff = nullptr;
+	char archive_filename[MAX_PATH];
 };
