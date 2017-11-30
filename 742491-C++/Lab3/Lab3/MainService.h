@@ -35,7 +35,6 @@ protected:
 
 	void BackupDir(LPCTSTR szSourceDir, LPCTSTR szTargetDir, LPCTSTR szSourceMask);
 	void ZipDir(char* zipName, LPCTSTR szSourceDir, LPCTSTR szTargetDir, LPCTSTR szSourceMask);
-	void ZipDir(LPCTSTR szSourceDir, LPCTSTR szTargetDir, LPCTSTR szSourceMask);
 
 private:
 
@@ -53,6 +52,8 @@ private:
 	TCHAR m_szSrcPath[MAX_PATH];
 	// имя директории, в которую выполняется резервирование
 	TCHAR m_szDstPath[MAX_PATH];
+	// имя файла архива
+	CHAR m_szZipFile[MAX_PATH];
 
 	DIRECTORY_INFO DirInfo; // параметры исходной директории
 	HANDLE  hCompPort = NULL; // дескриптор "порта завершения"
@@ -66,10 +67,11 @@ private:
 
 	// архиватор
 	static constexpr PCHAR s_pComment = "Empty comment";
-	static constexpr PCHAR s_Test_archive_filename = "backup.zip";
 	// память для содержимого файлов
 	size_t buff_size = 1024 * 1024;
 	size_t data_size = 1024 * 1024;
 	char* file_buff = nullptr;
-	char archive_filename[MAX_PATH];
+	// разгрузка стека (вместо локальных переменных - члены класса)
+	char szMainArchiveFullFileName[MAX_PATH] = "";
+	char szInnerArchiveFile[MAX_PATH];
 };

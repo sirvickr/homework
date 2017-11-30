@@ -86,16 +86,47 @@ void CMainService::OnStart(DWORD dwArgc, LPTSTR *lpszArgv)
 	// Запись в Журнал приложений
 	WriteEventLogEntry(_T("BackupService: OnStart"), EVENTLOG_INFORMATION_TYPE);
 
-	GetPrivateProfileString(_T("common"), _T("SourceDir"), _T("failed"), m_szSrcPath, MAX_PATH, szIniFileName);
-	GetPrivateProfileString(_T("common"), _T("TargetDir"), _T("failed"), m_szDstPath, MAX_PATH, szIniFileName);
+	GetPrivateProfileString(_T("common"), _T("SourceDir"), _T("c:\\temp1"), m_szSrcPath, MAX_PATH, szIniFileName);
+	GetPrivateProfileString(_T("common"), _T("TargetDir"), _T("c:\\temp2"), m_szDstPath, MAX_PATH, szIniFileName);
+	
+	TCHAR buffer[MAX_PATH];
+	GetPrivateProfileString(_T("common"), _T("ZipFile"), _T("backup"), buffer, MAX_PATH, szIniFileName);
+	_tcscat(buffer, _T(".zip"));
+	WideCharToMultiByte(CP_ACP, 0, buffer, -1, m_szZipFile, _tcslen(buffer) + 1, NULL, NULL);
+
 	Log(_ftprintf(logFile, _T("m_szSrcPath = %s\n"), m_szSrcPath));
 	Log(_ftprintf(logFile, _T("m_szDstPath = %s\n"), m_szDstPath));
 
 	// При запуске сохраняем всё содержимое директории
 	if (!CreateDirectory(m_szSrcPath, NULL)) // на случай, если такая не существует
 	{
-		//BackupDir(m_szSrcPath, m_szDstPath, _T("*"));
-		ZipDir(m_szSrcPath, m_szDstPath, _T("*"));
+#if 0
+		BackupDir(m_szSrcPath, m_szDstPath, _T("*"));
+#else
+		szMainArchiveFullFileName[0] = '\0';
+
+		if (_tcslen(m_szDstPath)) {
+			CreateDirectory(m_szDstPath, NULL);
+			int path_length = wcslen(m_szDstPath);
+			if (path_length) {
+				WideCharToMultiByte(CP_ACP, 0, m_szDstPath, -1, szMainArchiveFullFileName, path_length + 1, NULL, NULL);
+				for (int i = 0; i < path_length; ++i) {
+					if (szMainArchiveFullFileName[path_length - 1] == '\\') {
+						szMainArchiveFullFileName[path_length - 1] = '/';
+					}
+				}
+				if (szMainArchiveFullFileName[path_length - 1] != '/') {
+					strcat(szMainArchiveFullFileName, "/");
+				}
+			}
+		}
+
+		strcat(szMainArchiveFullFileName, m_szZipFile);
+
+		remove(szMainArchiveFullFileName);
+		
+		ZipDir(szMainArchiveFullFileName, m_szSrcPath, _T(""), _T("*"));
+#endif
 	}
 	
 	memset(&DirInfo, 0x00, sizeof(DIRECTORY_INFO));
@@ -231,11 +262,36 @@ void CMainService::ServiceWorkerThread(void)
 					else
 					{
 						Log(_ftprintf(logFile, _T("file modified: %s\n"), szSourceName));
+#if 1
+						// открыть исходный файл
+						/*FILE* pInfile = _tfopen(szSource, _T("rb"));
+						if (!pInfile) {
+							WriteEventLogEntry(_T("Main: ZipDir: Failed opening input file"), EVENTLOG_ERROR_TYPE);
+							break;
+						}
+						// определим размер входного файла
+						fseek(pInfile, 0, SEEK_END);
+						long file_loc = ftell(pInfile);
+						fseek(pInfile, 0, SEEK_SET);
+
+						if ((file_loc < 0) || (file_loc > INT_MAX)) {
+							WriteEventLogEntry(_T("Main: ZipDir: File is too large to be processed by this example"), EVENTLOG_ERROR_TYPE);
+							fclose(pInfile); pInfile = nullptr;
+							break;
+						}
+						// конструируем целевое имя целевого файла внутри архива
+						if (szTargetDir && _tcslen(szTargetDir))
+							_stprintf(szTarget, _T("%s/%s"), szTargetDir, lpszTestFile);
+						else
+							_tcscpy(szTarget, lpszTestFile);*/
+#else
 						if (!CopyFile(szSourceName, szTargetName, FALSE))
 						{
 							Log(_ftprintf(logFile, _T("\nCopyFile(%s, %s) failed with error %u\n"), szSourceName, szTargetName, GetLastError()));
 							WriteEventLogEntry(_T("Main: FileModofied: CopyFile failed"), EVENTLOG_ERROR_TYPE);
 						}
+#endif
+///						fclose(pInfile); pInfile = nullptr;
 					}
 					break;
 				case FILE_ACTION_RENAMED_OLD_NAME:
@@ -358,32 +414,6 @@ void CMainService::BackupDir(LPCTSTR szSourceDir, LPCTSTR szTargetDir, LPCTSTR s
 	FindClose(hFind);
 }
 
-void CMainService::ZipDir(LPCTSTR szSourceDir, LPCTSTR szTargetDir, LPCTSTR szSourceMask)
-{
-	char main_archive_filename[MAX_PATH] = "";
-
-	if (szTargetDir) {
-		CreateDirectory(szTargetDir, NULL);
-		int path_length = wcslen(szTargetDir);
-		if (path_length) {
-			WideCharToMultiByte(CP_ACP, 0, szTargetDir, -1, main_archive_filename, path_length + 1, NULL, NULL);
-			for (int i = 0; i < path_length; ++i) {
-				if (main_archive_filename[path_length - 1] == '\\') {
-					main_archive_filename[path_length - 1] = '/';
-				}
-			}
-			if (main_archive_filename[path_length - 1] != '/') {
-				strcat(main_archive_filename, "/");
-			}
-		}
-	}
-	strcat(main_archive_filename, s_Test_archive_filename);
-
-	remove(main_archive_filename);
-
-	ZipDir(main_archive_filename, szSourceDir, _T(""), szSourceMask);
-}
-
 // архивирование содержимого директории szSourceDir в szTargetDir
 void CMainService::ZipDir(char* zipName, LPCTSTR szSourceDir, LPCTSTR szTargetDir, LPCTSTR szSourceMask)
 {
@@ -415,8 +445,7 @@ void CMainService::ZipDir(char* zipName, LPCTSTR szSourceDir, LPCTSTR szTargetDi
 				_tcscat(szSource, ffd.cFileName);
 
 				// Add a directory entry
-				WideCharToMultiByte(CP_ACP, 0, szTarget, -1, archive_filename, _tcslen(szTarget) + 1, NULL, NULL);
-				status = mz_zip_add_mem_to_archive_file_in_place(zipName, "images/", NULL, 0, "no comment", (uint16_t)strlen("no comment"), MZ_BEST_COMPRESSION);
+				WideCharToMultiByte(CP_ACP, 0, szTarget, -1, szInnerArchiveFile, _tcslen(szTarget) + 1, NULL, NULL);
 				if (!status) {
 					WriteEventLogEntry(_T("Main: ZipDir: mz_zip_add_mem_to_archive_file_in_place(dir) failed"), EVENTLOG_ERROR_TYPE);
 				}
@@ -427,6 +456,13 @@ void CMainService::ZipDir(char* zipName, LPCTSTR szSourceDir, LPCTSTR szTargetDi
 			filesize.LowPart = ffd.nFileSizeLow;
 			filesize.HighPart = ffd.nFileSizeHigh;
 			_stprintf(szSource, _T("%s/%s"), szSourceDir, ffd.cFileName);
+			// открыть исходный файл
+			FILE* pInfile = _tfopen(szSource, _T("rb"));
+			if (!pInfile) {
+				WriteEventLogEntry(_T("Main: ZipDir: Failed opening input file"), EVENTLOG_ERROR_TYPE);
+				continue;
+			}
+			// конструируем целевое имя целевого файла внутри архива
 			if (szTargetDir && _tcslen(szTargetDir))
 				_stprintf(szTarget, _T("%s/%s"), szTargetDir, ffd.cFileName);
 			else
@@ -440,16 +476,12 @@ void CMainService::ZipDir(char* zipName, LPCTSTR szSourceDir, LPCTSTR szTargetDi
 				file_buff = (char*)malloc(buff_size);
 			}
 			if (file_buff) {
-				WideCharToMultiByte(CP_ACP, 0, szTarget, -1, archive_filename, _tcslen(szTarget) + 1, NULL, NULL);
-				FILE* file = _tfopen(szSource, _T("rb"));
-				if (file) {
-					size_t n = fread(file_buff, 1, data_size, file);
-					fclose(file);
-					file = nullptr;
-					status = mz_zip_add_mem_to_archive_file_in_place(zipName, archive_filename, file_buff, data_size, s_pComment, (uint16_t)strlen(s_pComment), MZ_BEST_COMPRESSION);
-					if (!status) {
-						WriteEventLogEntry(_T("Main: ZipDir: mz_zip_add_mem_to_archive_file_in_place(file) failed"), EVENTLOG_ERROR_TYPE);
-					}
+				WideCharToMultiByte(CP_ACP, 0, szTarget, -1, szInnerArchiveFile, _tcslen(szTarget) + 1, NULL, NULL);
+				size_t n = fread(file_buff, 1, data_size, pInfile);
+				fclose(pInfile); pInfile = nullptr;
+				status = mz_zip_add_mem_to_archive_file_in_place(zipName, szInnerArchiveFile, file_buff, data_size, s_pComment, (uint16_t)strlen(s_pComment), MZ_BEST_COMPRESSION);
+				if (!status) {
+					WriteEventLogEntry(_T("Main: ZipDir: mz_zip_add_mem_to_archive_file_in_place(file) failed"), EVENTLOG_ERROR_TYPE);
 				}
 			}
 		}
