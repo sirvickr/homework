@@ -5,7 +5,7 @@
 #include "ServiceBase.h"
 
 #define MAX_BUFFER  4096
-#define LOCAL_FILE_LOGGER
+//#define LOCAL_FILE_LOGGER
 
 // структура, содержащая все данные по наблюдаемому каталогу
 struct DIRECTORY_INFO {
@@ -34,8 +34,10 @@ protected:
 	void ServiceWorkerThread(void);
 
 	void BackupDir(LPCTSTR szSourceDir, LPCTSTR szTargetDir, LPCTSTR szSourceMask);
-	void ZipDir(char* zipName, LPCTSTR szSourceDir, LPCTSTR szTargetDir, LPCTSTR szSourceMask);
-
+	void ZipDir(LPCTSTR szSourceDir, LPCTSTR szTargetDir, LPCTSTR szSourceMask);
+	void NormalizePath(PCHAR pszPath, size_t length = 0);
+	PCHAR GetFileBuffer(size_t size);
+	BOOL BackupFile(LPCTSTR lpszSourceName, LPCTSTR lpszTargetName);
 private:
 
 	struct Pattern {
@@ -65,12 +67,14 @@ private:
 		| FILE_NOTIFY_CHANGE_CREATION
 		;
 
+	// изменение файла сигнализируется дважды, обрабатываем однократно
+	bool processModified = false;
 	// архиватор
 	static constexpr PCHAR s_pComment = "Empty comment";
 	// память для содержимого файлов
 	size_t buff_size = 1024 * 1024;
 	size_t data_size = 1024 * 1024;
-	char* file_buff = nullptr;
+	PCHAR file_buff = nullptr;
 	// разгрузка стека (вместо локальных переменных - члены класса)
 	char szMainArchiveFullFileName[MAX_PATH] = "";
 	char szInnerArchiveFile[MAX_PATH];
