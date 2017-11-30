@@ -5,7 +5,7 @@
 #include "ServiceBase.h"
 
 #define MAX_BUFFER  4096
-//#define LOCAL_FILE_LOGGER
+#define LOCAL_FILE_LOGGER
 
 // структура, содержащая все данные по наблюдаемому каталогу
 struct DIRECTORY_INFO {
@@ -20,7 +20,7 @@ class CMainService : public CServiceBase
 {
 public:
 
-	CMainService(PWSTR pszServiceName,
+	CMainService(LPCTSTR pszServiceName,
 		BOOL fCanStop = TRUE,
 		BOOL fCanShutdown = TRUE,
 		BOOL fCanPauseContinue = FALSE);
@@ -28,12 +28,16 @@ public:
 
 protected:
 
-	virtual void OnStart(DWORD dwArgc, PWSTR *pszArgv);
+	virtual void OnStart(DWORD dwArgc, LPTSTR *pszArgv);
 	virtual void OnStop();
 
 	void ServiceWorkerThread(void);
 
-	void BackupDir(PWSTR szSourceDir, PWSTR szTargetDir, PWSTR szSourceMask);
+	void BackupDir(LPCTSTR szSourceDir, LPCTSTR szTargetDir, LPCTSTR szSourceMask);
+	void ZipDir(char* zipName, LPCTSTR szSourceDir, LPCTSTR szTargetDir, LPCTSTR szSourceMask);
+	void ZipDir(LPCTSTR szSourceDir, LPCTSTR szTargetDir, LPCTSTR szSourceMask);
+
+	int Test(LPCTSTR lpszPath);
 
 private:
 
@@ -51,6 +55,11 @@ private:
 	TCHAR m_szSrcPath[MAX_PATH];
 	// имя директории, в которую выполняется резервирование
 	TCHAR m_szDstPath[MAX_PATH];
+	// память для архиватора
+	size_t buff_size = 1024 * 1024;
+	size_t data_size = 1024 * 1024;
+	char* file_buff = nullptr;
+	char archive_filename[MAX_PATH];
 
 	DIRECTORY_INFO DirInfo; // параметры исходной директории
 	HANDLE  hCompPort = NULL; // дескриптор "порта завершения"

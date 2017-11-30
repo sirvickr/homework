@@ -147,11 +147,13 @@
   <ItemGroup>
     <ClCompile Include="Lab3.cpp" />
     <ClCompile Include="MainService.cpp" />
+    <ClCompile Include="miniz.c" />
     <ClCompile Include="ServiceBase.cpp" />
     <ClCompile Include="ServiceInstaller.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainService.h" />
+    <ClInclude Include="miniz.h" />
     <ClInclude Include="ServiceBase.h" />
     <ClInclude Include="ServiceInstaller.h" />
     <ClInclude Include="ThreadPool.h" />
