@@ -1,0 +1,83 @@
+#ifndef __FS_IDL__
+#define __FS_IDL__
+
+module Agent
+{
+
+	exception QueryError {
+		long errorNumber;
+		string msg;
+	};
+
+	struct OsVersionInfoEx {
+		unsigned long dwOSVersionInfoSize;
+		unsigned long dwMajorVersion;
+		unsigned long dwMinorVersion;
+		unsigned long dwBuildNumber;
+		unsigned long dwPlatformId;
+		string szCSDVersion;
+		unsigned short wServicePackMajor;
+		unsigned short wServicePackMinor;
+		unsigned short wSuiteMask;
+		octet wProductType;
+		octet wReserved;
+	};
+
+	struct SystemTime {
+		unsigned short wYear;
+		unsigned short wMonth;
+		unsigned short wDayOfWeek;
+		unsigned short wDay;
+		unsigned short wHour;
+		unsigned short wMinute;
+		unsigned short wSecond;
+		unsigned short wMilliseconds;
+	};
+
+	struct MemoryStatusEx {
+		unsigned long dwLength;
+		unsigned long dwMemoryLoad;
+		unsigned long long ullTotalPhys;
+		unsigned long long ullAvailPhys;
+		unsigned long long ullTotalPageFile;
+		unsigned long long ullAvailPageFile;
+		unsigned long long ullTotalVirtual;
+		unsigned long long ullAvailVirtual;
+		unsigned long long ullAvailExtendedVirtual;
+	};
+
+	struct FreeSpaceReply {
+		unsigned long long freeBytesAvailable;
+		unsigned long long totalNumberOfBytes;
+		unsigned long long totalNumberOfFreeBytes;
+	};
+
+	interface InfoProvider {
+
+		OsVersionInfoEx GetOsVersionInfo()
+			raises (QueryError);
+
+		SystemTime GetSysTime();
+
+		unsigned long GetTickCount();
+
+		MemoryStatusEx GetMemoryStatus()
+			raises(QueryError);
+
+		unsigned long GetDriveType()
+			raises(QueryError);
+
+		FreeSpaceReply GetFreeSpaceInfo()
+			raises(QueryError);
+
+		unsigned long GetAccessMask()
+			raises(QueryError);
+
+		string GetObjectOwner()
+			raises(QueryError);
+
+	};
+
+}; // module Agent
+
+#endif // __FS_IDL__
