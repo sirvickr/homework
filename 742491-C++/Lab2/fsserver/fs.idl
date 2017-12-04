@@ -1,0 +1,165 @@
+#ifndef __FS_IDL__
+#define __FS_IDL__
+
+module FS
+{
+
+	enum ErrorNumberType {
+		NotSet,
+		EAccess,
+		Ebadf,
+		EInval,
+		EIo,
+		NotDir,
+		ERange
+	};
+
+	typedef sequence < octet > OctetSequence;
+
+	exception InvalidFileName{
+		ErrorNumberType errorNumber;
+		string msg;
+	};
+
+	exception FileException{
+		ErrorNumberType errorNumber;
+		string msg;
+		unsigned short errorCode;
+	};
+
+	interface File;
+
+	struct DataType {
+		string id;
+		any value;
+	};
+
+	typedef sequence <DataType> Properties;
+
+	interface FileSystem {
+		exception UnknownFileSystemProperties {
+			Properties invalidProperties;
+		};
+		
+		const string SIZE = "SIZE";
+		const string AVAILABLE_SIZE = "AVAILABLE_SPACE";
+		
+		enum FileType {
+			PLAIN,
+			FDIRECTORY,
+			FILE_SYSTEM
+		};
+
+		struct FileInformationType {
+			string name;
+			FileType kind;
+			unsigned long long size;
+			Properties fileProperties;
+		};
+
+		typedef sequence < FileInformationType > FileInformationSequence;
+
+		const string CREATED_TIME_ID = "CREATED_TIME";
+		const string MODIFIED_TIME_ID = "MODIFIED_TIME";
+		const string LAST_ACCESS_TIME_ID = "LAST_ACCESS_TIME";
+
+		void remove (in string fileName) 
+			raises (FileException,InvalidFileName);
+
+		void copy (in string sourceFileName, in string destinationFileName)
+			raises (InvalidFileName,FileException);
+
+		boolean exists (in string fileName)
+			raises (InvalidFileName);
+
+		FileInformationSequence list (in string pattern)
+			raises (FileException, InvalidFileName);
+
+		File create (in string fileName)
+			raises (InvalidFileName, FileException);
+
+		File open (in string fileName, in boolean read_Only)
+			raises (InvalidFileName, FileException);
+
+		void mkdir (in string directoryName)
+			raises (InvalidFileName, FileException);
+
+		void rmdir (in string directoryName)
+			raises (InvalidFileName, FileException);
+
+		void query (inout Properties fileSystemProperties)
+			raises (UnknownFileSystemProperties);
+
+		attribute string currDir;
+	};
+
+	interface File {
+		exception IOException {
+			ErrorNumberType errorNumber;
+			string msg;
+		};
+
+		exception InvalidFilePointer {
+		};
+
+		readonly attribute string fileName;
+
+		readonly attribute unsigned long filePointer;
+
+		void read (
+			out OctetSequence data,
+			in unsigned long length
+			)
+			raises (IOException);
+
+		void write (
+			in OctetSequence data
+			)
+			raises (IOException);
+			
+		unsigned long sizeOf ()
+			raises (FileException);
+
+		void close ()
+			raises (FileException);
+
+		void setFilePointer (
+			in unsigned long filePointer
+			)
+			raises (InvalidFilePointer,FileException);
+	};
+
+	interface FileManager : FileSystem {
+		struct MountType {
+			FileSystem fs;
+			string mountPoint;
+		};
+
+		typedef sequence <MountType> MountSequence;
+
+		exception NonExistentMount {
+		};
+
+		exception InvalidFileSystem {
+		};
+
+		exception MountPointAlreadyExists {
+		};
+
+		void mount (
+			in string mountPoint,
+			in FileSystem file_System
+			)
+			raises (InvalidFileName,InvalidFileSystem,MountPointAlreadyExists);
+
+		void unmount (
+			in string mountPoint
+			)
+			raises (NonExistentMount);
+
+		MountSequence getMounts ();
+	};
+
+};
+
+#endif // __FS_IDL__

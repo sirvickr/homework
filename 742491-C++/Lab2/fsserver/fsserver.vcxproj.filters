@@ -24,6 +24,36 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="config_win32.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="File_impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FileManager_impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem_impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="My_Naming_Service.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="orb_server.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="os.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fsC.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fsS.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -32,5 +62,31 @@
     <ClCompile Include="fsserver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="File_impl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FileManager_impl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystem_impl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="My_Naming_Service.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="os.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fsC.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fsS.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="fsC.inl">
+      <Filter>Header Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
