@@ -3,7 +3,7 @@
 
 using namespace std;
 
-PSID ConvertNameToBinarySid(LPTSTR pAccountName, LPDWORD lpdwRetCode)
+PSID ConvertNameToBinarySid(LPCTSTR pAccountName, LPDWORD lpdwRetCode)
 {
 	LPTSTR lpServerName = NULL;
 	LPTSTR pDomainName = NULL;
@@ -135,7 +135,7 @@ DWORD GetAccess(AUTHZ_CLIENT_CONTEXT_HANDLE hAuthzClient, PSECURITY_DESCRIPTOR p
 DWORD GetEffectiveRightsForUser(
 	AUTHZ_RESOURCE_MANAGER_HANDLE hManager,
 	PSECURITY_DESCRIPTOR psd,
-	LPTSTR lpszUserName, 
+	LPCTSTR lpszUserName,
 	PAUTHZ_ACCESS_REPLY pAccessReply)
 {
 	DWORD dwRetCode = ERROR_SUCCESS;
@@ -161,7 +161,7 @@ DWORD GetEffectiveRightsForUser(
 	return dwRetCode;
 }
 
-DWORD UseAuthzSolution(PSECURITY_DESCRIPTOR psd, LPTSTR lpszUserName, PAUTHZ_ACCESS_REPLY pAccessReply)
+DWORD UseAuthzSolution(PSECURITY_DESCRIPTOR psd, LPCTSTR lpszUserName, PAUTHZ_ACCESS_REPLY pAccessReply)
 {
 	DWORD dwRetCode = ERROR_SUCCESS;
 	AUTHZ_RESOURCE_MANAGER_HANDLE hManager;

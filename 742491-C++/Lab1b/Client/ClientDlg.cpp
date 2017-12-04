@@ -268,12 +268,11 @@ void CClientDlg::OnBnClickedCmdconnect()
 	tostringstream ostr;
 	const size_t BuffSize = 512;
 #if 1
-	
+	Agent::InfoProvider_var infoProvider = GetInfoProvider((LPCTSTR)GetHost(), (LPCTSTR)GetPort());
 	if (CORBA::is_nil(infoProvider.in())) {
-		MessageBox(_T("Info provider is NULL"), _T("Error"), MB_OK | MB_ICONERROR);
+		MessageBox(_T("Не удалось подключиться к выбранному серверу"), _T("Error"), MB_OK | MB_ICONERROR);
 		return;
 	}
-//	MessageBox(_T("Info provider resolved"), _T("Success"), MB_OK | MB_ICONINFORMATION);
 
 	int reqType = GetCheckedRadioButton(IDC_RADIO1, IDC_RADIO8) - IDC_RADIO1;
 	switch (reqType) {
@@ -302,169 +301,165 @@ void CClientDlg::OnBnClickedCmdconnect()
 		} catch (...) {
 			MessageBox(_T("Не удалось запросить версию ОС"), _T("Ошибка"), MB_OK | MB_ICONERROR);
 		}
-
 		break;
 
 	case reqSysTime:
-		/*resultCode = client->GetSysTime(sysTime, (LPCTSTR)GetHost(), (LPCTSTR)GetPort());
-		if (resultCode != ERROR_SUCCESS) {
-			break;
+		try {
+			Agent::SystemTime sysTime = infoProvider->GetSysTime();
+			ostr << setfill(_T('0')) << setw(2) << sysTime.wHour
+				<< _T(':') << setw(2) << sysTime.wMinute
+				<< _T(':') << setw(2) << sysTime.wSecond;
+			SetDlgItemText(IDC_EDIT_SYSTIME, ostr.str().c_str());
+		} catch (...) {
+			MessageBox(_T("Не удалось запросить текущее время"), _T("Ошибка"), MB_OK | MB_ICONERROR);
 		}
-
-		ostr << setfill(_T('0')) << setw(2) << sysTime.wHour
-			<< _T(':') << setw(2) << sysTime.wMinute
-			<< _T(':') << setw(2) << sysTime.wSecond;
-		SetDlgItemText(IDC_EDIT_SYSTIME, ostr.str().c_str());*/
-
 		break;
 
 	case reqTickCount:
-		/*resultCode = client->GetTickCount(tickCount, (LPCTSTR)GetHost(), (LPCTSTR)GetPort());
-		if (resultCode != ERROR_SUCCESS) {
-			break;
+		try {
+			SetDlgItemInt(IDC_EDIT_TICKS, infoProvider->GetTickCount());
+		} catch (...) {
+			MessageBox(_T("Не удалось запросить количество тактов с запуска ОС"), _T("Ошибка"), MB_OK | MB_ICONERROR);
 		}
-
-		SetDlgItemInt(IDC_EDIT_TICKS, tickCount);*/
-
 		break;
 
 	case reqMemStatus:
-		/*resultCode = client->GetMemStatus(memStatus, (LPCTSTR)GetHost(), (LPCTSTR)GetPort());
-		if (resultCode != ERROR_SUCCESS) {
-			break;
+		try {
+			Agent::MemoryStatusEx memStatus = infoProvider->GetMemoryStatus();
+			ostr.str(TEXT(""));
+			ostr << memStatus.dwMemoryLoad;
+			SetDlgItemText(IDC_EDIT_MEMLOAD, ostr.str().c_str());
+			ostr.str(TEXT(""));
+			ostr << memStatus.ullTotalPhys;
+			SetDlgItemText(IDC_EDIT_MEMTOTALPHYS, ostr.str().c_str());
+			ostr.str(TEXT(""));
+			ostr << memStatus.ullAvailPhys;
+			SetDlgItemText(IDC_EDIT_MEMAVAILPHYS, ostr.str().c_str());
+			ostr.str(TEXT(""));
+			ostr << memStatus.ullTotalPageFile;
+			SetDlgItemText(IDC_EDIT_MEMTOTALPAGE, ostr.str().c_str());
+			ostr.str(TEXT(""));
+			ostr << memStatus.ullAvailPageFile;
+			SetDlgItemText(IDC_EDIT_MEMAVAILPAGE, ostr.str().c_str());
+			ostr.str(TEXT(""));
+			ostr << memStatus.ullTotalVirtual;
+			SetDlgItemText(IDC_EDIT_MEMTOTALVIRT, ostr.str().c_str());
+			ostr.str(TEXT(""));
+			ostr << memStatus.ullAvailVirtual;
+			SetDlgItemText(IDC_EDIT_MEMAVAILVIRT, ostr.str().c_str());
+			ostr.str(TEXT(""));
+			ostr << memStatus.ullAvailExtendedVirtual;
+			SetDlgItemText(IDC_EDIT_MEMAVAILVIRTEXT, ostr.str().c_str());
+		} catch (...) {
+			MessageBox(_T("Не удалось запросить количество тактов с запуска ОС"), _T("Ошибка"), MB_OK | MB_ICONERROR);
 		}
-
-		ostr.str(TEXT(""));
-		ostr << memStatus.dwMemoryLoad;
-		SetDlgItemText(IDC_EDIT_MEMLOAD, ostr.str().c_str());
-		ostr.str(TEXT(""));
-		ostr << memStatus.ullTotalPhys;
-		SetDlgItemText(IDC_EDIT_MEMTOTALPHYS, ostr.str().c_str());
-		ostr.str(TEXT(""));
-		ostr << memStatus.ullAvailPhys;
-		SetDlgItemText(IDC_EDIT_MEMAVAILPHYS, ostr.str().c_str());
-		ostr.str(TEXT(""));
-		ostr << memStatus.ullTotalPageFile;
-		SetDlgItemText(IDC_EDIT_MEMTOTALPAGE, ostr.str().c_str());
-		ostr.str(TEXT(""));
-		ostr << memStatus.ullAvailPageFile;
-		SetDlgItemText(IDC_EDIT_MEMAVAILPAGE, ostr.str().c_str());
-		ostr.str(TEXT(""));
-		ostr << memStatus.ullTotalVirtual;
-		SetDlgItemText(IDC_EDIT_MEMTOTALVIRT, ostr.str().c_str());
-		ostr.str(TEXT(""));
-		ostr << memStatus.ullAvailVirtual;
-		SetDlgItemText(IDC_EDIT_MEMAVAILVIRT, ostr.str().c_str());
-		ostr.str(TEXT(""));
-		ostr << memStatus.ullAvailExtendedVirtual;
-		SetDlgItemText(IDC_EDIT_MEMAVAILVIRTEXT, ostr.str().c_str());*/
-
 		break;
 
 	case reqDriveType:
-		/*resultCode = client->GetDriveType(driveType, (LPCTSTR)GetHost(), (LPCTSTR)GetPort(), (LPCTSTR)GetDisk());
-		if (resultCode != ERROR_SUCCESS) {
-			break;
+		try {
+			CORBA::ULong driveType = infoProvider->GetDriveTypeInfo((LPCTSTR)GetDisk());
+			ostr << driveType << " (";
+			switch (driveType) {
+			case DRIVE_UNKNOWN:
+				ostr << TEXT("неизвестный тип");
+				break;
+			case DRIVE_NO_ROOT_DIR:
+				ostr << TEXT("неверный путь");
+				break;
+			case DRIVE_REMOVABLE:
+				ostr << TEXT("съемное устройство");
+				break;
+			case DRIVE_FIXED:
+				ostr << TEXT("жесткий диск");
+				break;
+			case DRIVE_REMOTE:
+				ostr << TEXT("сетевой диск");
+				break;
+			case DRIVE_CDROM:
+				ostr << TEXT("CD-ROM");
+				break;
+			case DRIVE_RAMDISK:
+				ostr << TEXT("виртуальный диск");
+				break;
+			default:
+				ostr << TEXT("неизвестный код");
+				break;
+			}
+			ostr << ")";
+			SetDlgItemText(IDC_EDIT_DRIVE, ostr.str().c_str());
 		}
-
-		ostr << driveType << " (";
-		switch (driveType) {
-		case DRIVE_UNKNOWN:
-			ostr << TEXT("неизвестный тип");
-			break;
-		case DRIVE_NO_ROOT_DIR:
-			ostr << TEXT("неверный путь");
-			break;
-		case DRIVE_REMOVABLE:
-			ostr << TEXT("съемное устройство");
-			break;
-		case DRIVE_FIXED:
-			ostr << TEXT("жесткий диск");
-			break;
-		case DRIVE_REMOTE:
-			ostr << TEXT("сетевой диск");
-			break;
-		case DRIVE_CDROM:
-			ostr << TEXT("CD-ROM");
-			break;
-		case DRIVE_RAMDISK:
-			ostr << TEXT("виртуальный диск");
-			break;
-		default:
-			ostr << TEXT("неизвестный код");
-			break;
+		catch (...) {
+			MessageBox(_T("Не удалось запросить тип привода"), _T("Ошибка"), MB_OK | MB_ICONERROR);
 		}
-		ostr << ")";
-		SetDlgItemText(IDC_EDIT_DRIVE, ostr.str().c_str());*/
 
 		break;
 
 	case reqFreeSpace:
-		/*resultCode = client->GetDiskFreeSpace(freeSpace, (LPCTSTR)GetHost(), (LPCTSTR)GetPort(), (LPCTSTR)GetDisk());
-		if (resultCode != ERROR_SUCCESS) {
-			break;
+		try {
+			Agent::FreeSpaceReply freeSpace  = infoProvider->GetFreeSpaceInfo((LPCTSTR)GetDisk());
+			ostr.str(TEXT(""));
+			ostr << freeSpace.totalNumberOfBytes;
+			SetDlgItemText(IDC_EDIT_TOTALBYTES, ostr.str().c_str());
+			ostr.str(TEXT(""));
+			ostr << freeSpace.totalNumberOfFreeBytes;
+			SetDlgItemText(IDC_EDIT_TOTALFREEBYTES, ostr.str().c_str());
+			ostr.str(TEXT(""));
+			ostr << freeSpace.freeBytesAvailable;
+			SetDlgItemText(IDC_EDIT_TOTALAVAILBYTES, ostr.str().c_str());
 		}
-
-		ostr.str(TEXT(""));
-		ostr << freeSpace.totalNumberOfBytes.QuadPart;
-		SetDlgItemText(IDC_EDIT_TOTALBYTES, ostr.str().c_str());
-		ostr.str(TEXT(""));
-		ostr << freeSpace.totalNumberOfFreeBytes.QuadPart;
-		SetDlgItemText(IDC_EDIT_TOTALFREEBYTES, ostr.str().c_str());
-		ostr.str(TEXT(""));
-		ostr << freeSpace.freeBytesAvailable.QuadPart;
-		SetDlgItemText(IDC_EDIT_TOTALAVAILBYTES, ostr.str().c_str());*/
+		catch (...) {
+			MessageBox(_T("Не удалось запросить данные о свободном дисковом пространстве"), _T("Ошибка"), MB_OK | MB_ICONERROR);
+		}
 
 		break;
 
 	case reqAccessRights:
-		/*resultCode = client->GetAccessRights(accessMask, (LPCTSTR)GetHost(), (LPCTSTR)GetPort(), (LPCTSTR)GetObject(), (LPCTSTR)GetUser());
-		if (resultCode != ERROR_SUCCESS) {
-			break;
-		}
-
-		CheckDlgButton(IDC_CHECK_READ, FALSE);
-		CheckDlgButton(IDC_CHECK_WRITE, FALSE);
-		CheckDlgButton(IDC_CHECK_EXEC, FALSE);
-		if (((accessMask & GENERIC_ALL) == GENERIC_ALL) || ((accessMask & FILE_ALL_ACCESS) == FILE_ALL_ACCESS)) {
-			ostr << " ( Full Control )" << endl;
-			CheckDlgButton(IDC_CHECK_READ, TRUE);
-			CheckDlgButton(IDC_CHECK_WRITE, TRUE);
-			CheckDlgButton(IDC_CHECK_EXEC, TRUE);
-		}
-		else {
-			ostr << " (";
-			if (((accessMask & GENERIC_READ) == GENERIC_READ)
-				|| ((accessMask & FILE_GENERIC_READ) == FILE_GENERIC_READ))
-			{
-				ostr << " Read";
+		try {
+			CORBA::ULong accessMask = infoProvider->GetAccessMask((LPCTSTR)GetObject(), (LPCTSTR)GetUser());
+			CheckDlgButton(IDC_CHECK_READ, FALSE);
+			CheckDlgButton(IDC_CHECK_WRITE, FALSE);
+			CheckDlgButton(IDC_CHECK_EXEC, FALSE);
+			if (((accessMask & GENERIC_ALL) == GENERIC_ALL) || ((accessMask & FILE_ALL_ACCESS) == FILE_ALL_ACCESS)) {
+				ostr << " ( Full Control )" << endl;
 				CheckDlgButton(IDC_CHECK_READ, TRUE);
-			}
-			if (((accessMask & GENERIC_WRITE) == GENERIC_WRITE)
-				|| ((accessMask & FILE_GENERIC_WRITE) == FILE_GENERIC_WRITE))
-			{
-				ostr << " Write";
 				CheckDlgButton(IDC_CHECK_WRITE, TRUE);
-			}
-			if (((accessMask & GENERIC_EXECUTE) == GENERIC_EXECUTE)
-				|| ((accessMask & FILE_GENERIC_EXECUTE) == FILE_GENERIC_EXECUTE))
-			{
-				ostr << " Execute";
 				CheckDlgButton(IDC_CHECK_EXEC, TRUE);
 			}
-			ostr << " )" << endl;
-		}*/
-
+			else {
+				ostr << " (";
+				if (((accessMask & GENERIC_READ) == GENERIC_READ)
+					|| ((accessMask & FILE_GENERIC_READ) == FILE_GENERIC_READ))
+				{
+					ostr << " Read";
+					CheckDlgButton(IDC_CHECK_READ, TRUE);
+				}
+				if (((accessMask & GENERIC_WRITE) == GENERIC_WRITE)
+					|| ((accessMask & FILE_GENERIC_WRITE) == FILE_GENERIC_WRITE))
+				{
+					ostr << " Write";
+					CheckDlgButton(IDC_CHECK_WRITE, TRUE);
+				}
+				if (((accessMask & GENERIC_EXECUTE) == GENERIC_EXECUTE)
+					|| ((accessMask & FILE_GENERIC_EXECUTE) == FILE_GENERIC_EXECUTE))
+				{
+					ostr << " Execute";
+					CheckDlgButton(IDC_CHECK_EXEC, TRUE);
+				}
+				ostr << " )" << endl;
+			}
+		}
+		catch (...) {
+			MessageBox(_T("Не удалось запросить права доступа"), _T("Ошибка"), MB_OK | MB_ICONERROR);
+		}
 		break;
 
 	case reqObjectOwn:
-		/*resultCode = client->GetObjectOwner(szObjectOwner, MAX_PATH, (LPCTSTR)GetHost(), (LPCTSTR)GetPort(), (LPCTSTR)GetObject());
-		if (resultCode != ERROR_SUCCESS) {
-			break;
+		try {
+			SetDlgItemText(IDC_EDIT_OWNER, infoProvider->GetObjectOwnerInfo((LPCTSTR)GetObject()));
 		}
-
-		SetDlgItemText(IDC_EDIT_OWNER, szObjectOwner);*/
-
+		catch (...) {
+			MessageBox(_T("Не удалось запросить владельца объекта"), _T("Ошибка"), MB_OK | MB_ICONERROR);
+		}
 		break;
 
 	}
@@ -741,21 +736,39 @@ void CClientDlg::InitOrb()
 	char** argv;
 	CmdLineToArgv(GetCommandLine(), argc, argv);
 	orb = CORBA::ORB_init(argc, argv);
+#if 0
+	infoProvider = GetInfoProvider("localhost");
+	if (CORBA::is_nil(infoProvider.in())) {
+		cerr << "InfoProvider: zero ptr" << endl;
+	}
+	else {
+		cout << "resolved InfoProvider object" << endl;
+	}
+#endif
+}
 
+Agent::InfoProvider_var CClientDlg::GetInfoProvider(const std::string& host, const std::string& port) {
 	cout << "resolving naming service" << endl;
 	CosNaming::NamingContext_var nc = CosNaming::NamingContext::_nil();
 	try {
+#if 1
+		string ior = "corbaloc:iiop:1.1@" + host + ":" + port + "/NameService";
+		//LPCTSTR ior = _T("corbaloc:iiop:1.1@localhost:9999/NameService");
+		CORBA::Object_var obj = orb->string_to_object(ior.c_str());
+		nc = CosNaming::NamingContext::_narrow(obj.in());
+#else
 		ACE_Time_Value timeout(0, 1000000);
 		CORBA::Object_var obj = orb->resolve_initial_references("NameService", &timeout);
 		nc = CosNaming::NamingContext::_narrow(obj.in());
+#endif
 	}
 	catch (CORBA::Exception &) {
 		cerr << "could not resolve existing NameService (exeption)" << endl;
-		return;
+		return Agent::InfoProvider::_nil();
 	}
 	if (CORBA::is_nil(nc.in())) {
 		cerr << "NameService: zero ptr" << endl;
-		return;
+		return Agent::InfoProvider::_nil();
 	}
 	cout << "resolved existing NameService" << endl;
 
@@ -764,10 +777,6 @@ void CClientDlg::InitOrb()
 	name[0].id = CORBA::string_dup("SysInfoAgent");
 	CORBA::Object_var obj = nc->resolve(name);
 
-	infoProvider = ::Agent::InfoProvider::_narrow(obj.in());
-	if (CORBA::is_nil(infoProvider.in())) {
-		cerr << "InfoProvider: zero ptr" << endl;
-		return;
-	}
-	cout << "resolved InfoProvider object" << endl;
+	Agent::InfoProvider_var result = Agent::InfoProvider::_narrow(obj.in());
+	return result;
 }

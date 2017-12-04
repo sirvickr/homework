@@ -573,7 +573,6 @@ DWORD WINAPI TcpSrv::WorkerThread(LPVOID lpParam)
 				if (pRequest->pathSize) {
 					LPCTSTR objectPath = (LPCTSTR)(pbDecoded + pRequest->headSize);
 					tcout << TEXT("object path: \"") << objectPath << TEXT("\"") << endl;
-					pReply->vf.memStatus.dwLength = sizeof(pReply->vf.memStatus);
 					if (GetDiskFreeSpaceEx(objectPath,
 						&pReply->vf.freeSpace.freeBytesAvailable,
 						&pReply->vf.freeSpace.totalNumberOfBytes,

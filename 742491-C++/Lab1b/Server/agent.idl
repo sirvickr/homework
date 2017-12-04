@@ -64,7 +64,7 @@ module Agent
 		MemoryStatusEx GetMemoryStatus()
 			raises(QueryError);
 
-		unsigned long GetDriveType(in string drive)
+		unsigned long GetDriveTypeInfo(in string drive)
 			raises(QueryError);
 
 		FreeSpaceReply GetFreeSpaceInfo(in string drive)
@@ -73,7 +73,7 @@ module Agent
 		unsigned long GetAccessMask(in string path, in string user)
 			raises(QueryError);
 
-		string GetObjectOwner(in string path)
+		string GetObjectOwnerInfo(in string path)
 			raises(QueryError);
 
 	};

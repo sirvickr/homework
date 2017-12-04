@@ -77,10 +77,11 @@ private:
 	CListBox m_lstHosts;
 //	CTcpClient* client;
 	CORBA::ORB_var orb;
-	::Agent::InfoProvider_var infoProvider;
+	//Agent::InfoProvider_var infoProvider;
 public:
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnLbnSelchangeListHosts();
 private:
 	void InitOrb();
+	Agent::InfoProvider_var GetInfoProvider(const std::string& host, const std::string& port = "9999");
 };
