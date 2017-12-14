@@ -1,6 +1,6 @@
 #include <vcl.h>
 #include <math.h>
-#include <list>
+#include <vector>
 #pragma hdrstop
 
 #include "View.h"
@@ -91,6 +91,7 @@ double __fastcall TFView::DrawRay()
 	if(rayY > topMargin) {
 		double y = topMargin;
 		Canvas->LineTo(x, y);
+		bool footer = true;
 		for(TLayers::iterator it = layers.begin(); it != layers.end(); it++) {
 			TLayerConfig* item = *it;
 			double angle = item->getAngle();
@@ -114,27 +115,23 @@ double __fastcall TFView::DrawRay()
 						break;
 					Canvas->LineTo(x, y);
 				}
-				//int height = 200.0 * item->getH() / TLayerConfig::maxH;
-				//y2 += height;
-				//Canvas->Rectangle(x1, y1, x2, y2);
-				//y1 += height;
-
+				footer = false;
+				break;
 			}
 		} // for(layer)
-
-		double angle = -10.0;
-		double height = 60;
-		double a = angle * M_PI / 180.0;
-		double dy = 1;
-		double dx = dy * tan(a);
-		for(int i = 0; i < height; ++i) {
-			x += dx;
-			y += dy;
-			if(y > rayY)
-				break;
-			Canvas->LineTo(x, y);
+		if(footer) {
+			double angle = -10.0;
+			double height = rayY - y;//80;
+			double a = angle * M_PI / 180.0;
+			double dy = 1;
+			double dx = dy * tan(a);
+			for(int i = 0; i < height; ++i) {
+				x += dx;
+				y += dy;
+				Canvas->LineTo(x, y);
+			}
 		}
-	} else {
+	} else { // header
 		Canvas->LineTo(x, rayY);
 	}
 
@@ -146,7 +143,7 @@ double __fastcall TFView::DrawRay()
 void __fastcall TFView::tmrViewTimer(TObject *Sender)
 {
 	rayY += 10;
-	if(rayY < Height - 40) {
+	if(rayY < Height - 10) {
 		Repaint();
 	} else {
 		tmrView->Enabled = false;

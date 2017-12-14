@@ -1,6 +1,6 @@
 #include <vcl.h>
 #include <math.h>
-#include <list>
+#include <vector>
 #pragma hdrstop
 
 #include "LayerConfig.h"
@@ -36,25 +36,56 @@ TLayerConfig::TLayerConfig(TWinControl* owner, int index, double h, double n, do
 	gbxFrame->Width = owner->ClientWidth - 20;
 	gbxFrame->ShowHint = true;
 
-	int topStart = 20;
-	int left = 10;
-	int width = gbxFrame->ClientWidth - 20;
+	int width = 30;//gbxFrame->ClientWidth - 20;
+	int top[2] = { 20, 50 };
+	int leftBorder[4] = { 10, 30, 80, 110 };
+
+	lblN = new TLabel(owner);
+	lblN->Parent = gbxFrame;
+	lblN->AutoSize = true;
+	lblN->Left = leftBorder[0];
+	lblN->Top = top[0];
+	lblN->Caption = "n =";
 
 	txtN = new TEdit(owner);
 	txtN->Parent = gbxFrame;
-	txtN->Left = left;
-	txtN->Top = topStart;
-	txtN->Width = width;
+	txtN->Left = leftBorder[1];
+	txtN->Top = top[0];
+	txtN->Width = width; // gbxFrame->ClientWidth - leftBorder[1] - 20;
 	txtN->Hint = "Показатель преломления " + IntToStr(index) + "-го слоя";
 	txtN->Text = FloatToStr(n);
 
+	lblH = new TLabel(owner);
+	lblH->Parent = gbxFrame;
+	lblH->AutoSize = true;
+	lblH->Left = leftBorder[0];
+	lblH->Top = top[1];
+	lblH->Caption = "h =";
+
 	txtH = new TEdit(owner);
 	txtH->Parent = gbxFrame;
-	txtH->Left = left;
-	txtH->Top = topStart + txtN->Top + 15;
-	txtH->Width = width;
+	txtH->Left = leftBorder[1];
+	txtH->Top = top[1];
+	txtH->Width = width; // gbxFrame->ClientWidth - leftBorder[1] - 20;
 	txtH->Hint = "Толщина " + IntToStr(index) + "-го слоя";
 	txtH->Text = FloatToStr(h);
+
+	lblA = new TLabel(owner);
+	lblA->Parent = gbxFrame;
+	lblA->AutoSize = true;
+	lblA->Left = leftBorder[2];
+	lblA->Top = top[0];
+	lblA->Caption = "угол:";
+
+	txtA = new TEdit(owner);
+	txtA->Parent = gbxFrame;
+	txtA->Left = leftBorder[3];
+	txtA->Top = top[0];
+	txtA->Width = width;
+	txtA->Hint = "Угол";
+	txtA->Text = FloatToStr(angle);
+	txtA->ReadOnly = true;
+	txtA->Color = clBtnFace; 
 }
 //---------------------------------------------------------------------------
 double TLayerConfig::getN() const

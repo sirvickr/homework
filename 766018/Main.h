@@ -16,11 +16,15 @@ __published:	// IDE-managed Components
 	TEdit *txtAlpha;
 	TLabel *Label2;
 	TButton *cmdView;
+	TEdit *txtBeta;
+	TLabel *Label1;
+	TEdit *txtL;
+	TLabel *Label3;
 	void __fastcall FormCreate(TObject *Sender);
 	void __fastcall FormDestroy(TObject *Sender);
 	void __fastcall cmdViewClick(TObject *Sender);
 private:	// User declarations
-	typedef std::list< TLayerConfig* > TLayers;
+	typedef std::vector< TLayerConfig* > TLayers;
 	TLayers layers;
 public:		// User declarations
 	__fastcall TFMain(TComponent* Owner);

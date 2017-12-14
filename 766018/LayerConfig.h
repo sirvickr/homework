@@ -29,13 +29,15 @@ private:
 	TGroupBox* gbxFrame;
 	TEdit* txtN;
 	TEdit* txtH;
+	TLabel* lblN;
+	TLabel* lblH;
+	TLabel* lblA;
+	TEdit* txtA;
 	// границы отображения слоя (в пикселях)
 	int top;
 	int height;
 	int bottom;
 	double angle;
 };
-//---------------------------------------------------------------------------
-typedef std::list< TLayerConfig* > TLayers;
 //---------------------------------------------------------------------------
 #endif

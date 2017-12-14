@@ -1,6 +1,6 @@
 #include <vcl.h>
 #include <math.h>
-#include <list>
+#include <vector>
 #pragma hdrstop
 
 #include "Main.h"

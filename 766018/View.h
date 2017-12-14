@@ -22,7 +22,7 @@ __published:	// IDE-managed Components
 private:	// User declarations
 	static const int leftMargin = 10;
 	static const int topMargin = 50;
-	typedef std::list< TLayerConfig* > TLayers;
+	typedef std::vector< TLayerConfig* > TLayers;
 	TLayers layers;
 	double rayX, rayY;
 public:		// User declarations
