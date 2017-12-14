@@ -4,6 +4,7 @@
 #pragma hdrstop
 //---------------------------------------------------------------------------
 USEFORM("Main.cpp", FMain);
+USEFORM("View.cpp", FView);
 //---------------------------------------------------------------------------
 WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
@@ -11,6 +12,7 @@ WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	{
 		Application->Initialize();
 		Application->CreateForm(__classid(TFMain), &FMain);
+		Application->CreateForm(__classid(TFView), &FView);
 		Application->Run();
 	}
 	catch (Exception &exception)

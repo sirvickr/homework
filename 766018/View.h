@@ -1,5 +1,7 @@
-#ifndef MainH
-#define MainH
+//---------------------------------------------------------------------------
+
+#ifndef ViewH
+#define ViewH
 //---------------------------------------------------------------------------
 #include <Classes.hpp>
 #include <Controls.hpp>
@@ -9,26 +11,27 @@
 //---------------------------------------------------------------------------
 class TLayerConfig;
 //---------------------------------------------------------------------------
-class TFMain : public TForm
+class TFView : public TForm
 {
 __published:	// IDE-managed Components
-	TPanel *pnlConfig;
-	TGroupBox *GroupBox1;
-	TLabel *Label1;
-	TEdit *Edit1;
-	TEdit *txtAlpha;
-	TLabel *Label2;
-	TButton *cmdView;
-	void __fastcall FormCreate(TObject *Sender);
-	void __fastcall FormDestroy(TObject *Sender);
-	void __fastcall cmdViewClick(TObject *Sender);
+	TTimer *tmrView;
+	void __fastcall FormActivate(TObject *Sender);
+	void __fastcall FormDeactivate(TObject *Sender);
+	void __fastcall FormPaint(TObject *Sender);
+	void __fastcall tmrViewTimer(TObject *Sender);
 private:	// User declarations
+	static const int leftMargin = 10;
+	static const int topMargin = 50;
 	typedef std::list< TLayerConfig* > TLayers;
 	TLayers layers;
+	double rayX, rayY;
 public:		// User declarations
-	__fastcall TFMain(TComponent* Owner);
+	__fastcall TFView(TComponent* Owner);
+	void __fastcall SetLayers(const TLayers&);
+	double __fastcall DrawLayers();
+	double __fastcall DrawRay();
 };
 //---------------------------------------------------------------------------
-extern PACKAGE TFMain *FMain;
+extern PACKAGE TFView *FView;
 //---------------------------------------------------------------------------
 #endif

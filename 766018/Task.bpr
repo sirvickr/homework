@@ -4,12 +4,12 @@
   <MACROS>
     <VERSION value="BCB.06.00"/>
     <PROJECT value="Task.exe"/>
-    <OBJFILES value="Task.obj Main.obj"/>
+    <OBJFILES value="Task.obj Main.obj View.obj LayerConfig.obj"/>
     <RESFILES value="Task.res"/>
     <IDLFILES value=""/>
     <IDLGENFILES value=""/>
     <DEFFILE value=""/>
-    <RESDEPEN value="$(RESFILES) Main.dfm"/>
+    <RESDEPEN value="$(RESFILES) Main.dfm View.dfm"/>
     <LIBFILES value=""/>
     <LIBRARIES value=""/>
     <SPARELIBS value="vcl.lib rtl.lib"/>
@@ -54,6 +54,8 @@
       <FILE FILENAME="Task.res" FORMNAME="" UNITNAME="Task.res" CONTAINERID="ResTool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="Task.cpp" FORMNAME="" UNITNAME="Task" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="Main.cpp" FORMNAME="FMain" UNITNAME="Main" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="View.cpp" FORMNAME="FView" UNITNAME="View" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="LayerConfig.cpp" FORMNAME="" UNITNAME="LayerConfig" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
   </FILELIST>
   <BUILDTOOLS>
   </BUILDTOOLS>
