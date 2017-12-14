@@ -24,10 +24,23 @@ private:	// User declarations
 	static const int topMargin = 50;
 	typedef std::vector< TLayerConfig* > TLayers;
 	TLayers layers;
-	double rayX, rayY;
+	double rayLength;
+	double alpha, beta;
 public:		// User declarations
 	__fastcall TFView(TComponent* Owner);
-	void __fastcall SetLayers(const TLayers&);
+	void __fastcall Layers(const TLayers&);
+	inline void __fastcall Alpha(double value) {
+		alpha = value;
+	}
+	inline double __fastcall Alpha() const {
+		return alpha;
+	}
+	inline void __fastcall Beta(double value) {
+		beta = value;
+	}
+	inline double __fastcall Beta() const {
+		return beta;
+	}
 	double __fastcall DrawLayers();
 	double __fastcall DrawRay();
 };

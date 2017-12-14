@@ -4,7 +4,7 @@ object FView: TFView
   BorderStyle = bsToolWindow
   Caption = #1061#1086#1076' '#1083#1091#1095#1072
   ClientHeight = 602
-  ClientWidth = 890
+  ClientWidth = 595
   Color = clGray
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText

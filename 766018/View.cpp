@@ -11,19 +11,18 @@
 TFView *FView;
 //---------------------------------------------------------------------------
 __fastcall TFView::TFView(TComponent* Owner)
-	: TForm(Owner), rayX(0.0), rayY(0.0)
+	: TForm(Owner), rayLength(0.0), alpha(0.0), beta(0.0)
 {
 }
 //---------------------------------------------------------------------------
-void __fastcall TFView::SetLayers(const TLayers& value)
+void __fastcall TFView::Layers(const TLayers& value)
 {
 	layers = value;
 }
 //---------------------------------------------------------------------------
 void __fastcall TFView::FormActivate(TObject *Sender)
 {
-	rayX = ClientWidth / 2;
-	rayY = 0;
+	rayLength = 0;
 	Height = DrawLayers() + 100;
 	tmrView->Enabled = true;
 }
@@ -63,11 +62,8 @@ double __fastcall TFView::DrawLayers()
 	for(TLayers::iterator it = layers.begin(); it != layers.end(); it++) {
 		TLayerConfig* item = *it;
 		TColor oldColor = Canvas->Brush->Color;
-		//if(item->current)
-		//	Canvas->Brush->Color = RGB(20, 20, 255);
-		//else
-			Canvas->Brush->Color = RGB(120, 120, 255);
-		int height = 200.0 * item->getH() / TLayerConfig::maxH;
+		Canvas->Brush->Color = RGB(120, 120, 255);
+		int height = 120.0 * item->getH() / TLayerConfig::maxH;
 		y2 += height;
 		Canvas->Rectangle(x1, y1, x2, y2);
 		item->SetBounds(y1, height);
@@ -85,33 +81,46 @@ double __fastcall TFView::DrawRay()
 	Canvas->Pen->Color = RGB(255, 200, 100);
 	Canvas->Pen->Width = 2;
 
-	int center = ClientWidth / 2;
-	double x = center;
+	double x = ClientWidth / 2, y = 0;
+	double dx = 0, dy = 0;;
 	Canvas->MoveTo(x, 0);
-	if(rayY > topMargin) {
-		double y = topMargin;
+	double angleRad = alpha;
+	if(rayLength <= topMargin) { // луч проходит вакуум
+		// вакуум (анимация луча)
+		y = rayLength;
+		dx = y * tan(angleRad);
+		x += dx;
 		Canvas->LineTo(x, y);
+	} else {  // луч проходит один из слоёв или уже вышел из пластины
+		// вакуум (сразу весь луч до входа в пластину)
+		y = topMargin;
+		dx = y * tan(angleRad);
+		x += dx;
+		Canvas->LineTo(x, y);
+
 		bool footer = true;
+		// прохождение луча через пластину
 		for(TLayers::iterator it = layers.begin(); it != layers.end(); it++) {
 			TLayerConfig* item = *it;
-			double angle = item->getAngle();
 			double height = item->getHeight();
-			double a = angle * M_PI / 180.0;
-			if(rayY > item->getBottom()) {
+			angleRad = item->getAngle();
+			if(rayLength > item->getBottom()) {
+				// отрисовать весь луч, прошедший через этот слой
 				///item->current = false;
-				double dx = height * tan(a);
-				double dy = height;
+				dx = height * tan(angleRad);
+				dy = height;
 				x += dx;
 				y += dy;
 				Canvas->LineTo(x, y);
 			} else {
+				// анимация луча, проходящего через этот слой
 				///item->current = true;
-				double dy = 1;
-				double dx = dy * tan(a);
+				dy = 1;
+				dx = dy * tan(angleRad);
 				for(int i = 0; i < int(height + 0.5); ++i) {
 					x += dx;
 					y += dy;
-					if(y > rayY)
+					if(y > rayLength)
 						break;
 					Canvas->LineTo(x, y);
 				}
@@ -119,31 +128,31 @@ double __fastcall TFView::DrawRay()
 				break;
 			}
 		} // for(layer)
-		if(footer) {
-			double angle = -10.0;
-			double height = rayY - y;//80;
-			double a = angle * M_PI / 180.0;
-			double dy = 1;
-			double dx = dy * tan(a);
+		if(footer) { // снова луч проходит вакуум, уже после пластины
+			double height = rayLength - y;//80;
+			dy = 1;
+			 // показатель преломления последнего слоя
+			double nPrev = layers.back()->getN();
+			 // показатель преломления в вакууме
+			double nCurr = 1.0;
+			dx = dy * tan(beta);
 			for(int i = 0; i < height; ++i) {
 				x += dx;
 				y += dy;
 				Canvas->LineTo(x, y);
 			}
 		}
-	} else { // header
-		Canvas->LineTo(x, rayY);
 	}
 
 	Canvas->Pen->Color = oldColor;
 	Canvas->Pen->Width = oldWidth;
-	return rayY;
+	return rayLength;
 }
 //---------------------------------------------------------------------------
 void __fastcall TFView::tmrViewTimer(TObject *Sender)
 {
-	rayY += 10;
-	if(rayY < Height - 10) {
+	rayLength += 10;
+	if(rayLength < Height - 10) {
 		Repaint();
 	} else {
 		tmrView->Enabled = false;

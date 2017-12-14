@@ -9,36 +9,27 @@
 //---------------------------------------------------------------------------
 const double TLayerConfig::minN = 1.20;
 const double TLayerConfig::maxN = 4.70;
-const double TLayerConfig::minH = 0.01; // 1см
+const double TLayerConfig::minH = 0.01; // 1 см
 const double TLayerConfig::maxH = 0.20;
 //---------------------------------------------------------------------------
-TLayerConfig::TLayerConfig(TWinControl* owner, int index, double h, double n, double a)
+TLayerConfig::TLayerConfig(TWinControl* owner, Classes::TNotifyEvent OnChange,
+							int index, double h, double n)
 : index(index), owner(owner)
-, gbxFrame(NULL), txtN(NULL), txtH(NULL), top(0), height(0), bottom(0), angle(a)
-//, current(false)
+, gbxFrame(NULL), txtN(NULL), txtH(NULL)
+, top(0), height(0), bottom(0), angle(0)
 {
-	//angle = a * M_PI / 180.0;
-	if(n < minN)
-		n = minN;
-	if(n > maxN)
-		n = maxN;
-	if(h < minH)
-		h = minH;
-	if(h > maxH)
-		h = maxH;
-
 	gbxFrame = new TGroupBox(owner);
 	gbxFrame->Parent = owner;
-	gbxFrame->Caption = IntToStr(index);
+	//gbxFrame->Caption = IntToStr(index);
 	gbxFrame->Left = 10;
-	gbxFrame->Top = 20 + index * 110;
-	gbxFrame->Height = 100;
+	gbxFrame->Top = 20 + index * 40;
+	gbxFrame->Height = 40;
 	gbxFrame->Width = owner->ClientWidth - 20;
 	gbxFrame->ShowHint = true;
 
-	int width = 30;//gbxFrame->ClientWidth - 20;
-	int top[2] = { 20, 50 };
-	int leftBorder[4] = { 10, 30, 80, 110 };
+	int width = 40;//gbxFrame->ClientWidth - 20;
+	int top[2] = { 12, 40 };
+	int leftBorder[6] = { 10, 30, 80, 110, 160, 190 };
 
 	lblN = new TLabel(owner);
 	lblN->Parent = gbxFrame;
@@ -53,33 +44,35 @@ TLayerConfig::TLayerConfig(TWinControl* owner, int index, double h, double n, do
 	txtN->Top = top[0];
 	txtN->Width = width; // gbxFrame->ClientWidth - leftBorder[1] - 20;
 	txtN->Hint = "Показатель преломления " + IntToStr(index) + "-го слоя";
-	txtN->Text = FloatToStr(n);
+	setN(n);
+	txtN->OnChange = OnChange;
 
 	lblH = new TLabel(owner);
 	lblH->Parent = gbxFrame;
 	lblH->AutoSize = true;
-	lblH->Left = leftBorder[0];
-	lblH->Top = top[1];
+	lblH->Left = leftBorder[2];
+	lblH->Top = top[0];
 	lblH->Caption = "h =";
 
 	txtH = new TEdit(owner);
 	txtH->Parent = gbxFrame;
-	txtH->Left = leftBorder[1];
-	txtH->Top = top[1];
+	txtH->Left = leftBorder[3];
+	txtH->Top = top[0];
 	txtH->Width = width; // gbxFrame->ClientWidth - leftBorder[1] - 20;
 	txtH->Hint = "Толщина " + IntToStr(index) + "-го слоя";
-	txtH->Text = FloatToStr(h);
+	setH(h);
+	txtH->OnChange = OnChange;
 
 	lblA = new TLabel(owner);
 	lblA->Parent = gbxFrame;
 	lblA->AutoSize = true;
-	lblA->Left = leftBorder[2];
+	lblA->Left = leftBorder[4];
 	lblA->Top = top[0];
 	lblA->Caption = "угол:";
 
 	txtA = new TEdit(owner);
 	txtA->Parent = gbxFrame;
-	txtA->Left = leftBorder[3];
+	txtA->Left = leftBorder[5];
 	txtA->Top = top[0];
 	txtA->Width = width;
 	txtA->Hint = "Угол";
@@ -93,9 +86,33 @@ double TLayerConfig::getN() const
 	return txtN->Text.ToDouble();
 }
 //---------------------------------------------------------------------------
+void TLayerConfig::setN(double value)
+{
+	if(value < minN)
+		value = minN;
+	if(value > maxN)
+		value = maxN;
+	txtN->Text = FloatToStr(Round(value));
+}
+//---------------------------------------------------------------------------
 double TLayerConfig::getH() const
 {
 	return txtH->Text.ToDouble();
+}
+//---------------------------------------------------------------------------
+void TLayerConfig::setH(double value)
+{
+	if(value < minH)
+		value = minH;
+	if(value > maxH)
+		value = maxH;
+	txtH->Text = FloatToStr(Round(value));
+}
+//---------------------------------------------------------------------------
+void TLayerConfig::setAngle(double value)
+{
+	angle = value;
+	txtA->Text = FloatToStr(Round(value * 180.0 / M_PI));
 }
 //---------------------------------------------------------------------------
 
