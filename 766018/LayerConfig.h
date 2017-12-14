@@ -21,6 +21,7 @@ public:
 	}
 	inline double getAngle() const { return angle; }
 	inline void setAngle(double value) { angle = value; }
+	//bool current;// временно, дл€ подсветки
 private:
 	int index;
 	// элементы управлени€ настройками (удал€ютс€ владельцем)

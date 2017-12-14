@@ -1,10 +1,11 @@
 object FView: TFView
-  Left = 594
-  Top = 158
-  Width = 1012
-  Height = 640
-  Caption = 'FView'
-  Color = clBtnFace
+  Left = 290
+  Top = 157
+  BorderStyle = bsToolWindow
+  Caption = #1054#1090#1086#1073#1088#1072#1078#1077#1085#1080#1077
+  ClientHeight = 602
+  ClientWidth = 890
+  Color = clGray
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11

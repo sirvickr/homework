@@ -58,16 +58,21 @@ void __fastcall TFView::FormPaint(TObject *Sender)
 double __fastcall TFView::DrawLayers()
 {
 	// рисуем слои пластины
-	Canvas->Brush->Color = RGB(120, 120, 255);
 	const int width = ClientWidth - leftMargin * 2; // 200;
 	int x1 = leftMargin, y1 = topMargin, x2 = leftMargin + width, y2 = topMargin;
 	for(TLayers::iterator it = layers.begin(); it != layers.end(); it++) {
 		TLayerConfig* item = *it;
+		TColor oldColor = Canvas->Brush->Color;
+		//if(item->current)
+		//	Canvas->Brush->Color = RGB(20, 20, 255);
+		//else
+			Canvas->Brush->Color = RGB(120, 120, 255);
 		int height = 200.0 * item->getH() / TLayerConfig::maxH;
 		y2 += height;
 		Canvas->Rectangle(x1, y1, x2, y2);
 		item->SetBounds(y1, height);
 		y1 += height;
+		Canvas->Brush->Color = oldColor;
 	}
 	return y1;
 }
@@ -76,52 +81,65 @@ double __fastcall TFView::DrawRay()
 {
 	// рисуем луч
 	TColor oldColor = Canvas->Pen->Color;
-	Canvas->Pen->Color = RGB(255, 100, 100);
+	int oldWidth = Canvas->Pen->Width;
+	Canvas->Pen->Color = RGB(255, 200, 100);
+	Canvas->Pen->Width = 2;
 
 	int center = ClientWidth / 2;
-	Canvas->MoveTo(center, 0);
+	double x = center;
+	Canvas->MoveTo(x, 0);
 	if(rayY > topMargin) {
 		double y = topMargin;
-		Canvas->LineTo(center, y);
-		for(TLayers::const_iterator it = layers.begin(); it != layers.end(); it++) {
-			const TLayerConfig* item = *it;
+		Canvas->LineTo(x, y);
+		for(TLayers::iterator it = layers.begin(); it != layers.end(); it++) {
+			TLayerConfig* item = *it;
 			double angle = item->getAngle();
 			double height = item->getHeight();
+			double a = angle * M_PI / 180.0;
 			if(rayY > item->getBottom()) {
-				double a = angle * M_PI / 180.0;
+				///item->current = false;
 				double dx = height * tan(a);
 				double dy = height;
-				rayX += dx;
+				x += dx;
 				y += dy;
-				Canvas->LineTo(rayX, y);
+				Canvas->LineTo(x, y);
 			} else {
-				/*
+				///item->current = true;
+				double dy = 1;
+				double dx = dy * tan(a);
 				for(int i = 0; i < int(height + 0.5); ++i) {
-					double dx = ;
-					double dy = ;
-					rayX += dx;
-					int y = int( + 0.5);
+					x += dx;
+					y += dy;
 					if(y > rayY)
 						break;
-					Canvas->LineTo(rayX, y);
+					Canvas->LineTo(x, y);
 				}
 				//int height = 200.0 * item->getH() / TLayerConfig::maxH;
 				//y2 += height;
 				//Canvas->Rectangle(x1, y1, x2, y2);
 				//y1 += height;
-				*/
+
 			}
+		} // for(layer)
+
+		double angle = -10.0;
+		double height = 60;
+		double a = angle * M_PI / 180.0;
+		double dy = 1;
+		double dx = dy * tan(a);
+		for(int i = 0; i < height; ++i) {
+			x += dx;
+			y += dy;
+			if(y > rayY)
+				break;
+			Canvas->LineTo(x, y);
 		}
-		#if 0
-		for(int y = 10; y < rayY; ++y) {
-			Canvas->LineTo(rayX, y);
-		}
-		#endif
 	} else {
-		Canvas->LineTo(rayX, rayY);
+		Canvas->LineTo(x, rayY);
 	}
 
 	Canvas->Pen->Color = oldColor;
+	Canvas->Pen->Width = oldWidth;
 	return rayY;
 }
 //---------------------------------------------------------------------------

@@ -13,9 +13,6 @@ class TFMain : public TForm
 {
 __published:	// IDE-managed Components
 	TPanel *pnlConfig;
-	TGroupBox *GroupBox1;
-	TLabel *Label1;
-	TEdit *Edit1;
 	TEdit *txtAlpha;
 	TLabel *Label2;
 	TButton *cmdView;

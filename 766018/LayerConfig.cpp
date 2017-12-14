@@ -15,6 +15,7 @@ const double TLayerConfig::maxH = 0.20;
 TLayerConfig::TLayerConfig(TWinControl* owner, int index, double h, double n, double a)
 : index(index), owner(owner)
 , gbxFrame(NULL), txtN(NULL), txtH(NULL), top(0), height(0), bottom(0), angle(a)
+//, current(false)
 {
 	//angle = a * M_PI / 180.0;
 	if(n < minN)

@@ -15,7 +15,7 @@ using namespace std;
 TFMain *FMain;
 static const int m = 5;
 double _n[] = { 2.0, 1.2, 3.5, 3.1, 4.5 };
-double _h[] = { 20.0, 8.0, 2.0, 3.0, 4.0 }; // см
+double _h[] = { 8.0, 12.0, 2.0, 5.0, 4.0 }; // см
 //---------------------------------------------------------------------------
 __fastcall TFMain::TFMain(TComponent* Owner)
 	: TForm(Owner)
