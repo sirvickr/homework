@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "WinApiHelper.h"
 #include "TcpSrv.h"
+#include "CryptoAPI.h"
 #include "../AgentReply.h"
-#include "../CryptoAPI/CryptoAPI.h"
 
 using namespace std;
 
