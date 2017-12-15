@@ -1,6 +1,8 @@
 *.opendb
 *.db
+*.res
 *.obj
+*.exe
 *.iobj
 *.tlog
 *.suo
@@ -9,7 +11,14 @@
 *.ipdb
 *.ipch
 *.ilk
-*.exe
 *.pch
 *.log
 *.user
+*.dsk
+*.tds
+*.ddp
+*.~bpr
+*.~cpp
+*.~h
+*.~ddp
+*.~dfm
