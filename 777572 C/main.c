@@ -14,14 +14,15 @@ int main()
 
 void FindSumSeq( size_t n ) {
   size_t i, N, index;
-  int S, a[n];
+  int S;
+  int* a = ( int* )malloc( n * sizeof( int ) );
   for( i = 0; i < n; ++i )
     scanf( "%d", &a[ i ] );
   scanf( "%d", &S );
   // переберем все возможные суммы,
   // т.е. все возможные сочетания знаков слагаемых
-  N = pow(2, n);
-  for(index = 0; index < N; ++index) {
+  N = pow( 2, n );
+  for( index = 0; index < N; ++index ) {
     // в двоичном преставлении индекса суммы,
     // единицы соответствуют слагаемым со знаком "-",
     // а нули - слагаемым со знаком "+", например, в случае
@@ -53,4 +54,5 @@ void FindSumSeq( size_t n ) {
   } else {
     printf( "no solution\n" );
   }
+  free( a );
 }
