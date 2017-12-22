@@ -10,6 +10,8 @@
 #define MIN_S ((int)-1e9)
 #define MAX_S ((int)1e9)
 
+#define SUMMAND(a, i, mask) (((mask >> i) & 1) ? -a[i] : a[i])
+
 void FindSumSeq(int N);
 
 int main()
@@ -57,20 +59,16 @@ void FindSumSeq(int N) {
 		// всего 2^3 = 8 возможных вариантов суммирования
 		int sum = 0;
 		for (i = 0; i < N; ++i) {
-			if ((index >> i) & 1) {
-				sum -= X[i];
-			} else {
-				sum += X[i];
-			}
+			sum += SUMMAND(X, i, index);
 		}
 		if (sum == S) {
 			break;
 		}
 	} // for (index)
 	if (index < total) {
-		printf("%d", (index & 1) ? -X[0] : X[0]);
+		printf("%d", SUMMAND(X, 0, index));
 		for (i = 1; i < N; ++i)
-			printf("%+d", ((index >> i) & 1) ? -X[i] : X[i]);
+			printf("%+d", SUMMAND(X, i, index));
 		printf("=%d\n", S);
 	} else {
 		printf("no solution\n");
