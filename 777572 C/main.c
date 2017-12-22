@@ -10,7 +10,7 @@
 #define MIN_S ((int)-1e9)
 #define MAX_S ((int)1e9)
 
-#define SUMMAND(a, i, mask) (((mask >> i) & 1) ? -a[i] : a[i])
+#define SUMMAND(a, i, mask) (((mask >> i) & 1) ? a[i] : -a[i])
 
 void FindSumSeq(int N);
 
