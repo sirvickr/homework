@@ -1,28 +1,50 @@
 #include <stdio.h>
 #include <math.h>
 
-void FindSumSeq( int n );
+#define MIN_N 2
+#define MAX_N 24
+
+#define MIN_X 0
+#define MAX_X ((int)5e7)
+
+#define MIN_S ((int)-1e9)
+#define MAX_S ((int)1e9)
+
+void FindSumSeq(int N);
 
 int main()
 {
-	int n;
+	int N;
 	printf("input: ");
-	scanf("%d", &n);
-	FindSumSeq( n );
+	scanf("%d", &N);
+	FindSumSeq(N);
 	return 0;
 }
 
-void FindSumSeq( int n ) {
-	int i, N, index;
+void FindSumSeq(int N) {
+	int i, total, index;
 	int S;
-	int* a = ( int* )malloc( n * sizeof( int ) );
-	for( i = 0; i < n; ++i )
-		scanf( "%d", &a[ i ] );
-	scanf( "%d", &S );
+	int X[MAX_N];
+	if (N < MIN_N || N > MAX_N) {
+		printf("\nvalid range: %d <= N <= %d\n\n", MIN_N, MAX_N);
+		return;
+	}
+	for (i = 0; i < N; ++i) {
+		scanf("%d", &X[i]);
+		if (X[i] < MIN_X || X[i] > MAX_X) {
+			printf("\nvalid range: %d <= X <= %d\n\n", MIN_X, MAX_X);
+			return;
+		}
+	}
+	scanf("%d", &S);
+	if (S < MIN_S || S > MAX_S) {
+		printf("\nvalid range: %d <= S <= %d\n\n", MIN_S, MAX_S);
+		return;
+	}
 	// переберем все возможные суммы,
 	// т.е. все возможные сочетания знаков слагаемых
-	N = pow( 2, n );
-	for( index = 0; index < N; ++index ) {
+	total = pow(2, N);
+	for (index = 0; index < total; ++index) {
 		// в двоичном преставлении индекса суммы,
 		// единицы соответствуют слагаемым со знаком "-",
 		// а нули - слагаемым со знаком "+", например, в случае
@@ -34,24 +56,23 @@ void FindSumSeq( int n ) {
 		// для 7-й суммы (111): -15 -25 -30 = ;
 		// всего 2^3 = 8 возможных вариантов суммирования
 		int sum = 0;
-		for( i = 0; i < n; ++i ) {
-			if( ( index >> i ) & 1 ) {
-				sum -= a[ i ];
+		for (i = 0; i < N; ++i) {
+			if ((index >> i) & 1) {
+				sum -= X[i];
 			} else {
-				sum += a[ i ];
+				sum += X[i];
 			}
 		}
-		if( sum == S ) {
+		if (sum == S) {
 			break;
 		}
-	} // for( index )
-	if( index < N ) {
-		printf( "%d", ( index & 1 ) ? -a[ 0 ] : a[ 0 ] );
-		for( i = 1; i < n; ++i )
-			printf( "%+d", ( ( index >> i ) & 1 ) ? -a[ i ] : a[ i ] );
-		printf( "=%d\n", S );
+	} // for (index)
+	if (index < total) {
+		printf("%d", (index & 1) ? -X[0] : X[0]);
+		for (i = 1; i < N; ++i)
+			printf("%+d", ((index >> i) & 1) ? -X[i] : X[i]);
+		printf("=%d\n", S);
 	} else {
-		printf( "no solution\n" );
+		printf("no solution\n");
 	}
-	free( a );
 }
