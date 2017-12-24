@@ -1,8 +1,8 @@
 object FReports: TFReports
   Left = 0
   Top = 0
-  Width = 318
-  Height = 264
+  Width = 435
+  Height = 266
   Align = alClient
   TabOrder = 0
   object Label1: TLabel
@@ -33,5 +33,6 @@ object FReports: TFReports
     Width = 17
     Height = 17
     TabOrder = 1
+    OnClick = cmdDirClick
   end
 end

@@ -1,9 +1,9 @@
 object FMain: TFMain
   Left = 306
-  Top = 100
+  Top = 121
   BorderStyle = bsDialog
   Caption = #1043#1083#1072#1074#1085#1072#1103' '#1082#1085#1086#1087#1086#1095#1085#1072#1103' '#1092#1086#1088#1084#1072
-  ClientHeight = 601
+  ClientHeight = 740
   ClientWidth = 1216
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -17,7 +17,7 @@ object FMain: TFMain
   TextHeight = 13
   object cmdExit: TSpeedButton
     Left = 64
-    Top = 488
+    Top = 648
     Width = 57
     Height = 57
     Glyph.Data = {
@@ -46,7 +46,7 @@ object FMain: TFMain
   end
   object cmdBack: TButton
     Left = 64
-    Top = 448
+    Top = 608
     Width = 25
     Height = 25
     Enabled = False
@@ -57,7 +57,7 @@ object FMain: TFMain
     Left = 0
     Top = 0
     Width = 1216
-    Height = 433
+    Height = 593
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 1
@@ -116,12 +116,12 @@ object FMain: TFMain
     Mode = cmShareDenyNone
     Provider = 'Microsoft.ACE.OLEDB.12.0'
     Left = 248
-    Top = 536
+    Top = 688
   end
   object dataSource: TDataSource
     DataSet = adoTable
     Left = 248
-    Top = 456
+    Top = 608
   end
   object adoPracticeQuery: TADOQuery
     Active = True
@@ -139,50 +139,49 @@ object FMain: TFMain
         '.'#1050#1086#1076#1057#1086#1090#1088#1091#1076#1085#1080#1082') ON ['#1042#1080#1076' '#1087#1088#1072#1082#1090#1080#1082#1080'].'#1050#1086#1076#1042#1055' = ['#1056#1091#1082#1086#1074#1086#1076#1089#1090#1074#1086' '#1087#1088#1072#1082#1090#1080#1082#1086#1081']' +
         '.'#1050#1086#1076#1042#1055)
     Left = 320
-    Top = 472
+    Top = 624
   end
   object adoTable: TADOTable
     Connection = adoConn
     CursorType = ctStatic
-    TableName = #1050#1072#1076#1088#1099
     Left = 248
-    Top = 496
+    Top = 648
   end
   object adoPersRanks: TADOQuery
     Connection = adoConn
     CursorType = ctStatic
     Parameters = <>
     Left = 360
-    Top = 472
+    Top = 624
   end
   object srcPersRanks: TDataSource
     DataSet = adoPersRanks
     Left = 400
-    Top = 472
+    Top = 624
   end
   object adoPersPractice: TADOQuery
     Connection = adoConn
     CursorType = ctStatic
     Parameters = <>
     Left = 360
-    Top = 512
+    Top = 664
   end
   object srcPersPractice: TDataSource
     DataSet = adoPersPractice
     Left = 400
-    Top = 512
+    Top = 664
   end
   object adoPersSubj: TADOQuery
     Connection = adoConn
     CursorType = ctStatic
     Parameters = <>
     Left = 360
-    Top = 552
+    Top = 704
   end
   object srcPersSubj: TDataSource
     DataSet = adoPersSubj
     Left = 400
-    Top = 552
+    Top = 704
   end
   object tbl: TADOTable
     Active = True
@@ -190,11 +189,11 @@ object FMain: TFMain
     CursorType = ctStatic
     TableName = #1050#1072#1076#1088#1099
     Left = 504
-    Top = 464
+    Top = 616
   end
   object src: TDataSource
     DataSet = tbl
     Left = 544
-    Top = 464
+    Top = 616
   end
 end

@@ -1,7 +1,7 @@
 #include <vcl.h>
 #include <vector>
 #include <stack>
-#include <algorithm> // std::max()
+#include <algorithm>
 #pragma hdrstop
 
 #include "StaffReport.h"
