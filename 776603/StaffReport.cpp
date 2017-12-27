@@ -16,3 +16,9 @@ __fastcall TFStaffReport::TFStaffReport(TComponent* Owner)
 {
 }
 //---------------------------------------------------------------------------
+void __fastcall TFStaffReport::FrameClick(TObject *Sender)
+{
+	qrMain->Preview();
+}
+//---------------------------------------------------------------------------
+

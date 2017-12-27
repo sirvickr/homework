@@ -8,6 +8,9 @@
 #include <Controls.hpp>
 #include <StdCtrls.hpp>
 #include <Forms.hpp>
+#include <ExtCtrls.hpp>
+#include <QRCtrls.hpp>
+#include <QuickRpt.hpp>
 //---------------------------------------------------------------------------
 class TFReports : public TFrame
 {

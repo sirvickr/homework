@@ -1,8 +1,8 @@
 object FReports: TFReports
   Left = 0
   Top = 0
-  Width = 435
-  Height = 266
+  Width = 314
+  Height = 645
   Align = alClient
   TabOrder = 0
   object Label1: TLabel

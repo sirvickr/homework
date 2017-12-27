@@ -20,28 +20,18 @@ __fastcall TFReports::TFReports(TComponent* Owner)
 //---------------------------------------------------------------------------
 void __fastcall TFReports::cmdStaffClick(TObject *Sender)
 {
-	// создаём фрейм (подчинённую форму)
-	TFStaffReport* frame = new TFStaffReport(NULL);
-	// загружаем данные из базы в отчёт
 	FMain->adoTable->Active = false;
 	FMain->adoTable->TableName = "Кадры";
-	frame->qrMain->DataSet = FMain->adoTable;
 	FMain->adoTable->Active = true;
-	// отображаем созданный фрейм
-	FMain->AddFrame(frame);
+	FMain->qrStaff->Preview();
 }
 //---------------------------------------------------------------------------
 void __fastcall TFReports::cmdDirClick(TObject *Sender)
 {
-	// создаём фрейм (подчинённую форму)
-	TFPayments* frame = new TFPayments(NULL);
-	// загружаем данные из базы в отчёт
 	FMain->adoTable->Active = false;
 	FMain->adoTable->TableName = "Выплаты";
-	frame->qrMain->DataSet = FMain->adoTable;
 	FMain->adoTable->Active = true;
-	// отображаем созданный фрейм
-	FMain->AddFrame(frame);
+	FMain->qrPayments->Preview();
 }
 //---------------------------------------------------------------------------
 

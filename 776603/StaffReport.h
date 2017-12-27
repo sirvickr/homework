@@ -19,8 +19,6 @@ class TFStaffReport : public TFrame
 {
 __published:	// IDE-managed Components
 	TQuickRep *qrMain;
-	TDataSource *src;
-	TDBGrid *DBGrid1;
 	TQRBand *DetailBand1;
 	TQRDBText *QRDBText1;
 	TQRDBText *QRDBText2;
@@ -28,6 +26,16 @@ __published:	// IDE-managed Components
 	TQRDBText *QRDBText4;
 	TQRDBText *QRDBText5;
 	TQRDBText *QRDBText6;
+	TQRBand *ColumnHeaderBand1;
+	TQRLabel *QRLabel1;
+	TQRDBText *QRDBText7;
+	TQRLabel *QRLabel2;
+	TQRLabel *QRLabel3;
+	TQRLabel *QRLabel4;
+	TQRLabel *QRLabel5;
+	TQRLabel *QRLabel6;
+	TQRLabel *QRLabel7;
+	void __fastcall FrameClick(TObject *Sender);
 private:	// User declarations
 public:		// User declarations
 	__fastcall TFStaffReport(TComponent* Owner);
