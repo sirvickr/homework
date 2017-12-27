@@ -20,6 +20,7 @@ object FMain: TFMain
     Top = 648
     Width = 57
     Height = 57
+    Hint = #1042#1099#1093#1086#1076
     Glyph.Data = {
       76010000424D7601000000000000760000002800000020000000100000000100
       04000000000000010000120B0000120B00001000000000000000000000000000
@@ -34,11 +35,13 @@ object FMain: TFMain
       0333337F3F7F33337F333301E10BBBBB0333337F7F7F33337F333301EE0BBBBB
       0333337F777FFFFF7F3333000000000003333377777777777333}
     NumGlyphs = 2
+    ParentShowHint = False
+    ShowHint = True
     OnClick = cmdExitClick
   end
   object lblBack: TLabel
     Left = 96
-    Top = 448
+    Top = 608
     Width = 32
     Height = 13
     Caption = #1053#1072#1079#1072#1076
@@ -110,8 +113,8 @@ object FMain: TFMain
   object qrPayments: TQuickRep
     Left = 1169
     Top = 368
-    Width = 696
-    Height = 361
+    Width = 1191
+    Height = 1684
     Frame.Color = clBlack
     Frame.DrawTop = False
     Frame.DrawBottom = False
@@ -156,7 +159,7 @@ object FMain: TFMain
     object QRBand1: TQRBand
       Left = 57
       Top = 117
-      Width = 583
+      Width = 1078
       Height = 45
       Frame.Color = clBlack
       Frame.DrawTop = False
@@ -175,7 +178,7 @@ object FMain: TFMain
       ParentFont = False
       Size.Values = (
         79.375
-        1028.34722222222)
+        1901.47222222222)
       BandType = rbDetail
       object QRDBText9: TQRDBText
         Left = 118
@@ -501,7 +504,7 @@ object FMain: TFMain
     object ColumnHeaderBand2: TQRBand
       Left = 57
       Top = 57
-      Width = 583
+      Width = 1078
       Height = 60
       Frame.Color = clBlack
       Frame.DrawTop = False
@@ -514,7 +517,7 @@ object FMain: TFMain
       ForceNewPage = False
       Size.Values = (
         105.833333333333
-        1028.34722222222)
+        1901.47222222222)
       BandType = rbColumnHeader
       object QRLabel8: TQRLabel
         Left = -15
@@ -674,7 +677,7 @@ object FMain: TFMain
       object QRLabel13: TQRLabel
         Left = 279
         Top = 30
-        Width = 0
+        Width = 53
         Height = 30
         Frame.Color = clBlack
         Frame.DrawTop = False
@@ -685,7 +688,7 @@ object FMain: TFMain
           52.9166666666667
           492.125
           52.9166666666667
-          0)
+          93.4861111111111)
         Alignment = taLeftJustify
         AlignToBand = False
         AutoSize = True
@@ -736,7 +739,7 @@ object FMain: TFMain
       object QRLabel15: TQRLabel
         Left = 424
         Top = 30
-        Width = 0
+        Width = 36
         Height = 30
         Frame.Color = clBlack
         Frame.DrawTop = False
@@ -747,7 +750,7 @@ object FMain: TFMain
           52.9166666666667
           747.888888888889
           52.9166666666667
-          0)
+          63.5)
         Alignment = taLeftJustify
         AlignToBand = False
         AutoSize = True
@@ -861,7 +864,7 @@ object FMain: TFMain
     object SummaryBand1: TQRBand
       Left = 57
       Top = 162
-      Width = 583
+      Width = 1078
       Height = 60
       Frame.Color = clBlack
       Frame.DrawTop = False
@@ -874,7 +877,7 @@ object FMain: TFMain
       ForceNewPage = False
       Size.Values = (
         105.833333333333
-        1028.34722222222)
+        1901.47222222222)
       BandType = rbSummary
       object QRExpr2: TQRExpr
         Left = 464
@@ -1073,8 +1076,8 @@ object FMain: TFMain
   object qrStaff: TQuickRep
     Left = 1168
     Top = 8
-    Width = 771
-    Height = 353
+    Width = 1111
+    Height = 1572
     Frame.Color = clBlack
     Frame.DrawTop = False
     Frame.DrawBottom = False
@@ -1119,7 +1122,7 @@ object FMain: TFMain
     object DetailBand1: TQRBand
       Left = 53
       Top = 109
-      Width = 665
+      Width = 1005
       Height = 37
       Frame.Color = clBlack
       Frame.DrawTop = False
@@ -1138,7 +1141,7 @@ object FMain: TFMain
       ParentFont = False
       Size.Values = (
         69.9255952380952
-        1256.77083333333)
+        1899.33035714286)
       BandType = rbDetail
       object QRDBText1: TQRDBText
         Left = 5
@@ -1368,7 +1371,7 @@ object FMain: TFMain
     object ColumnHeaderBand1: TQRBand
       Left = 53
       Top = 53
-      Width = 665
+      Width = 1005
       Height = 56
       Frame.Color = clBlack
       Frame.DrawTop = False
@@ -1381,7 +1384,7 @@ object FMain: TFMain
       ForceNewPage = False
       Size.Values = (
         105.833333333333
-        1256.77083333333)
+        1899.33035714286)
       BandType = rbColumnHeader
       object QRLabel4: TQRLabel
         Left = -21
@@ -1604,7 +1607,7 @@ object FMain: TFMain
     object SummaryBand2: TQRBand
       Left = 53
       Top = 146
-      Width = 665
+      Width = 1005
       Height = 56
       Frame.Color = clBlack
       Frame.DrawTop = False
@@ -1617,7 +1620,7 @@ object FMain: TFMain
       ForceNewPage = False
       Size.Values = (
         105.833333333333
-        1256.77083333333)
+        1899.33035714286)
       BandType = rbSummary
       object QRExpr4: TQRExpr
         Left = 64

@@ -5,11 +5,9 @@
 #pragma hdrstop
 
 #include "Main.h"
-#include "StaffBtns.h"
 #include "Directories.h"
 #include "Reports.h"
 #include "Staff.h"
-#include "StaffReport.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma resource "*.dfm"

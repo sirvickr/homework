@@ -6,8 +6,6 @@
 
 #include "Reports.h"
 #include "Main.h"
-#include "StaffReport.h"
-#include "Payments.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma resource "*.dfm"
