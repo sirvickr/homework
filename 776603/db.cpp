@@ -14,8 +14,6 @@ USEFORM("Council.cpp", FCouncil); /* TFrame: File Type */
 USEFORM("Practice.cpp", FPractice); /* TFrame: File Type */
 USEFORM("Ranks.cpp", FRanks); /* TFrame: File Type */
 USEFORM("Subj.cpp", FSubj); /* TFrame: File Type */
-USEFORM("StaffReport.cpp", FStaffReport); /* TFrame: File Type */
-USEFORM("Payments.cpp", FPayments); /* TFrame: File Type */
 //---------------------------------------------------------------------------
 WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {

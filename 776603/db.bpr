@@ -5,15 +5,13 @@
     <VERSION value="BCB.06.00"/>
     <PROJECT value="db.exe"/>
     <OBJFILES value="db.obj Main.obj Directories.obj Reports.obj Staff.obj Post.obj 
-      Contract.obj Council.obj Practice.obj Ranks.obj Subj.obj StaffReport.obj 
-      Payments.obj"/>
+      Contract.obj Council.obj Practice.obj Ranks.obj Subj.obj"/>
     <RESFILES value="db.res"/>
     <IDLFILES value=""/>
     <IDLGENFILES value=""/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES) Main.dfm Directories.dfm Reports.dfm Staff.dfm Post.dfm 
-      Contract.dfm Council.dfm Practice.dfm Ranks.dfm Subj.dfm StaffReport.dfm 
-      Payments.dfm"/>
+      Contract.dfm Council.dfm Practice.dfm Ranks.dfm Subj.dfm"/>
     <LIBFILES value=""/>
     <LIBRARIES value=""/>
     <SPARELIBS value="vcl.lib rtl.lib dbrtl.lib adortl.lib vcldb.lib qrpt.lib vclx.lib bdertl.lib"/>
@@ -67,8 +65,6 @@
       <FILE FILENAME="Practice.cpp" FORMNAME="FPractice" UNITNAME="Practice" CONTAINERID="CCompiler" DESIGNCLASS="TFrame" LOCALCOMMAND=""/>
       <FILE FILENAME="Ranks.cpp" FORMNAME="FRanks" UNITNAME="Ranks" CONTAINERID="CCompiler" DESIGNCLASS="TFrame" LOCALCOMMAND=""/>
       <FILE FILENAME="Subj.cpp" FORMNAME="FSubj" UNITNAME="Subj" CONTAINERID="CCompiler" DESIGNCLASS="TFrame" LOCALCOMMAND=""/>
-      <FILE FILENAME="StaffReport.cpp" FORMNAME="FStaffReport" UNITNAME="StaffReport" CONTAINERID="CCompiler" DESIGNCLASS="TFrame" LOCALCOMMAND=""/>
-      <FILE FILENAME="Payments.cpp" FORMNAME="FPayments" UNITNAME="Payments" CONTAINERID="CCompiler" DESIGNCLASS="TFrame" LOCALCOMMAND=""/>
   </FILELIST>
   <BUILDTOOLS>
   </BUILDTOOLS>
