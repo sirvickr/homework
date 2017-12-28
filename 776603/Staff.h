@@ -16,6 +16,8 @@
 #include <Grids.hpp>
 #include <Mask.hpp>
 //---------------------------------------------------------------------------
+class TFEmployee;
+//---------------------------------------------------------------------------
 class TFStaff : public TFrame
 {
 __published:	// IDE-managed Components
@@ -27,12 +29,25 @@ __published:	// IDE-managed Components
 	TDBGrid *tblPersRanks;
 	TGroupBox *GroupBox2;
 	TDBEdit *txtID;
-	TDBText *txtPerson;
 	TDBGrid *tblPersPractice;
 	TGroupBox *GroupBox3;
 	TDBGrid *tblPersSubj;
+	TButton *txtAddEmployee;
+	TDBEdit *txtPost;
+	TDBEdit *txtCouncil;
+	TDBEdit *txtPatronimic;
+	TDBEdit *txtContract;
+	TDBEdit *txtName;
+	TDBEdit *txtHireDate;
+	TDBEdit *txtSurname;
+	TDBEdit *txtBirthDate;
+	TButton *Button1;
 	void __fastcall txtIDChange(TObject *Sender);
+	void __fastcall txtAddEmployeeClick(TObject *Sender);
 private:	// User declarations
+	TFEmployee* frmEmployee;
+	// коды из таблиц соответствующих справочников
+	int idContract, idPost, idCouncil;
 public:		// User declarations
 	__fastcall TFStaff(TComponent* Owner);
 };

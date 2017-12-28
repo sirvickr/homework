@@ -99,6 +99,11 @@ __published:	// IDE-managed Components
 	TQRExpr *QRExpr6;
 	TQRLabel *QRLabel23;
 	TQRLabel *QRLabel24;
+	TDataSource *srcEmployee;
+	TADOQuery *adoEmployee;
+	TADOCommand *adoCmd;
+	TADOQuery *adoFullStaff;
+	TDataSource *srcFullStaff;
 	void __fastcall cmdExitClick(TObject *Sender);
 	void __fastcall cmdStaffClick(TObject *Sender);
 	void __fastcall cmdDirClick(TObject *Sender);

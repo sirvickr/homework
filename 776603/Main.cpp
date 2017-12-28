@@ -53,6 +53,10 @@ void __fastcall TFMain::cmdStaffClick(TObject *Sender)
 {
 	// создаём фрейм (подчинённую форму)
 	TFStaff* frame = new TFStaff(NULL);
+	#if 0
+	frame->tblMain->DataSource = srcFullStaff;
+	frame->dbnMain->DataSource = srcFullStaff;
+	#else
 	// загружаем данные из базы в ADOTable
 	//adoPost->Active = true;
 	adoTable->Active = false;
@@ -63,6 +67,7 @@ void __fastcall TFMain::cmdStaffClick(TObject *Sender)
 	// подключаем элементы интерфейса к источнику данных
 	frame->tblMain->DataSource = dataSource;
 	frame->dbnMain->DataSource = dataSource;
+	#endif
 	// отображаем созданный фрейм
 	AddFrame(frame);
 }
@@ -103,4 +108,5 @@ void __fastcall TFMain::DelFrame()
 	}
 }
 //---------------------------------------------------------------------------
+
 

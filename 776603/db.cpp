@@ -14,6 +14,8 @@ USEFORM("Council.cpp", FCouncil); /* TFrame: File Type */
 USEFORM("Practice.cpp", FPractice); /* TFrame: File Type */
 USEFORM("Ranks.cpp", FRanks); /* TFrame: File Type */
 USEFORM("Subj.cpp", FSubj); /* TFrame: File Type */
+USEFORM("Employee.cpp", FEmployee); /* TFrame: File Type */
+USEFORM("EditEmployee.cpp", FEditEmployee);
 //---------------------------------------------------------------------------
 WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
@@ -21,6 +23,7 @@ WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	{
 		Application->Initialize();
 		Application->CreateForm(__classid(TFMain), &FMain);
+		Application->CreateForm(__classid(TFEditEmployee), &FEditEmployee);
 		Application->Run();
 	}
 	catch (Exception &exception)

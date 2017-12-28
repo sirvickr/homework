@@ -1,32 +1,32 @@
 object FStaff: TFStaff
   Left = 0
   Top = 0
-  Width = 925
-  Height = 685
+  Width = 878
+  Height = 668
   Align = alClient
   TabOrder = 0
   object pnlMain: TPanel
     Left = 0
     Top = 0
-    Width = 632
-    Height = 685
+    Width = 585
+    Height = 668
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 0
     object dbnMain: TDBNavigator
       Left = 0
-      Top = 660
-      Width = 632
+      Top = 643
+      Width = 585
       Height = 25
-      VisibleButtons = [nbFirst, nbPrior, nbNext, nbLast, nbDelete, nbRefresh]
+      VisibleButtons = [nbFirst, nbPrior, nbNext, nbLast, nbDelete]
       Align = alBottom
       TabOrder = 0
     end
     object tblMain: TDBGrid
       Left = 0
       Top = 0
-      Width = 632
-      Height = 660
+      Width = 585
+      Height = 643
       Align = alClient
       ReadOnly = True
       TabOrder = 1
@@ -81,30 +81,16 @@ object FStaff: TFStaff
     end
   end
   object pnlDetails: TPanel
-    Left = 632
+    Left = 585
     Top = 0
     Width = 293
-    Height = 685
+    Height = 668
     Align = alRight
     BevelOuter = bvNone
     TabOrder = 1
-    object txtPerson: TDBText
-      Left = 8
-      Top = 8
-      Width = 225
-      Height = 25
-      DataField = #1060#1048#1054
-      DataSource = FMain.dataSource
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clTeal
-      Font.Height = -19
-      Font.Name = 'MS Sans Serif'
-      Font.Style = [fsBold]
-      ParentFont = False
-    end
     object GroupBox1: TGroupBox
       Left = 0
-      Top = 41
+      Top = 113
       Width = 293
       Height = 112
       Caption = #1055#1086#1076#1075#1086#1090#1086#1074#1082#1072' '#1088#1072#1079#1088#1103#1076#1085#1080#1082#1086#1074
@@ -149,7 +135,7 @@ object FStaff: TFStaff
     end
     object GroupBox2: TGroupBox
       Left = 0
-      Top = 160
+      Top = 232
       Width = 293
       Height = 145
       Caption = #1056#1091#1082#1086#1074#1086#1076#1089#1090#1074#1086' '#1087#1088#1072#1082#1090#1080#1082#1086#1081
@@ -212,7 +198,7 @@ object FStaff: TFStaff
     end
     object GroupBox3: TGroupBox
       Left = 0
-      Top = 312
+      Top = 384
       Width = 289
       Height = 137
       Caption = #1055#1088#1086#1074#1077#1088#1082#1072' '#1088#1072#1073#1086#1090
@@ -261,6 +247,100 @@ object FStaff: TFStaff
             Visible = True
           end>
       end
+    end
+    object txtAddEmployee: TButton
+      Left = 8
+      Top = 536
+      Width = 137
+      Height = 33
+      Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1089#1086#1090#1088#1091#1076#1085#1080#1082#1072
+      TabOrder = 4
+      OnClick = txtAddEmployeeClick
+    end
+    object txtPost: TDBEdit
+      Left = 16
+      Top = 80
+      Width = 121
+      Height = 21
+      DataField = #1044#1086#1083#1078#1085#1086#1089#1090#1100
+      DataSource = FMain.srcEmployee
+      ReadOnly = True
+      TabOrder = 5
+    end
+    object txtCouncil: TDBEdit
+      Left = 144
+      Top = 80
+      Width = 121
+      Height = 21
+      DataField = #1052#1077#1090#1086#1076#1080#1095#1077#1089#1082#1080#1081' '#1089#1086#1074#1077#1090
+      DataSource = FMain.srcEmployee
+      ReadOnly = True
+      TabOrder = 6
+    end
+    object txtPatronimic: TDBEdit
+      Left = 16
+      Top = 56
+      Width = 121
+      Height = 21
+      DataField = #1054#1090#1095#1077#1089#1090#1074#1086
+      DataSource = FMain.srcEmployee
+      ReadOnly = True
+      TabOrder = 7
+    end
+    object txtContract: TDBEdit
+      Left = 144
+      Top = 56
+      Width = 121
+      Height = 21
+      DataField = #1053#1072#1079#1074#1072#1085#1080#1077
+      DataSource = FMain.srcEmployee
+      TabOrder = 8
+    end
+    object txtName: TDBEdit
+      Left = 16
+      Top = 32
+      Width = 121
+      Height = 21
+      DataField = #1048#1084#1103
+      DataSource = FMain.srcEmployee
+      ReadOnly = True
+      TabOrder = 9
+    end
+    object txtHireDate: TDBEdit
+      Left = 144
+      Top = 32
+      Width = 121
+      Height = 21
+      DataField = #1044#1072#1090#1072#1053#1072#1081#1084#1072
+      DataSource = FMain.srcEmployee
+      TabOrder = 10
+    end
+    object txtSurname: TDBEdit
+      Left = 16
+      Top = 8
+      Width = 121
+      Height = 21
+      DataField = #1060#1072#1084#1080#1083#1080#1103
+      DataSource = FMain.srcEmployee
+      ReadOnly = True
+      TabOrder = 11
+    end
+    object txtBirthDate: TDBEdit
+      Left = 144
+      Top = 8
+      Width = 121
+      Height = 21
+      DataField = #1044#1072#1090#1072#1056#1086#1078#1076#1077#1085#1080#1103
+      DataSource = FMain.srcEmployee
+      TabOrder = 12
+    end
+    object Button1: TButton
+      Left = 8
+      Top = 592
+      Width = 75
+      Height = 25
+      Caption = 'Button1'
+      TabOrder = 13
     end
   end
 end
