@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
@@ -34,30 +36,30 @@ void newDog() {                                                    // добавление
 
 void Edit() {                                                           // редактирование информации
     char str[100];
-    int flag = -1;                                                                  // вспомогательный флаг, с помошьдю которого поймем, нашли ли мы нужную собаку
     cout << endl << "Введите кличку собаки информацию о которой нужно изменить: ";  // вводим имя нужного собаки
     cin.sync();
     cin.getline(str, 50);
-    for (int i = 0; i < current; i++) {                                             // проходим по всей базе
+    int i;
+    for (i = 0; i < current; i++) {                                             // проходим по всей базе
         cout << dogs_database[i].name;
         if ((strcmp(str, dogs_database[i].name) == 0)) {                            // сравниваем введенную строку с текущей
-            flag = i;                                                               // если находим совпадение, то запоминаем его индекс
+            break;                                                               // если находим совпадение, сразу выходим
         }
     }
-    if (flag == -1) {                                                               // проверяем, нашли ли собаку
-        cout << "Собака не найдена" << endl;                                       // иначе пишем, что не нашли
-    } else {
-    cout << "Введите новую породу собаки: ";                                        // считываем все поля, заносим в структуру
-    cin.sync();
-    cin.getline(dogs_database[current].kind, 50);
-    cout << "Введите новую кличку: ";
-    cin.sync();
-    cin.getline(dogs_database[current].name, 50);
-    cout << "Введите новую дату рождения: ";
-    cin >> dogs_database[current].date;
-    cout << "Введите новую информацию о медалях(золото, серебро, бронза, через пробел): ";
-    cin.sync();
-    cin.getline(dogs_database[current].medals, 50);
+    if (i < current) {                                                               // проверяем, нашли ли собаку
+	    cout << "Введите новую породу собаки: ";                                     // считываем все поля, заносим в структуру
+	    cin.sync();
+	    cin.getline(dogs_database[i].kind, 50);
+	    cout << "Введите новую кличку: ";
+	    cin.sync();
+	    cin.getline(dogs_database[i].name, 50);
+	    cout << "Введите новую дату рождения: ";
+	    cin >> dogs_database[i].date;
+	    cout << "Введите новую информацию о медалях(золото, серебро, бронза, через пробел): ";
+	    cin.sync();
+	    cin.getline(dogs_database[i].medals, 50);
+	} else {
+	    cout << "Собака не найдена" << endl;                                       // иначе пишем, что не нашли
     }
 }
 
@@ -93,19 +95,42 @@ void fileIn() {
     char buf[30];
     cout << endl << "Введите имя файла для считывания информации: " << endl;
     cin >> buf;
-    FILE *file = fopen(buf, "r");                                                     // открываем файл
-    while (!feof(file)) {                                                           // читаем информацию из файла
-        fscanf(file, "%s\n", dogs_database[current].kind);
-        fscanf(file, "%s\n", dogs_database[current].name);
-        fscanf(file, "%d\n", &dogs_database[current].date);
-        fscanf(file, "%s\n", dogs_database[current].medals);
-        cout << dogs_database[current].kind << " " << current << endl;
-        cout << dogs_database[current].name << " " << current << endl;
-        cout << dogs_database[current].date << " " << current << endl;
-        cout << dogs_database[current].medals << " " << current << endl;
-        current++;                                                                  // увеличиваем кол-во записей
-    }
-    fclose(file);                                                                   // закрываем файл
+    ifstream file(buf, ios_base::in);                                              // открываем файл
+    if(file) {
+    	string line;
+    	int index = 0;
+    	while(getline(file, line)) {                                              // читаем информацию из файла
+    		istringstream iss(line);
+			index++;
+    		switch(index) {
+			case 1:
+	    		strcpy(dogs_database[current].kind, line.c_str());
+    			cout << " kind = '" << dogs_database[current].kind << "'" << endl;
+				break;
+			case 2:
+	    		strcpy(dogs_database[current].name, line.c_str());
+    			cout << " name = '" << dogs_database[current].name << "'" << endl;
+				break;
+			case 3:
+	    		iss >> dogs_database[current].date;
+    			cout << " date = '" << dogs_database[current].date << "'" << endl;
+				break;
+			case 4:
+	    		strcpy(dogs_database[current].medals, line.c_str());
+				current++;
+				index = 0;
+				break;
+			}
+		} // while()
+		cout << "#\tkind\tname\tdate\tmedals" << endl;
+	    for (int i = 0; i < current; i++) {                                             // проходим по базе данных
+   			cout << "[" << i << "]\t" << dogs_database[i].kind 
+			   << "\t" << dogs_database[i].name 
+			   << "\t" << dogs_database[i].date 
+			   << "\t" << dogs_database[i].medals 
+			   << endl;
+	    }
+	}
 }
 
 void List() {                                                                  // показать список собак определенной породы с золотыми медалями
@@ -129,16 +154,17 @@ void solveTask() {                                                              
     int avg = 0;
     float res = 0;
     for (int i = 0; i < current; i++) {                                             // проходим по базе
-        avg = avg + 2018 - dogs_database[i].date;                                   // считаем кол-во лет для каждой собаки(текущий год - дата рождения), суммируем
-        cout << dogs_database[i].date << " " << current << endl;
+    	int age = 2018 - dogs_database[i].date;         // считаем кол-во лет для каждой собаки(текущий год - дата рождения)
+        avg += age;                                   // суммируем
+        cout << dogs_database[i].date << " " << age << endl;
     }
-    res = avg / current;                                                            // считаем среднее аримфметическое, выводим
+    res = float(avg) / current;                                                            // считаем среднее аримфметическое, выводим
     cout << "Средний возраст равен: " << res;
 }
 
-
 int main() {
-    //system("chcp 1251");                        // для поддержки русского языка в консоли
+	int counter = 0;
+    system("chcp 1251");                        // для поддержки русского языка в консоли
     setlocale(LC_ALL, "RUS");                   // установка русского языка
     int menu = 0;
     while (menu != 8) {
@@ -176,6 +202,10 @@ int main() {
         if (menu == 7) {
             solveTask();
         }
+        if(counter++ == 10) {
+        	cout << "emergency exit" << endl;
+        	break;
+		}
     }
     return 0;
 }
