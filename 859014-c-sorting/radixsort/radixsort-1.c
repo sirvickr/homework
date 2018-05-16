@@ -3,11 +3,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-typedef union Int32 {
-	int x;
-	unsigned char bytes[4];
-} Int32;
-
 // размер статического массива
 #define ARRAY_LENGTH(ARR) (sizeof ARR / sizeof *ARR)
 // случайное число в интервале [A, B]

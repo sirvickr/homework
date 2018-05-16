@@ -15,26 +15,28 @@ typedef struct ArrayItem {
 	unsigned int digit;
 } ArrayItem;
 
+// основание системы счисления
 #define RADIX 10
-
-static unsigned  A[10] = { 12, 10, 45, 29, 74, 32, 11, 47, 22, 27 };
-static ArrayItem B[10];
-
-RadixItem radix[RADIX] = {0};
 
 // размер статического массива
 #define ARRAY_LENGTH(ARR) (sizeof ARR / sizeof *ARR)
-// случайное число в интервале [A, B]
-#define RAND_RANGE(A,B) (A + rand() / (RAND_MAX / (B - A + 1) + 1));
+
+// массив исходных данных
+static unsigned  A[10] = { 12, 10, 45, 29, 74, 32, 11, 47, 22, 27 };
+// вспомогательный массив для копирования исходных данных
+static ArrayItem B[ARRAY_LENGTH(A)];
+// вспомогательный массив для параметров сортировки
+static RadixItem radix[RADIX] = {0};
 
 int main(int argc, char* argv[]) {
 
 	size_t i, j;
 	
 	printf("A:");
-	for (i = 0; i < ARRAY_LENGTH(A); i++) {
-		printf("%d%c", A[i], i + 1 < ARRAY_LENGTH(A) ? ' ' : '\n');
-	}
+	for (i = 0; i < ARRAY_LENGTH(A); i++)
+		printf("%d ", A[i]);
+	printf("\n");
+
 	int rCurr = 1, rNext; // текущий и следующий разряды
 	int r;
 	for (j = 0; j < 2; j++) {
@@ -70,9 +72,9 @@ int main(int argc, char* argv[]) {
 		}
 		
 		printf("A:");
-		for (i = 0; i < ARRAY_LENGTH(A); i++) {
-			printf("%d%c", A[i], i + 1 < ARRAY_LENGTH(A) ? ' ' : '\n');
-		}
+		for (i = 0; i < ARRAY_LENGTH(A); i++)
+			printf("%d ", A[i]);
+		printf("\n");
 		
 		rCurr = rNext;
 	}

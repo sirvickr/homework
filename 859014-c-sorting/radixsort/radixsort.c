@@ -113,38 +113,41 @@ static void radix_sort(int *a, const size_t len) {
 	// сортируем полученный массив беззнаковых целых
 	radix_sort_u(x, len);
 
+	// возвращаем знаковый бит, т.е.возвращаем исходные значения со знаком
 	for (i = 0; i < len; i++) {
 		x[i] ^= INT_MIN;
 	}
-
-	// возвращаем знаковый бит, т.е.возвращаем исходные значения со знаком
-	print_array(a, len, "", "%d ");
 }
 
 int main(int argc, char* argv[]) {
-	size_t len, i;
-	if (argc < 3) {
-		fprintf(stderr, "expecting array size and items\n");
+	int len, i;
+	
+	//printf("input len: ");
+	scanf("%d", &len);
+	if (len <= 0) {
+		fprintf(stderr, "length must be positive value\n");
 		return 1;
 	}
-	len = (size_t)atoi(argv[1]);
-	if (argc < len + 2) {
-		fprintf(stderr, "not all array items specified\n");
-		return 2;
-	}
-	// похоже, что данные введены корректно, выделяем память и заполняем исходный массив
+
+	// похоже, что данные введены корректно, выделяем память под исходный массив
 	int *a = (int*)malloc(len * sizeof(int));
 	if (a == NULL) {
 		fprintf(stderr, "failed to allocate memory for source array\n");
-		return 3;
+		return 2;
 	}
 	
+	// заполняем его из стандартного потока ввода
 	for (i = 0; i < len; i++) {
-		a[i] = atoi(argv[i + 2]);
+		//printf("input a[%d]: ", i);
+		scanf("%d", &a[i]);
 	}
-
+	
 	radix_sort(a, len);
 	
+	// выводим результат
+	print_array(a, len, "", "%d ");
+
+	// освобождаем память исходного массива
 	free(a);
 	
 	return 0;

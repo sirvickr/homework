@@ -18,14 +18,10 @@ static void swap(char** a, char** b) {
 	*b = s;
 }
 
-static int strjoin(const char* first, size_t n, char* b, size_t m, char* result, int res_size) {
+static int intersection_count(const char* a, size_t n, const char* b, size_t m) {
+	int count = 0;
 	int i, j, start;
-	int count = 0; // длина общей подстроки
-
-	char* a = (char*)malloc((n + 1) * sizeof(char));
-	strcpy(a, first);
-	//printf("strjoin: %s %s (%s size %d)\n", a, b, result, res_size);
-	
+	//printf(" intersection_count: %s %s\n", a, b);
 	for (start = 0; start < m; start++) {
 		//printf(" %c", b[start]);
 		if(a[0] == b[start]) {
@@ -46,7 +42,19 @@ static int strjoin(const char* first, size_t n, char* b, size_t m, char* result,
 		}
 		//printf("\n");
 	}
-	//printf("\ncount = %d\n", count);
+	return count;
+}
+
+static int strjoin(const char* first, size_t n, char* b, size_t m, char* result, int res_size) {
+	int i, j, start;
+	int count = 0; // длина общей подстроки
+
+	char* a = (char*)malloc((n + 1) * sizeof(char));
+	strcpy(a, first);
+	//printf("strjoin: %s %s (%s size %d)\n", a, b, result, res_size);
+	
+	count = intersection_count(a, n, b, m);
+	//printf("count = %d\n", count);
 	int total = m + n - count;
 	if(count > 0) {
 		//printf("total = %d\n", total);
