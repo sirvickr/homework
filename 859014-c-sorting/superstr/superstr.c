@@ -19,8 +19,8 @@ static void swap(char** a, char** b) {
 }
 
 static int intersection_count(const char* a, size_t n, const char* b, size_t m) {
-	int count = 0;
 	int i, j, start;
+	int count = 0;
 	//printf(" intersection_count: %s %s\n", a, b);
 	for (start = 0; start < m; start++) {
 		//printf(" %c", b[start]);
@@ -47,22 +47,34 @@ static int intersection_count(const char* a, size_t n, const char* b, size_t m) 
 
 static int strjoin(const char* first, size_t n, char* b, size_t m, char* result, int res_size) {
 	int i, j, start;
-	int count = 0; // длина общей подстроки
+	// длина общей подстроки
+	int count, counts[2] = {0, 0};
 
 	char* a = (char*)malloc((n + 1) * sizeof(char));
 	strcpy(a, first);
-	//printf("strjoin: %s %s (%s size %d)\n", a, b, result, res_size);
-	
-	count = intersection_count(a, n, b, m);
-	//printf("count = %d\n", count);
+	//printf("strjoin: %s (%u) %s (%u): %s size %d\n", a, n, b, m, result, res_size);
+
+	// проверяем глубину стыковки первого слова в конец второго
+	counts[0] = intersection_count(a, n, b, m);
+	// проверяем глубину стыковки второго слова в конец первого
+	counts[1] = intersection_count(b, m, a, n);
+	// выбираем наиболее подходящую стыковку
+	if(counts[0] >= counts[1])
+		count = counts[0];
+	else
+		count = counts[1];
 	int total = m + n - count;
-	if(count > 0) {
-		//printf("total = %d\n", total);
-		if(total > res_size) {
+	//printf("\ncounts = %d %d count %d total %d\n", counts[0], counts[1], count, total);
+	if(total > 0) {
+		if(total > res_size)
 			result = (char*)realloc(result, (total + 1) * sizeof(char));
+		if(counts[0] >= counts[1]) {
+			strcpy(result, b);
+			strncat(result, a + count, n - count);
+		} else {
+			strcpy(result, a);
+			strncat(result, b + count, m - count);
 		}
-		strcpy(result, b);
-		strncat(result, a + count, n - count);
 	}
 	free(a);
 	//printf("result = %s\n", result);
