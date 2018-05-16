@@ -7,11 +7,13 @@
 #define HEAP_LEFT( i )		( ( ( ( ( i ) + 1 ) << 1 ) + 0 ) - 1 )
 #define HEAP_RIGHT( i )		( ( ( ( ( i ) + 1 ) << 1 ) + 1 ) - 1 )
 
+typedef int (*compare_t)(const void* a, const void* b);
+
 static void print_array(char **a, const size_t len, const char *legend) {
 	size_t i;
-	printf(legend);
+	printf("%s", legend);
 	for (i = 0; i < len; i++)
-		printf("\"%s\" ", a[i]);
+		printf("%s ", a[i]);
 	printf("\n");
 }
 
@@ -35,38 +37,38 @@ static void str_swap(char** a, char** b) {
 	*b = s;
 }
 
-static void fix_down( ITEM_TYPE* a, int n, int i )
+static void fix_down(ITEM_TYPE* a, int n, int i,  compare_t compare)
 {
 	int l, r, largest;
-	l = HEAP_LEFT( i );
-	r = HEAP_RIGHT( i );
-	if ( l < n && compare_a_count( a[ l ], a[ i ] ) > 0 )
+	l = HEAP_LEFT(i);
+	r = HEAP_RIGHT(i);
+	if (l < n && compare(a[l], a[i]) > 0)
 		largest = l;
 	else
 		largest = i;
-	if ( r < n && compare_a_count( a[ r ], a[ largest ] ) > 0 )
+	if (r < n && compare(a[r], a[largest]) > 0)
 		largest = r;
-	if ( largest != i ) {
-		str_swap( &a[ largest ], &a[ i ] );
-		fix_down( a, n, largest );
+	if (largest != i) {
+		str_swap(&a[largest], &a[i]);
+		fix_down(a, n, largest, compare);
 	}
 }
 
-static void build_heap( ITEM_TYPE* a, int n )
+static void build_heap(ITEM_TYPE* a, int n, compare_t compare)
 {
-	for ( int i = ( n >> 1 ) - 1; i >= 0; i-- ) {
-		fix_down( a, n, i );
+	for (int i = (n >> 1) - 1; i >= 0; i--) {
+		fix_down(a, n, i, compare);
 	}
 }
 
-//static void hsort(void* base, int nel, int width, int (*compare)(const void* a, const void* b))
-static void hsort(ITEM_TYPE* base, int nel, int width, int (*compare)(const void* a, const void* b))
+//static void hsort(void* base, int nel, int width, compare_t compare)
+static void hsort(ITEM_TYPE* base, int nel, int width, compare_t compare)
 {
-	build_heap( base, nel );
-	for ( int i = nel - 1; i > 0; i-- ) {
-		str_swap( &base[ 0 ], &base[ i ] );
+	build_heap(base, nel, compare);
+	for (int i = nel - 1; i > 0; i--) {
+		str_swap(&base[0], &base[i]);
 		nel--;
-		fix_down( base, nel, 0 );
+		fix_down(base, nel, 0, compare);
 	}
 }
 
