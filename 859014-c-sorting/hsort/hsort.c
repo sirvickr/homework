@@ -56,7 +56,8 @@ static void fix_down(ITEM_TYPE* a, int n, int i,  compare_t compare)
 
 static void build_heap(ITEM_TYPE* a, int n, compare_t compare)
 {
-	for (int i = (n >> 1) - 1; i >= 0; i--) {
+	int i;
+	for (i = (n >> 1) - 1; i >= 0; i--) {
 		fix_down(a, n, i, compare);
 	}
 }
@@ -64,8 +65,9 @@ static void build_heap(ITEM_TYPE* a, int n, compare_t compare)
 //static void hsort(void* base, int nel, int width, compare_t compare)
 static void hsort(ITEM_TYPE* base, int nel, int width, compare_t compare)
 {
+	int i;
 	build_heap(base, nel, compare);
-	for (int i = nel - 1; i > 0; i--) {
+	for (i = nel - 1; i > 0; i--) {
 		str_swap(&base[0], &base[i]);
 		nel--;
 		fix_down(base, nel, 0, compare);
