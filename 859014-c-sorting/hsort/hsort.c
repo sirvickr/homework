@@ -9,6 +9,8 @@
 
 typedef int (*compare_t)(const void* a, const void* b);
 
+static char swap_buff[sizeof(ITEM_TYPE)];
+
 static void print_array(char **a, const size_t len, const char *legend) {
 	size_t i;
 	printf("%s", legend);
@@ -28,37 +30,38 @@ static int calc_a_count(const char* s) {
 }
 
 static int compare_a_count(const void* a, const void* b) {
-	return calc_a_count((const char*)a) - calc_a_count((const char*)b);
+	return calc_a_count(*(const char**)a) - calc_a_count(*(const char**)b);
 }
 
-static void str_swap(char** a, char** b) {
-	char* s = *a;
-	*a = *b;
-	*b = s;
+static void mem_swap(void* a, void* b, size_t size, void* temp_buff) {
+	memcpy(temp_buff, a, size);
+	memcpy(a, b, size);
+	memcpy(b, temp_buff, size);
 }
 
-static void fix_down(ITEM_TYPE* a, int n, int i,  compare_t compare)
+static void fix_down(ITEM_TYPE* base, int n, int width, int i,  compare_t compare)
 {
+	char* bytes = (char*)base;
 	int l, r, largest;
 	l = HEAP_LEFT(i);
 	r = HEAP_RIGHT(i);
-	if (l < n && compare(a[l], a[i]) > 0)
+	if (l < n && compare(&bytes[l * width], &bytes[i * width]) > 0)
 		largest = l;
 	else
 		largest = i;
-	if (r < n && compare(a[r], a[largest]) > 0)
+	if (r < n && compare(&bytes[r * width], &bytes[largest * width]) > 0)
 		largest = r;
 	if (largest != i) {
-		str_swap(&a[largest], &a[i]);
-		fix_down(a, n, largest, compare);
+		mem_swap(bytes + largest * width, bytes + i * width, width, swap_buff);
+		fix_down(base, n, width, largest, compare);
 	}
 }
 
-static void build_heap(ITEM_TYPE* a, int n, compare_t compare)
+static void build_heap(ITEM_TYPE* a, int n, int width, compare_t compare)
 {
 	int i;
 	for (i = (n >> 1) - 1; i >= 0; i--) {
-		fix_down(a, n, i, compare);
+		fix_down(a, n, width, i, compare);
 	}
 }
 
@@ -66,11 +69,11 @@ static void build_heap(ITEM_TYPE* a, int n, compare_t compare)
 static void hsort(ITEM_TYPE* base, int nel, int width, compare_t compare)
 {
 	int i;
-	build_heap(base, nel, compare);
+	build_heap(base, nel, width, compare);
 	for (i = nel - 1; i > 0; i--) {
-		str_swap(&base[0], &base[i]);
+		mem_swap(base, (char*)base + i * width, width, swap_buff);
 		nel--;
-		fix_down(base, nel, 0, compare);
+		fix_down(base, nel, width, 0, compare);
 	}
 }
 
@@ -111,7 +114,7 @@ int main(int argc, char* argv[]) {
 	if (error == 0) {
 
 		//print_array(a, len, "input: ");
-		hsort(a, len, sizeof(char*), compare_a_count);
+		hsort(a, len, sizeof(ITEM_TYPE), compare_a_count);
 		
 		// выводим результат
 		print_array(a, len, "");
