@@ -1,14 +1,14 @@
 object FStaff: TFStaff
   Left = 0
   Top = 0
-  Width = 878
+  Width = 882
   Height = 668
   Align = alClient
   TabOrder = 0
   object pnlMain: TPanel
     Left = 0
     Top = 0
-    Width = 585
+    Width = 589
     Height = 668
     Align = alClient
     BevelOuter = bvNone
@@ -16,16 +16,16 @@ object FStaff: TFStaff
     object dbnMain: TDBNavigator
       Left = 0
       Top = 643
-      Width = 585
+      Width = 589
       Height = 25
-      VisibleButtons = [nbFirst, nbPrior, nbNext, nbLast, nbDelete]
+      VisibleButtons = [nbFirst, nbPrior, nbNext, nbLast]
       Align = alBottom
       TabOrder = 0
     end
     object tblMain: TDBGrid
       Left = 0
       Top = 0
-      Width = 585
+      Width = 589
       Height = 643
       Align = alClient
       ReadOnly = True
@@ -81,7 +81,7 @@ object FStaff: TFStaff
     end
   end
   object pnlDetails: TPanel
-    Left = 585
+    Left = 589
     Top = 0
     Width = 293
     Height = 668
@@ -334,13 +334,14 @@ object FStaff: TFStaff
       DataSource = FMain.srcEmployee
       TabOrder = 12
     end
-    object Button1: TButton
-      Left = 8
-      Top = 592
-      Width = 75
-      Height = 25
-      Caption = 'Button1'
+    object cmdDelEmployee: TButton
+      Left = 152
+      Top = 536
+      Width = 137
+      Height = 33
+      Caption = #1059#1076#1072#1083#1080#1090#1100' '#1089#1086#1090#1088#1091#1076#1085#1080#1082#1072
       TabOrder = 13
+      OnClick = cmdDelEmployeeClick
     end
   end
 end

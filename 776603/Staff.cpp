@@ -121,3 +121,14 @@ void __fastcall TFStaff::txtAddEmployeeClick(TObject *Sender)
 	}
 }
 //---------------------------------------------------------------------------
+void __fastcall TFStaff::cmdDelEmployeeClick(TObject *Sender)
+{
+	if(txtID->Text.Trim().IsEmpty())
+		return;
+	FMain->adoCmd->CommandText = "DELETE FROM Сотрудник WHERE КодСотрудник = " + txtID->Text;
+	FMain->adoCmd->Execute();
+	tblMain->DataSource->DataSet->Active = false;
+	tblMain->DataSource->DataSet->Active = true;
+}
+//---------------------------------------------------------------------------
+

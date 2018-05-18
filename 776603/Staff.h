@@ -41,9 +41,10 @@ __published:	// IDE-managed Components
 	TDBEdit *txtHireDate;
 	TDBEdit *txtSurname;
 	TDBEdit *txtBirthDate;
-	TButton *Button1;
+	TButton *cmdDelEmployee;
 	void __fastcall txtIDChange(TObject *Sender);
 	void __fastcall txtAddEmployeeClick(TObject *Sender);
+	void __fastcall cmdDelEmployeeClick(TObject *Sender);
 private:	// User declarations
 	TFEmployee* frmEmployee;
 	// коды из таблиц соответствующих справочников

@@ -28,9 +28,6 @@ __published:	// IDE-managed Components
 	TLabel *Label6;
 	TLabel *Label7;
 	TLabel *Label8;
-	TListView *lvwRanks;
-	TListView *lvwPractice;
-	TListView *ListView1;
 	TButton *cmdOK;
 	TButton *cmdCancel;
 	TADOQuery *adoEmployee;
