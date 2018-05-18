@@ -5,6 +5,8 @@
 
 #include <string>
 
+class Province;
+
 class Animal {
 public:
 	Animal(const std::string& kind, double weight);
@@ -21,16 +23,27 @@ public:
 		return weight;
 	}
 
+	inline void Home(Province* value) {
+		home = value;
+	}
+	inline Province* Home() const {
+		return home;
+	}
+
+	virtual void Display() const = 0;
+
+	static size_t InstanceCount();
+
 protected:
 	// вид
-	const std::string& kind;
+	std::string kind;
 	// вес
 	double weight;
+	//
+	Province* home;
 
 private:
-	static const size_t MAX_ANIMALS_COUNT = 20;
-	static Animal* animals[MAX_ANIMALS_COUNT];
-	static size_t animalsCount;
+	static size_t instCount;
 
 };
 

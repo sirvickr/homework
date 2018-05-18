@@ -11,7 +11,8 @@ public:
 	virtual ~Country();
 
 	// override: наследуемый метод об€зан быть объ€вленным в базовом классе
-	void Display() override;
+	void Display(bool brief) const override;
+
 };
 
 #endif /* COUNTRY_H_ */

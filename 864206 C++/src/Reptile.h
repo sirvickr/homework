@@ -8,8 +8,21 @@
 class Reptile: public Animal {
 public:
 	Reptile();
-	Reptile(const std::string& kind, double weight = 0.0);
+	Reptile(const std::string& kind, double weight, bool toxic);
 	virtual ~Reptile();
+
+	inline void Toxic(bool value) {
+		toxic = value;
+	}
+	inline bool Toxic() const {
+		return toxic;
+	}
+
+	// override: наследуемый метод об€зан быть объ€вленным в базовом классе
+	void Display() const override;
+
+private:
+	bool toxic;
 };
 
 #endif /* REPTILE_H_ */

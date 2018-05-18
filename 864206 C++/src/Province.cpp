@@ -10,6 +10,8 @@ Province::Province(const std::string& name) : Region(name) {
 Province::~Province() {
 }
 
-void Province::Display() {
-	cout << "Отображение на карте: " << name << " (" << kind << ")" << endl;;
+void Province::Display(bool brief) const {
+	if(!brief)
+		cout << "Область:";
+	cout << " " << name << endl;
 }
