@@ -19,7 +19,7 @@ object FView: TFView
   TextHeight = 13
   object tmrView: TTimer
     Enabled = False
-    Interval = 100
+    Interval = 50
     OnTimer = tmrViewTimer
   end
 end

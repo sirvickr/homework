@@ -39,7 +39,7 @@ void __fastcall TFMain::FormCreate(TObject *Sender)
 	double alpha = (rand() % 60) - 30;
 	if(GetPrivateProfileString("common", "alpha", FloatToStr(alpha).c_str(), szTemp, MAX_PATH, iniFileName.c_str()))
 		alpha = StrToFloatDef(szTemp, alpha);
-	txtAlpha->Text = FloatToStr(int(alpha * 100.0 + 0.5) / 100.0);
+	txtAlpha->Text = FloatToStr(Round(alpha));
 
 	double angle = alpha * M_PI / 180.0; // градусы -> радианы
 	double n = 1.0, h;
@@ -47,17 +47,15 @@ void __fastcall TFMain::FormCreate(TObject *Sender)
 	for(int i = 0; i < m; ++i) {
 		strI = IntToStr(i);
 
+		n = ((rand() % (int(TLayerConfig::maxN * 100 - TLayerConfig::minN * 100))) + TLayerConfig::minN * 100) / 100.0;
 		if(GetPrivateProfileString(strI.c_str(), "n", "", szTemp, MAX_PATH, iniFileName.c_str()))
-			n = StrToFloat(szTemp);
-		else
-			n = ((rand() % (int(TLayerConfig::maxN * 100 - TLayerConfig::minN * 100))) + TLayerConfig::minN * 100) / 100.0;
+			n = StrToFloatDef(szTemp, n);
 
+		h = ((rand() % (int(TLayerConfig::maxH * 100 - TLayerConfig::minH * 100))) + TLayerConfig::minH * 100) / 100.0;
 		if(GetPrivateProfileString(strI.c_str(), "h", "", szTemp, MAX_PATH, iniFileName.c_str()))
-			h = StrToFloat(szTemp);
-		else
-			h = ((rand() % (int(TLayerConfig::maxH * 100 - TLayerConfig::minH * 100))) + TLayerConfig::minH * 100) / 100.0;
+			h = StrToFloatDef(szTemp, h);
 
-		layers.push_back(new TLayerConfig(pnlConfig, &txtAlphaChange, i, h, n/*, angle * 180.0 / M_PI*/));
+		layers.push_back(new TLayerConfig(pnlConfig, &txtAlphaChange, i, h, n));
 
 	}
 
@@ -77,7 +75,7 @@ void __fastcall TFMain::FormDestroy(TObject *Sender)
 		strVal = FloatToStr(item->getN());
 		WritePrivateProfileString(strI.c_str(), "n", strVal.c_str(), iniFileName.c_str());
 
-		strVal = FloatToStr(item->getH());
+		strVal = FloatToStr(item->getHsm());
 		WritePrivateProfileString(strI.c_str(), "h", strVal.c_str(), iniFileName.c_str());
 
 		delete item;
@@ -99,7 +97,7 @@ void __fastcall TFMain::RecalcLayers()
 			double nCurr = item->getN();
 			angle = asin(nPrev * sin(angle) / nCurr);
 			item->setAngle(angle);
-			double dx = item->getH() * tan(angle);
+			double dx = item->getHm() * tan(angle);
 			L += dx;
 
 			nPrev = nCurr;
@@ -107,7 +105,7 @@ void __fastcall TFMain::RecalcLayers()
 		nCurr = 1.0;
 		angle = asin(nPrev * sin(angle) / nCurr);
 		txtBeta->Text = FloatToStr(int(angle * 180.0 / M_PI * 100.0 + 0.5) / 100.0);
-		txtL->Text = FloatToStr(int(L * 100.0 + 0.5) / 100.0);
+		txtL->Text = FloatToStr(Round(L * 100));
 	} catch(Exception&) {
 	}
 }
@@ -115,10 +113,11 @@ void __fastcall TFMain::RecalcLayers()
 void __fastcall TFMain::cmdViewClick(TObject *Sender)
 {
 	if(FView) {
-		FView->Left = Left + Width * 5 / 6;
+		FView->Left = Left + Width - 20;
 		FView->Top = 20;
 		FView->Alpha(txtAlpha->Text.ToDouble() * M_PI / 180.0);
 		FView->Beta(txtBeta->Text.ToDouble() * M_PI / 180.0);
+		FView->L(txtL->Text.ToDouble());
 		FView->Layers(layers);
 		FView->ShowModal();
 	}

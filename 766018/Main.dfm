@@ -1,6 +1,6 @@
 object FMain: TFMain
-  Left = 223
-  Top = 250
+  Left = 187
+  Top = 174
   Width = 297
   Height = 577
   Caption = #1055#1088#1077#1083#1086#1084#1083#1077#1085#1080#1077
@@ -24,17 +24,24 @@ object FMain: TFMain
   end
   object Label1: TLabel
     Left = 8
-    Top = 512
+    Top = 514
     Width = 90
     Height = 13
     Caption = #1059#1075#1086#1083' '#1074#1099#1093#1086#1076#1072' '#1083#1091#1095#1072
   end
   object Label3: TLabel
-    Left = 168
-    Top = 512
-    Width = 54
+    Left = 157
+    Top = 514
+    Width = 69
     Height = 13
-    Caption = #1057#1084#1077#1097#1077#1085#1080#1077
+    Caption = #1057#1084#1077#1097#1077#1085#1080#1077' (L)'
+  end
+  object Label4: TLabel
+    Left = 24
+    Top = 24
+    Width = 32
+    Height = 13
+    Caption = 'Label4'
   end
   object pnlConfig: TPanel
     Left = 8
@@ -62,7 +69,7 @@ object FMain: TFMain
     OnClick = cmdViewClick
   end
   object txtBeta: TEdit
-    Left = 112
+    Left = 104
     Top = 512
     Width = 41
     Height = 21

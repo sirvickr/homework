@@ -22,10 +22,14 @@ __published:	// IDE-managed Components
 private:	// User declarations
 	static const int leftMargin = 10;
 	static const int topMargin = 50;
+	static const int rayInc = 10;
+	static const TColor BackColor = RGB(120, 120, 255);
 	typedef std::vector< TLayerConfig* > TLayers;
 	TLayers layers;
 	double rayLength;
-	double alpha, beta;
+	double alpha, beta, l;
+	// вспомогательная функция
+	void __fastcall Line(int x1, int y1, int x2, int y2, TColor color, TPenStyle style, int width = 1);
 public:		// User declarations
 	__fastcall TFView(TComponent* Owner);
 	void __fastcall Layers(const TLayers&);
@@ -40,6 +44,12 @@ public:		// User declarations
 	}
 	inline double __fastcall Beta() const {
 		return beta;
+	}
+	inline void __fastcall L(double value) {
+		l = value;
+	}
+	inline double __fastcall L() const {
+		return l;
 	}
 	double __fastcall DrawLayers();
 	double __fastcall DrawRay();

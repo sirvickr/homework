@@ -1,6 +1,8 @@
 #ifndef LayerConfigH
 #define LayerConfigH
 //---------------------------------------------------------------------------
+double Round(double value);
+//---------------------------------------------------------------------------
 class TLayerConfig
 {
 public:
@@ -10,12 +12,18 @@ public:
 	static const double maxH;
 	TLayerConfig(TWinControl* owner, Classes::TNotifyEvent OnChange,
 				int index, double h = 0.0, double n = 0.0);
+	inline int getIndex() const { return index; }
+	// показатель преломления слоя
 	double getN() const;
 	void setN(double value);
-	double getH() const; // в метрах
-	void setH(double value);
+	// высота слоя хранится в текстовом поле в см
+	double getHm() const; // в метрах
+	double getHsm() const; // в сантиметрах
+	void setHsm(double value); // в сантиметрах
+	// угол прохождния луча через слой
 	inline double getAngle() const { return angle; }
 	void setAngle(double value);
+	// характеристики отображения слоя
 	inline int getTop() const { return top; }
 	inline int getHeight() const { return height; }
 	inline int getBottom() const { return bottom; }
@@ -26,9 +34,6 @@ public:
 	}
 	//bool current;// временно, для подсветки
 private:
-	inline double Round(double value) const {
-		return int(value * 100.0 + 0.5) / 100.0;
-	}
 	int index;
 	// элементы управления настройками (удаляются владельцем)
 	TWinControl* owner;

@@ -20,6 +20,7 @@ __published:	// IDE-managed Components
 	TLabel *Label1;
 	TEdit *txtL;
 	TLabel *Label3;
+	TLabel *Label4;
 	void __fastcall FormCreate(TObject *Sender);
 	void __fastcall FormDestroy(TObject *Sender);
 	void __fastcall cmdViewClick(TObject *Sender);

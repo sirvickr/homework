@@ -9,8 +9,8 @@
 //---------------------------------------------------------------------------
 const double TLayerConfig::minN = 1.20;
 const double TLayerConfig::maxN = 4.70;
-const double TLayerConfig::minH = 0.01; // 1 см
-const double TLayerConfig::maxH = 0.20;
+const double TLayerConfig::minH = 1.0;//0.01; // 1 см
+const double TLayerConfig::maxH = 20.0;//0.20;
 //---------------------------------------------------------------------------
 TLayerConfig::TLayerConfig(TWinControl* owner, Classes::TNotifyEvent OnChange,
 							int index, double h, double n)
@@ -60,7 +60,7 @@ TLayerConfig::TLayerConfig(TWinControl* owner, Classes::TNotifyEvent OnChange,
 	txtH->Top = top[0];
 	txtH->Width = width; // gbxFrame->ClientWidth - leftBorder[1] - 20;
 	txtH->Hint = "Толщина " + IntToStr(index) + "-го слоя";
-	setH(h);
+	setHsm(h);
 	txtH->OnChange = OnChange;
 
 	lblA = new TLabel(owner);
@@ -95,12 +95,17 @@ void TLayerConfig::setN(double value)
 	txtN->Text = FloatToStr(Round(value));
 }
 //---------------------------------------------------------------------------
-double TLayerConfig::getH() const
+double TLayerConfig::getHm() const
+{
+	return txtH->Text.ToDouble() / 100.0; // возвращаем в метрах
+}
+//---------------------------------------------------------------------------
+double TLayerConfig::getHsm() const
 {
 	return txtH->Text.ToDouble();
 }
 //---------------------------------------------------------------------------
-void TLayerConfig::setH(double value)
+void TLayerConfig::setHsm(double value)
 {
 	if(value < minH)
 		value = minH;
@@ -113,6 +118,10 @@ void TLayerConfig::setAngle(double value)
 {
 	angle = value;
 	txtA->Text = FloatToStr(Round(value * 180.0 / M_PI));
+}
+//---------------------------------------------------------------------------
+double Round(double value) {
+	return int(value * 100.0 + (value < 0 ? -0.5 : 0.5)) / 100.0;
 }
 //---------------------------------------------------------------------------
 
