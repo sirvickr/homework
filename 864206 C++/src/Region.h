@@ -11,7 +11,7 @@ class Animal;
 class Region {
 public:
 	Region(const std::string& name);
-	virtual ~Region() = 0;
+	virtual ~Region() = 0; // запрещаем создавать экземпл€ры абстрактного класса
 
 	inline void Kind(const std::string& value) {
 		kind = value;
@@ -27,6 +27,8 @@ public:
 		return name;
 	}
 
+	void AddAnimal(const Animal* animal);
+
 	virtual void Display() = 0;
 
 protected:
@@ -35,7 +37,13 @@ protected:
 	// название
 	std::string name;
 	// фауна
-	std::vector< Animal* > animals;
+	std::vector< const Animal* > animals;
+
+private:
+	static const size_t MAX_REGIONS_COUNT = 10;
+	static Region* regions[MAX_REGIONS_COUNT];
+	static size_t regionsCount;
+
 };
 
 #endif /* REGION_H_ */

@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "Exceptions.h"
 #include "Country.h"
 #include "Province.h"
 #include "Reptile.h"
@@ -16,6 +17,7 @@ static Animal* animals[MAX_ANIMALS_COUNT] = { 0 };
 static size_t animalsCount = 0;
 */
 int main() {
+	try {
 	Country* country = new Country("Россия");
 	Province* province = new Province("Самарская область");
 	Mammal* mammal = new Mammal();
@@ -26,5 +28,8 @@ int main() {
 	delete province;
 	delete mammal;
 	delete reptile;
+	} catch(TooManyInstances& ex) {
+		cerr << "too many instances: " << ex.MaxCount() <<  endl;
+	}
 	return 0;
 }

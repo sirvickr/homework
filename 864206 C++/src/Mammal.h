@@ -7,7 +7,8 @@
 
 class Mammal: public Animal {
 public:
-	Mammal(double weight = 0.0);
+	Mammal();
+	Mammal(const std::string& kind, double weight);
 	virtual ~Mammal();
 };
 
