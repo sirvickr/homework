@@ -19,7 +19,9 @@ static size_t animalsCount = 0;
 typedef set< string > AnimalKinds;
 
 template<class T>
-void ListRegions(bool brief = false) {
+void ListRegions(bool brief, bool showCount = false) {
+	if(showCount)
+		cout << "Regions count: " << regionsCount << " = " << Region::InstanceCount() << endl;
 	for(size_t i = 0; i < regionsCount; i++) {
 		if(dynamic_cast< T* >(regions[i])) {
 			cout << "[" << i << "] ";
@@ -28,69 +30,20 @@ void ListRegions(bool brief = false) {
 	}
 }
 
-// type: 0 - все; 1 - страны; 2 - области
-/*void ListRegions(int type = 0, bool brief = false) {
-	switch(type) {
-	case 0:
-		for(size_t i = 0; i < regionsCount; i++) {
-			cout << "[" << i << "] ";
-			regions[i]->Display(brief);
-		}
-		break;
-	case 1:
-		for(size_t i = 0; i < regionsCount; i++) {
-			if(dynamic_cast< Country* >(regions[i])) {
-				cout << "[" << i << "] ";
-				regions[i]->Display(brief);
-			}
-		}
-		break;
-	case 2:
-		for(size_t i = 0; i < regionsCount; i++) {
-			if(dynamic_cast< Province* >(regions[i])) {
-				cout << "[" << i << "] ";
-				regions[i]->Display(brief);
-			}
-		}
-		break;
-	}
-}*/
-
-// type: 0 - все; 1 - млекопитающие; 2 - пресмыкающиеся
-void ListAnimals(int type = 0) {
-	switch(type) {
-	case 0:
-		for(size_t i = 0; i < animalsCount; i++) {
+template<class T>
+void ListAnimals(bool showCount = false) {
+	if(showCount)
+		cout << "Animals count: " << animalsCount << " = " << Animal::InstanceCount() << endl;
+	for(size_t i = 0; i < animalsCount; i++) {
+		if(dynamic_cast< T* >(animals[i])) {
 			cout << "[" << i << "] ";
 			animals[i]->Display();
 		}
-		break;
-	case 1:
-		for(size_t i = 0; i < animalsCount; i++) {
-			if(dynamic_cast< Mammal* >(animals[i])) {
-				cout << "[" << i << "] ";
-				animals[i]->Display();
-			}
-		}
-		break;
-	case 2:
-		for(size_t i = 0; i < animalsCount; i++) {
-			if(dynamic_cast< Reptile* >(animals[i])) {
-				cout << "[" << i << "] ";
-				animals[i]->Display();
-			}
-		}
-		break;
 	}
 }
 
-void ShowAnimal(size_t i) {
-	cout << "[" << i << "] ";
-	animals[i]->Display();
-}
-
-template<class FilterFn, class Operation>
-void ProcessAnimals(FilterFn filter, Operation op) {
+template<class Filter, class Operation>
+void ProcessAnimals(Filter filter, Operation op) {
 	for(size_t i = 0; i < animalsCount; i++) {
 		if(filter(animals[i])) {
 			op(animals[i]);
@@ -115,7 +68,7 @@ void ListAnimalsInCountry() {
 
 	size_t index = 0;
 	cout << "select country index:" << endl;
-	ListRegions<Country>();
+	ListRegions<Country>(false);
 	cout << "your choice: ";
 	cin >> index;
     if(index >= regionsCount) {
@@ -142,13 +95,13 @@ void ListAnimalsInCountry() {
 	}
 }
 
-//Список млекопитающих в конкретной территориальной единице
+// Список млекопитающих в конкретной территориальной единице
 void ListMammalsInRegion() {
 	AnimalKinds kinds;
 
 	size_t index = 0;
 	cout << "select region index:" << endl;
-	ListRegions<Region>();
+	ListRegions<Region>(false);
 	cout << "your choice: ";
 	cin >> index;
     if(index >= regionsCount) {
@@ -181,7 +134,7 @@ void ListToxicReptiles() {
 
 	size_t index = 0;
 	cout << "select region index:" << endl;
-	ListRegions<Region>();
+	ListRegions<Region>(false);
 	cout << "your choice: ";
 	cin >> index;
     if(index >= regionsCount) {
@@ -282,7 +235,7 @@ void DeleteRegion() {
 		return;
 	} else if(regionsCount > 1) {
 		cout << "input what region to delete:" << endl;
-		ListRegions<Region>();
+		ListRegions<Region>(false);
 		cout << "your choice: ";
 		cin >> index;
 	} // otherwise, there is only one region (with index [0]) to delete
@@ -367,7 +320,7 @@ void DeleteAnimal() {
 		return;
 	} else if(animalsCount > 1) {
 		cout << "input what animal to delete:" << endl;
-		ListAnimals();
+		ListAnimals<Animal>();
 		cout << "your choice: ";
 		cin >> index;
 	} // otherwise, there is only one animal (with index [0]) to delete
@@ -422,10 +375,10 @@ int main() {
 
         switch(menu) {
         case 1:
-            ListRegions<Region>();
+            ListRegions<Region>(false, true);
         	break;
         case 2:
-            ListAnimals();
+            ListAnimals<Animal>(true);
         	break;
         case 3:
         	ListAnimalsInCountry();
