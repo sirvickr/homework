@@ -20,7 +20,6 @@ MainWindow::~MainWindow()
 void MainWindow::mousePressEvent(QMouseEvent* event)
 {
 	if(event->button() == Qt::LeftButton) {
-		qDebug() << "mousePressEvent";
 		path.push_back({QPoint(event->x(), event->y()), QColor(Qt::red), 0, false});
 		drawing = true;
 	}
@@ -29,7 +28,6 @@ void MainWindow::mousePressEvent(QMouseEvent* event)
 void MainWindow::mouseReleaseEvent(QMouseEvent* event)
 {
 	if(event->button() == Qt::LeftButton) {
-		qDebug() << "mouseReleaseEvent";
 		drawing = false;
 	}
 }
@@ -37,7 +35,6 @@ void MainWindow::mouseReleaseEvent(QMouseEvent* event)
 void MainWindow::mouseMoveEvent(QMouseEvent* event)
 {
 	if(drawing) {
-		//qDebug() << " move: x " << event->x() << " y " <<  event->y();
 		QColor color = ui->btnColor->palette().color(ui->btnColor->foregroundRole());
 		path.push_back({QPoint(event->x(), event->y()), color, ui->spbLineWidth->value(), true});
 		this->repaint();
