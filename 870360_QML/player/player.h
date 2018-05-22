@@ -73,6 +73,9 @@ public:
 
     void addToPlaylist(const QList<QUrl> urls);
 
+	// обработчик нажатия клавиш
+	void keyPressEvent(QKeyEvent* event) Q_DECL_OVERRIDE;
+
 signals:
     void fullScreenChanged(bool fullScreen);
 

@@ -180,6 +180,17 @@ Player::~Player()
 {
 }
 
+void Player::keyPressEvent(QKeyEvent* event)
+{
+	// по нажатию клавиши Del удаляем текущий элемент списка, если он есть
+	if(event->key() == Qt::Key_Delete) {
+		int row = playlistView->currentIndex().row();
+		if(row >= 0) {
+			playlist->removeMedia(row);
+		}
+	}
+}
+
 bool Player::isPlayerAvailable() const
 {
     return player->isAvailable();
