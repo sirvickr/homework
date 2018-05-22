@@ -45,9 +45,9 @@ void MainWindow::paintEvent(QPaintEvent *event)
 {
 	if(!path.empty()) {
 		painter.begin(this);
-		auto prev = path[0];
-		for(size_t i = 0; i < path.size(); ++i) {
-			const auto& item = path[i];
+		PathPoint prev = path[0];
+		for(size_t i = 1; i < path.size(); ++i) {
+			const PathPoint& item = path[i];
 			if(item.visible) {
 				painter.setPen(QPen(item.color, item.width));
 			} else {
