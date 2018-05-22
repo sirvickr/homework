@@ -17,9 +17,11 @@
 *.dsk
 *.tds
 *.ddp
+*.~dsk
 *.~bpr
 *.~cpp
 *.~h
 *.~ddp
 *.~dfm
 .metadata
+build-*
