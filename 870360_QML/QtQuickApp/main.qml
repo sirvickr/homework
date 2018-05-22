@@ -49,7 +49,7 @@ Window {
                 mainWnd.manualChange = false
                 txtCel.text = Math.round((Number(text) - 32) * 100 / 1.8) / 100
                 txtKel.text = Number(txtCel.text) + 273.15
-                console.log("F(" + text + ") -> C(" + txtCel.text + ") K(" + txtKel.text + ")")
+                //console.log("F(" + text + ") -> C(" + txtCel.text + ") K(" + txtKel.text + ")")
                 mainWnd.manualChange = true
             }
         }
@@ -82,7 +82,7 @@ Window {
                 txtFar.text = Math.round((Number(text) * 1.8 + 32) * 100) / 100
                 txtKel.text = Number(text) + 273.15
                 mainWnd.manualChange = true
-                console.log("C(" + text + ") -> F(" + txtFar.text + ") K(" + txtKel.text + ")")
+                //console.log("C(" + text + ") -> F(" + txtFar.text + ") K(" + txtKel.text + ")")
             }
         }
     }
@@ -115,7 +115,7 @@ Window {
                 mainWnd.manualChange = false
                 txtCel.text = Math.round((Number(text) - 273.15) * 100) / 100
                 txtFar.text = Math.round((Number(txtCel.text) * 1.8 + 32) * 100) / 100
-                console.log("K(" + text + ") -> C(" + txtCel.text + ") F(" + txtFar.text + ")")
+                //console.log("K(" + text + ") -> C(" + txtCel.text + ") F(" + txtFar.text + ")")
                 mainWnd.manualChange = true
             }
         }
