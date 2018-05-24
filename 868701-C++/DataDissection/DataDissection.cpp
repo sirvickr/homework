@@ -1,5 +1,13 @@
 #include "stdafx.h"
 
+#include <iostream>       // std::cin, std::cout
+#include <sstream>        // std::ostringstream
+#include <string>         // std::string
+#include <vector>         // std::vector
+#include <fstream>        // std::ifstream
+#include <list>           // std::queue
+#include <algorithm>      // std::random_shuffle
+
 using namespace std;
 // задание
 static const size_t blockCount = 8; // количество блоков
