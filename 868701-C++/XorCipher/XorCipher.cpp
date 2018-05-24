@@ -111,6 +111,37 @@ void processFile(generator_t& gen, const string& dataFileName, const string& key
 	lpBuf = nullptr;
 }
 
+bool fileExists(const string& fileName) {
+	return static_cast<bool>(ifstream(fileName));
+}
+
+void makeParams(generator_t& gen, const string& fileName) {
+	if (fileExists(fileName)) {
+		cout << "‘айл \"" << fileName << "\" уже существует, продолжить (y/n)? ";
+		char answer;
+		cin >> answer;
+		if (tolower(answer) == 'n') {
+			return;
+		}
+	}
+	gen.createParams();
+	cout << "—формированы параметры: A " << gen.A() << " B " << gen.B() << " C0 " << gen.Seed() << endl;
+	writeParams(gen, fileName);
+}
+
+string inputFileName(const string& prompt, const string& suffix = "") {
+	string ext = "." + suffix;
+	string result;
+	
+	cout << prompt;
+	cin >> result;
+	
+	if (suffix.size() && !(result.size() > ext.size() && result.rfind(ext) == result.size() - ext.size()))
+		result += ext;
+	
+	return result;
+}
+
 int main()
 {
 	setlocale(LC_ALL, "Russian");
@@ -141,17 +172,13 @@ int main()
 
 		switch (menu) {
 		case 1:
-			cout << "¬ведите им€ файла данных: ";
-			cin >> dataFileName;
+			dataFileName = inputFileName("¬ведите им€ файла данных: ");
 			break;
 		case 2:
-			cout << "¬ведите им€ файла параметров: ";
-			cin >> keyFileName;
+			keyFileName = inputFileName("¬ведите им€ файла параметров: ", "key");
 			break;
 		case 3:
-			gen.createParams();
-			cout << "—формированы параметры: A " << gen.A() << " B " << gen.B() << " C0 " << gen.Seed() << endl;
-			writeParams(gen, keyFileName);
+			makeParams(gen, keyFileName);
 			break;
 		case 4:
 			processFile(gen, dataFileName, keyFileName);
