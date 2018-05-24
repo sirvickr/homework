@@ -5,6 +5,8 @@
 #include <string>         // std::string
 #include <vector>         // std::vector
 
+#include "../TaskLog.h"
+
 using namespace std;
 
 typedef vector<size_t> bits_t;
@@ -33,29 +35,11 @@ bool inputBits(bits_t& bits, const string& prompt) {
 	return result;
 }
 
-template<class Sequence>
-void printSequence(const Sequence& seq, const string& title = "") {
-	cout << title;
-	for (const auto& item : seq)
-		cout << " " << item;
-	cout << endl;
-}
-
-template<class Sequence>
-void printMatrix(const Sequence& matrix, size_t m, size_t n, const string& title = "") {
-	cout << title;
-	for (size_t i = 0; i < m; i++) {
-		for (size_t j = 0; j < n; j++)
-			cout << " " << matrix[i * n + j];
-		cout << endl;
-	}
-}
-
 // Подсчёт контрольной суммы 
-uint32_t checkBits(const bits_t& a, const bits_t& bt, size_t m, size_t N) {
-	uint32_t result = 0;
+size_t checkBits(const bits_t& a, const bits_t& bt, size_t m, size_t N) {
+	size_t result = 0;
 	for (size_t i = 0; i < m; i++) {
-		uint32_t bit = 0;
+		size_t bit = 0;
 		for (size_t j = 0; j < N; j++)
 			bit += a[i * N + j] * bt[j];
 		bit &= 1;
@@ -87,7 +71,7 @@ void encode(const bits_t& b, bits_t& bt, size_t m, size_t N) {
 		}
 	}
 	// Подсчитываем проверочные биты
-	uint32_t S = checkBits(a, bt, m, N);
+	size_t S = checkBits(a, bt, m, N);
 	cout << "S: " << uppercase << hex << S << dec << endl;
 	// Записываем проверочные биты в соответствующие позиции (степени двойки) передаваемого вектора
 	for (size_t i = 0; i < m; i++) {
@@ -121,7 +105,7 @@ void check(bits_t& bt, size_t m, size_t N) {
 size_t minCheckBitsCount(size_t n) {
 	size_t m;
 	for (m = 1; m < 32; m++)
-		if ((1 << m) >= (n + m + 1))
+		if ((size_t(1) << m) >= (n + m + 1))
 			break;
 	return m;
 }
@@ -142,7 +126,6 @@ int main()
 	bits_t b(defaultBits.begin(), defaultBits.begin() + n);
 	// передаваемая двоичная последовательность
 	bits_t bt(N, 0);
-
 
 	int menu = -1;
 	while (menu != 0) {
