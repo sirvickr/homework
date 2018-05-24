@@ -4,9 +4,6 @@
 #include <sstream>        // std::ostringstream
 #include <string>         // std::string
 #include <vector>         // std::vector
-#include <fstream>        // std::ifstream
-#include <list>           // std::queue
-#include <algorithm>      // std::random_shuffle
 
 using namespace std;
 
@@ -149,8 +146,11 @@ int main()
 
 	int menu = -1;
 	while (menu != 0) {
+		cout << endl << endl;
+		cout << "------------------------------------\n";
 		cout << "Параметры алгоритма: n " << n << " m " << m << " N " << N << endl;
-		cout << endl << endl << "Выберите действие:" << endl;
+		cout << "------------------------------------\n";
+		cout << "Выберите действие:" << endl;
 		cout << "[0] Завершение работы" << endl;
 		cout << "[1] Ввести исходную битовую последовательность (" << seqStr(b) << " )" << endl;
 		cout << "[2] Ввести передаваемую последовательность (" << seqStr(bt) << " )" << endl;

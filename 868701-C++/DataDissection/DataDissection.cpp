@@ -4,8 +4,8 @@
 #include <sstream>        // std::ostringstream
 #include <string>         // std::string
 #include <vector>         // std::vector
-#include <fstream>        // std::ifstream
-#include <list>           // std::queue
+#include <list>           // std::list
+#include <fstream>        // std::ifstream, std::ofstream
 #include <algorithm>      // std::random_shuffle
 
 using namespace std;
