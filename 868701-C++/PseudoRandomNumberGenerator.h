@@ -74,7 +74,6 @@ public:
 private:
 	// Поиск НОД (Бинарный алгоритм на основе битовой арифметики)
 	int gcd(int a, int b) {
-		cout << " gcd " << a << ", " << b;
 		int shift;
 		if (a == 0)
 			return b;
@@ -96,7 +95,6 @@ private:
 			}
 			b = b - a;
 		} while (b != 0);
-		cout << ": " << (a << shift) << endl;
 		return a << shift;
 	}
 private:
