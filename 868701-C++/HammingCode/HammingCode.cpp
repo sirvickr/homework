@@ -118,8 +118,8 @@ int main()
 {
 	setlocale(LC_ALL, "Russian");
 
-	// задание
-	const size_t n = 10;
+	// задание (вариант 2)
+	const size_t n = 4;
 
 	// вычисление параметров алгоритма
 	size_t m = minCheckBitsCount(n);
