@@ -57,6 +57,20 @@ bits_t makeChecksumMatrix(size_t m, size_t N) {
 	return a;
 }
 
+// ‘ормирование передаваемого вектора, пока с нулевыми проверочными битами
+void initCodeSeq(const bits_t& b, bits_t& bt, size_t N) {
+	for (size_t k = 0, j = 0; j < N; j++) {
+		size_t v = j + 1;
+		// проверка, не €вл€етс€ ли номер степенью двойки
+		if ((v && !(v & (v - 1)))) {
+			bt[j] = 0; // €вл€етс€, обнул€ем место дл€ проверочного бита
+		}
+		else {
+			bt[j] = b[k++]; // иначе записываем очередной бит исходных данных
+		}
+	}
+}
+
 //  одирование исходной двоичной последовательности по методу ’эмминга
 void encode(const bits_t& b, bits_t& bt, size_t m, size_t N) {
 	cout << "¬ыполн€етс€ кодирование..." << endl;
@@ -64,16 +78,7 @@ void encode(const bits_t& b, bits_t& bt, size_t m, size_t N) {
 	auto a = makeChecksumMatrix(m, N);
 	printMatrix(a, m, N, "ћатрица контрольного суммировани€ (A):\n");
 	// ‘ормируем передаваемый вектор, пока с нулевыми проверочными битами
-	for (size_t k = 0, j = 0; j < N; j++) {
-		size_t v = j + 1;
-		// проверка, не €вл€етс€ ли номер степенью двойки
-		if ((v && !(v & (v - 1)))) { 
-			bt[j] = 0; // €вл€етс€, обнул€ем место дл€ проверочного бита
-		}
-		else {
-			bt[j] = b[k++]; // иначе записываем очередной бит исходных данных
-		}
-	}
+	initCodeSeq(b, bt, N);
 	// ѕодсчитываем проверочные биты
 	size_t S = checkBits(a, bt, m, N);
 	cout << "S: " << uppercase << hex << S << dec << endl;
