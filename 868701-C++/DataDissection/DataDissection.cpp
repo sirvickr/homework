@@ -10,8 +10,8 @@
 
 using namespace std;
 // задание
-static const size_t blockCount = 8; // количество блоков
-static const size_t colCount = 4; // количество столбцов (длина ключа по столбцам)
+static const size_t blockCount = 15; // количество блоков
+static const size_t colCount = 5; // количество столбцов (длина ключа по столбцам)
 static const size_t rowCount = blockCount / colCount; // длина ключа по строкам
 
 typedef vector<uint8_t> data_t;
