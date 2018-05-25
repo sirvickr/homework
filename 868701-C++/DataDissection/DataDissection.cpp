@@ -14,9 +14,13 @@ static const size_t blockCount = 15; // количество блоков
 static const size_t colCount = 5; // количество столбцов (длина ключа по столбцам)
 static const size_t rowCount = blockCount / colCount; // длина ключа по строкам
 
+// последовательность символов
 typedef vector<uint8_t> data_t;
+// кодовый блок данных
 typedef list<uint8_t> block_t;
+// массив блоков (результат кодирования)
 typedef vector<block_t> blocks_t;
+// ключ (последовательность индексов)
 typedef vector<size_t> key_t;
 
 blocks_t encode(const data_t& data, const key_t& colKey, const key_t& rowKey) {
@@ -26,8 +30,6 @@ blocks_t encode(const data_t& data, const key_t& colKey, const key_t& rowKey) {
 		size_t row = i / colCount;
 		size_t col = i % colCount;
 		size_t k = colCount * rowKey[row % rowCount] + colKey[col];
-		//cout << "data[" << i << "]: '" << data[i] << "' row " << row << " col " << col 
-		//	<< " (" << rowKey[row % rowCount] << " " << colKey[col] << ")" << " k " << k << endl;
 		blocks[k].push_back(data[i]);
 	}
 
@@ -46,7 +48,6 @@ void encode(const string& rawFileName, const string& encFileName, const key_t& c
 	}
 	input.seekg(0, ios::end);
 	length = input.tellg();
-	//cout << "length = " << length << endl;
 	input.seekg(0, ios::beg);
 
 	lpBuf = new char[length + 1];
@@ -87,8 +88,6 @@ data_t decode(blocks_t& blocks, const key_t& colKey, const key_t& rowKey) {
 		size_t row = i / colCount;
 		size_t col = i % colCount;
 		size_t k = colCount * rowKey[row % rowCount] + colKey[col];
-		//cout << "data[" << i << "]: '" << data[i] << "' row " << row << " col " << col 
-		//	<< " (" << rowKey[row % rowCount] << " " << colKey[col] << ")" << " k " << k << endl;
 		if (!blocks[k].empty()) {
 			data[i] = blocks[k].front();
 			blocks[k].pop_front();
