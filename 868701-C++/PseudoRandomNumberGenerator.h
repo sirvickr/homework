@@ -39,18 +39,18 @@ public:
 	// Формирование и адаптация случайных параметров алгоритма
 	inline void createParams() {
 		// b: получаем случайное 32-битное число на основе текущего времени
-		uint32_t b = static_cast<uint32_t>(chrono::system_clock::now().time_since_epoch().count()) & 0xFFFF;
+		uint32_t b = std::chrono::system_clock::now().time_since_epoch().count() & 0xFFFF;
 		// обеспечиваем нечётность b
 		b |= 1;
 		// перебираем нечётные числа, большие b, пока не найдём взаимно простое с m
 		while (gcd(b, m) != 1)
 			b += 2;
 		// a: получаем случайное 32-битное число на основе текущего времени
-		uint32_t a = static_cast<uint32_t>(chrono::system_clock::now().time_since_epoch().count()) & 0xFFFF;
-		while ((a & 3) != 1)
-			a++;
+		uint32_t a = std::chrono::system_clock::now().time_since_epoch().count() & 0xFFFF;
+		// обеспечиваем выполнения требования "a mod 4 = 1"
+		a = ((a >> 2) << 2) + 1;
 		// c0: получаем случайное 32-битное число на основе текущего времени
-		uint32_t c0 = static_cast<uint32_t>(chrono::system_clock::now().time_since_epoch().count()) % m;
+		uint32_t c0 = std::chrono::system_clock::now().time_since_epoch().count() % m;
 		SetParams(a, b, c0);
 	}
 	// Формирование следующего псевдослучайного значения
