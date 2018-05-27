@@ -23,6 +23,32 @@ typedef vector<block_t> blocks_t;
 // ключ (последовательность индексов)
 typedef vector<size_t> key_t;
 
+char* readFile(const string& rawFileName, size_t& length, bool binary = false) {
+	length = 0;
+	char* lpBuf = 0;
+	ios_base::openmode mode = ios::in;
+	if (binary)
+		mode |= ios::binary;
+	ifstream input(rawFileName, mode);
+	if (!input) {
+		cerr << "не удалось открыть файл \"" << rawFileName << "\"" << endl;
+		return nullptr;
+	}
+	input.seekg(0, ios::end);
+	length = input.tellg();
+	input.seekg(0, ios::beg);
+
+	if (0 == length) {
+		cerr << "файл \"" << rawFileName << "\" пуст" << endl;
+		return NULL;
+	}
+	cout << "sizeof \"" << rawFileName << "\" = " << length << endl;
+	lpBuf = new char[length + 1];
+	input.read(lpBuf, length);
+	lpBuf[length] = '\0';
+	return lpBuf;
+}
+
 blocks_t encode(const data_t& data, const key_t& colKey, const key_t& rowKey) {
 	blocks_t blocks(blockCount);
 
@@ -37,31 +63,18 @@ blocks_t encode(const data_t& data, const key_t& colKey, const key_t& rowKey) {
 }
 
 void encode(const string& rawFileName, const string& encFileName, const key_t& colKey, const key_t& rowKey) {
-	string text;
-
 	size_t length = 0;
-	char* lpBuf = 0;
-	ifstream input(rawFileName);
-	if (!input) {
-		cerr << "не удалось открыть файл \"" << rawFileName << "\"" << endl;
+	char* lpBuf = readFile(rawFileName, length);
+	if (!lpBuf)
 		return;
-	}
-	input.seekg(0, ios::end);
-	length = input.tellg();
-	input.seekg(0, ios::beg);
 
-	lpBuf = new char[length + 1];
-	input.read(lpBuf, length);
-	lpBuf[length] = '\0';
-	text = lpBuf;
+	cout << "\nтекст:\n" << lpBuf << endl << endl;
 
-	cout << "\nтекст:\n" << text << endl << endl;
-
-	data_t data(text.begin(), text.end());
+	data_t data(lpBuf, lpBuf + length);
 
 	blocks_t blocks = encode(data, colKey, rowKey);
 	
-	ofstream output(encFileName);
+	ofstream output(encFileName, ios::binary);
 	if (!output) {
 		cerr << "не удалось открыть файл \"" << encFileName << "\"" << endl;
 		return;
@@ -70,10 +83,13 @@ void encode(const string& rawFileName, const string& encFileName, const key_t& c
 	cout << "Сформированные блоки:" << endl;
 	for (const auto& block : blocks) {
 		cout << string(block.begin(), block.end()) << endl;
-		for (const auto& byte : block) {
-			output.put(byte);
+		// записываем размер очередного блока
+		uint16_t blockSize = block.size();
+		output.write((const char*)&blockSize, sizeof(blockSize));
+		// записываем байты очередного блока
+		for (const auto byte : block) {
+			output.write((const char*)&byte, sizeof(byte));
 		}
-		output << endl;
 	}
 }
 
@@ -97,19 +113,20 @@ data_t decode(blocks_t& blocks, const key_t& colKey, const key_t& rowKey) {
 }
 
 void decode(const string& rawFileName, const string& encFileName, const key_t& colKey, const key_t& rowKey) {
-	ifstream encFile(encFileName);
-	if (!encFile) {
-		cerr << "Не удалось открыть файл \"" << encFileName << "\"" << endl;
+	size_t length = 0;
+	char* lpBuf = readFile(encFileName, length, true);
+	if (!lpBuf)
 		return;
-	}
 
 	blocks_t blocks;
-	string line;
-	while (getline(encFile, line)) {
-		cout << line << endl;
+
+	for (char* lpCurr = lpBuf; lpCurr - lpBuf < length; ) {
+		uint16_t blockSize = *(uint16_t*)lpCurr;
+		lpCurr += sizeof(blockSize);
 		block_t block;
-		for (const auto byte : line)
-			block.push_back(byte);
+		for (auto j = 0; j < blockSize; j++) {
+			block.push_back(*lpCurr++);
+		}
 		blocks.push_back(block);
 	}
 	
@@ -164,7 +181,6 @@ int main()
 		<< " colCount " << colCount << " rowCount " << rowCount;
 	cout << " colKey " << keyStr(colKey, colCount) << " rowKey " << keyStr(rowKey, rowCount) << endl;
 
-#if 1
 	int menu = -1;
 	while (menu != 0) {
 		cout << endl << endl << "Выберите действие:" << endl;
@@ -209,7 +225,6 @@ int main()
 			menu = 0;
 		}
 	}
-#endif
 	
 	return 0;
 }
