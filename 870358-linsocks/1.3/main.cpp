@@ -16,11 +16,11 @@ int main(int argc, char* argv[])
 {
 	char buffer[100];
 	if(argc != 2) {
-		cout << "usage: task number" << endl;
-		cout << "ex.:" << endl;
-		cout << "task 0x01020304" << endl;
-		cout << "task 0x7F000001" << endl;
-		cout << "task 0xC0A80001" << endl;
+		cout << "usage: " << argv[0] << " number" << endl;
+		cout << "e.g.:" << endl;
+		cout << "./" << argv[0] << " 0x01020304" << endl;
+		cout << "./" << argv[0] << " 0x7F000001" << endl;
+		cout << "./" << argv[0] << " 0xC0A80001" << endl;
 		cout << "etc.." << endl;
 		return 0;
 	}

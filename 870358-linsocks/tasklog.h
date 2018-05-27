@@ -1,5 +1,6 @@
 #include <iostream>
 #include <iomanip>
+#include <string.h> // memset
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
@@ -172,4 +173,11 @@ void printAddrInfo(const addrinfo* ai)
 	// преобразуем IP в строку и выводим его:
 	inet_ntop(ai->ai_family, addr, ipstr, sizeof ipstr);
 	cout << "canonname \"" << (ai->ai_canonname ? ai->ai_canonname : "") << "\" len " << (unsigned int) ai->ai_addrlen << ": " << ipstr << endl;
+}
+
+// Получение информации об удалённом хосте: имя и номер порта
+std::string getHostName(struct sockaddr_in* sock, socklen_t size) {
+    char host[NI_MAXHOST] = "", port[NI_MAXSERV] = "";
+    getnameinfo((struct sockaddr *) sock, size, host, NI_MAXHOST, port, NI_MAXSERV, NI_NUMERICSERV);
+    return std::string(host) + ":" + port;
 }

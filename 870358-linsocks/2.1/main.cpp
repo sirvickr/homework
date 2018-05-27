@@ -14,16 +14,15 @@ using namespace std;
 int main(int argc, char* argv[])
 {
 	if(argc != 2) {
-		cout << "usage: task ip_string" << endl;
-		cout << "ex.: task 127.0.0.1" << endl;
+		cout << "usage: " << argv[0] << " ip_string" << endl;
+		cout << "e.g.: " << argv[0] << " 127.0.0.1" << endl;
 		return 0;
 	}
 	
-	unsigned char buffer[sizeof(struct in6_addr)];
-	char str[INET6_ADDRSTRLEN];
+	char str[INET_ADDRSTRLEN];
+	struct in_addr addr;
 	
-	int status = inet_pton(AF_INET, argv[1], buffer);
-	
+	int status = inet_pton(AF_INET, argv[1], &addr);
 	if (status <= 0) {
 		if (status == 0)
 			fprintf(stderr, "Not in presentation format");
@@ -31,19 +30,15 @@ int main(int argc, char* argv[])
 			perror("inet_pton");
 		exit(EXIT_FAILURE);
 	}
-
-	if(1 != status) {
-		cerr << "inet_pton failed" << endl;
-		return 1;
-	}
 	
-	showBytes32(*(uint32_t*)buffer, "network");
-	/*
-	 * if (inet_ntop(AF_INET, buffer, str, INET6_ADDRSTRLEN) == NULL) {
+	showBytes32(addr.s_addr, "network");
+	// обратное преобразование, для наглядности
+	if (inet_ntop(AF_INET, &addr, str, INET_ADDRSTRLEN) == NULL) {
 		perror("inet_ntop");
 		exit(EXIT_FAILURE);
 	}
+	// должны увидеть строку адреса, переданную в параметре коммандной строки
 	cout << "s = " << str << endl;
-	*/
+	
 	return 0;
 }

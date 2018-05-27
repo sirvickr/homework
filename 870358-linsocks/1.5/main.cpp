@@ -17,12 +17,12 @@ using namespace std;
 int main(int argc, char* argv[])
 {
 	if(argc != 2) {
-		cout << "usage: task domain_name" << endl;
-		cout << "ex.:" << endl;
-		cout << "task localhost" << endl;
-		cout << "task ya.ru" << endl;
-		cout << "task mail.ru" << endl;
-		cout << "task example.com" << endl;
+		cout << "usage: " << argv[0] << " domain_name" << endl;
+		cout << "e.g..:" << endl;
+		cout << " " << argv[0] << " localhost" << endl;
+		cout << " " << argv[0] << " ya.ru" << endl;
+		cout << " " << argv[0] << " mail.ru" << endl;
+		cout << " " << argv[0] << " example.com" << endl;
 		cout << "etc.." << endl;
 		return 0;
 	}

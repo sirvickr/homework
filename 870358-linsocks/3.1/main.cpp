@@ -1,9 +1,6 @@
 /*
-1.6 getaddrinfo(), IPv4, IPv6, номер порта
-Модифицировать программу из п. 1. так, чтобы она получала два обязательных аргумента 
-командной строки - доменное имя и имя сервиса и выдавала вместе с IPv4 или IPv6 адресами 
-номер порта для подключения.
-Можно использовать task1.c как образец для задач 1.4-1.6
+3.1 struct addrinfo *hints
+Добавить к программе из п.1.6 ограничение на поиск адресов: искать только IPv4 и TCP
 */
 
 #include <iostream>
@@ -23,13 +20,15 @@ int main(int argc, char* argv[])
 		cout << "usage: " << argv[0] << " domain_name service_name" << endl;
 		cout << "e.g. " << argv[0] << " mail.ru http" << endl;
 		cout << "or   " << argv[0] << " example.com 80" << endl;
+		cout << "etc.." << endl;
 		return 0;
 	}
 	int status;
 	addrinfo hints;
 	addrinfo* servinfo;
 	memset(&hints, 0x00, sizeof(hints));
-	hints.ai_family = AF_UNSPEC; // IPv4 или IPv6
+	hints.ai_family = AF_INET; // IPv4
+	hints.ai_socktype = SOCK_STREAM; // TCP
 
 	status = getaddrinfo(argv[1], argv[2], &hints, &servinfo);
 	if(status) {

@@ -1,7 +1,8 @@
 /*
-2.2 inet_pton(), getnameinfo()
-Добавить к программе из п.2.1 получение доменного имени для получившегося 
-адреса с помощью функции getnameinfo(), вывести доменное имя (если есть).
+2.3 inet_pton(), getnameinfo()
+Модифицировать программу из п.2.3 так, чтобы она получала два обязательных 
+аргумента командной строки - IPv4 адрес в строковом формате и номер порта, 
+с помощью функции getnameinfo() получить доменное имя и имя сервиса, вывести (если есть).
 */
 
 #include <iostream>
@@ -12,10 +13,10 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-	if(argc != 2) {
-		cout << "usage: " << argv[0] << " ip_string" << endl;
-		cout << "e.g.: " << argv[0] << " 8.8.8.8" << endl;
-		cout << "or    " << argv[0] << " 127.0.0.1" << endl;
+	if(argc != 3) {
+		cout << "usage: " << argv[0] << " ip_string port_number" << endl;
+		cout << "e.g.: " << argv[0] << " 8.8.8.8 80" << endl;
+		cout << "or    " << argv[0] << " 127.0.0.1 23" << endl;
 		return 0;
 	}
 	
@@ -23,6 +24,7 @@ int main(int argc, char* argv[])
 	struct sockaddr_in addr_in;
 	memset(&addr_in, 0x00, sizeof(addr_in));
 	addr_in.sin_family = AF_INET;
+	addr_in.sin_port = htons(strtol(argv[2], NULL, 0));
 	
 	int status = inet_pton(AF_INET, argv[1], &addr_in.sin_addr);
 	if (status <= 0) {
