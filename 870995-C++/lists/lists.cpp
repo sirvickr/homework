@@ -70,6 +70,8 @@ IntNodePtr maxListItem(IntNodePtr list, size_t* pMaxIndex = nullptr) {
 
 int main()
 {
+	setlocale(LC_CTYPE, "Russian");
+
 	// инициализируем генератор случайных чисел текущим временем
 	srand(time(NULL));
 	// создаём целочисленный список, заполненный случайными значениями
@@ -86,7 +88,7 @@ int main()
 	IntNodePtr maxItem = maxListItem(list, &maxIndex);
 	// выводим результат
 	if(maxItem) 
-		cout << "max: index " << maxIndex << " data " << maxItem->data << endl;
+		cout << "максимальный элемент списка: " << maxItem->data << " (его порядковый номер " << maxIndex << ")" << endl;
 
 	return 0;
 }
