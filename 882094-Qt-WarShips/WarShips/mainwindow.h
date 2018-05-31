@@ -18,6 +18,7 @@ class MainWindow : public QMainWindow
 		enum { minSize = 1, maxSize = 4 };
 		//enum { minCount = 1, maxCount = 4 };
 		int size = 0; // minSize ... maxSize
+		int alive = true; // корабль жив
 		QPoint cells[maxSize];
 	};
 
@@ -43,8 +44,16 @@ protected:
 	void mousePressEvent(QMouseEvent* event) Q_DECL_OVERRIDE;
 	void paintEvent(QPaintEvent *event) Q_DECL_OVERRIDE;
 
+private slots:
+	void on_actRestart_triggered();
+
 private:
+	// начать игру заново
 	void resetShips();
+	// все ли корабли уничтожены
+	bool gameOver();
+	// открыть всё поле (в конце игры)
+	void openField();
 
 private:
 	Ui::MainWindow *ui;
@@ -52,7 +61,10 @@ private:
 	QPainter painter;
 	// игровое поле
 	Cell field[maxCells][maxCells];
+	// корабли
 	Ship ships[maxShips];
+	// количество ходов
+	int stepCount = 0;
 };
 
 #endif // MAINWINDOW_H

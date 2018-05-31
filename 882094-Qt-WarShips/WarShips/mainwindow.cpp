@@ -12,6 +12,9 @@ MainWindow::MainWindow(QWidget *parent) :
 {
 	ui->setupUi(this);
 
+	ui->statusBar->addWidget(ui->lblStepCount);
+	ui->statusBar->addWidget(ui->lblStepResult);
+
 	int width = this->width() - padding * 2;
 	int height = width;
 	int cellSize = width / maxCells;
@@ -39,8 +42,10 @@ void MainWindow::mousePressEvent(QMouseEvent* event)
 		for(int i = 0; i < maxCells; ++i) {
 			for(int j = 0; j < maxCells; ++j) {
 
-				if(field[i][j].rect.contains(event->pos(), true)) {
-					field[i][j].visible = !field[i][j].visible;
+				if(field[i][j].rect.contains(event->pos(), true) && !field[i][j].visible) {
+					field[i][j].visible = true;
+					stepCount++;
+					//ui->statusBar->showMessage(QString::number(stepCount), 1000);
 				}
 
 			}
@@ -60,16 +65,41 @@ void MainWindow::paintEvent(QPaintEvent *event)
 #if 1
 	for(int i = 0; i < maxCells; ++i) {
 		for(int j = 0; j < maxCells; ++j) {
-			Qt::BrushStyle brushStyle = Qt::SolidPattern;
-			Qt::GlobalColor clr = Qt::yellow;
-			if(field[i][j].occupied && !field[i][j].ship) {
-				brushStyle = Qt::Dense3Pattern;
-			}
-			if(field[i][j].ship) {
-				clr = Qt::red;
-			} else {
-				clr = Qt::green;
-			}
+			Qt::BrushStyle brushStyle = Qt::Dense1Pattern;
+			Qt::GlobalColor clr = Qt::darkCyan;
+
+			if(field[i][j].visible) {
+				brushStyle = Qt::SolidPattern;
+				//if(field[i][j].occupied && !field[i][j].ship) {
+				//	brushStyle = Qt::Dense3Pattern;
+				//}
+				Ship* ship = field[i][j].ship;
+				if(ship) { // попадание в корабль
+					int k;
+					for(k = 0; k < ship->size; ++k) {
+						// если есть хоть одна закрытая клетка у
+						// корабля, тогда он ранен, иначе - убит
+						if(!field[ship->cells[k].y()][ship->cells[k].x()].visible) {
+							break; //  таки ранен
+						}
+					}
+					if(k < ship->size) {
+						clr = Qt::red;
+					} else {
+						clr = Qt::darkRed;
+						if(ship->alive) {
+							ship->alive = false;
+							if(gameOver()) {
+								qDebug() << "GAME OVER";
+								openField();
+							}
+						}
+					}
+				} else { // промах
+					clr = Qt::darkCyan;
+				}
+			} // if(visible)
+
 			painter.setBrush(QBrush(clr, brushStyle));
 			painter.drawRect(field[i][j].rect);
 		}
@@ -81,8 +111,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
 		painter.drawLine(QPoint(padding, j), QPoint(padding + width, j));
 	}
 #endif
-#if 1
-	painter.setPen(QPen(Qt::darkGreen, 1));
+#if 1 // границы игрового поля
+	painter.setPen(QPen(Qt::darkBlue, 2));
 	painter.drawLine(QPoint(padding, padding), QPoint(padding, padding + height));
 	painter.drawLine(QPoint(padding, padding), QPoint(padding + width, padding));
 	painter.drawLine(QPoint(padding, padding + height), QPoint(padding + width, padding + height));
@@ -90,12 +120,21 @@ void MainWindow::paintEvent(QPaintEvent *event)
 #endif
 
 	painter.end();
+
+	ui->lblStepCount->setText(QString::number(stepCount));
+}
+
+void MainWindow::on_actRestart_triggered()
+{
+	resetShips();
 }
 
 void MainWindow::resetShips()
 {
 	// можно QDateTime::currentMSecsSinceEpoch()
 	qsrand(QTime::currentTime().msec());
+
+	stepCount = 0;
 
 	for(int i = 0; i < maxCells; ++i) {
 		for(int j = 0; j < maxCells; ++j) {
@@ -110,8 +149,9 @@ void MainWindow::resetShips()
 		qDebug() << "size " << size << " count " << count;
 		for(int n = Ship::minSize; n <= count; ++n) {
 			Ship& ship = ships[index++];
-			ship.size = size;
 			ship.orient = static_cast<Ship::Orient>(qrand() & 1);
+			ship.size = size;
+			ship.alive = true;
 			int rowLim = maxCells, colLim = maxCells;
 			switch(ship.orient) {
 			case Ship::Horz:
@@ -160,8 +200,7 @@ void MainWindow::resetShips()
 			} while(!placed);
 			// занимаем клетки под кораблём и вокруг него
 			for(int i = 0; i < ship.size; ++i) {
-				Cell& cell = field[ship.cells[i].y()][ship.cells[i].x()];
-				cell.ship = &ship;
+				field[ship.cells[i].y()][ship.cells[i].x()].ship = &ship;
 			}
 			int colMin = qMax(ship.cells[0].x() - 1, 0);
 			int rowMin = qMax(ship.cells[0].y() - 1, 0);
@@ -185,6 +224,25 @@ void MainWindow::resetShips()
 
 			qDebug() << "\tship: " << ship.size << " orient " << ship.orient << "[" << row << "][" << col << "] attemps " << attemptCount << " min " << rowMin << ", " << colMin << " max " << rowMax << ", " << colMax << line;
 
+		}
+	}
+	this->repaint();
+}
+
+bool MainWindow::gameOver()
+{
+	int i;
+	for(i = 0; i < maxShips; ++i)
+		if(ships[i].alive)
+			break;
+	return (i == maxShips);
+}
+
+void MainWindow::openField()
+{
+	for(int i = 0; i < maxCells; ++i) {
+		for(int j = 0; j < maxCells; ++j) {
+			field[i][j].visible = true;
 		}
 	}
 }
