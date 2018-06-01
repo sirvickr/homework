@@ -16,23 +16,25 @@ class MainWindow : public QMainWindow
 	struct Ship {
 		enum Orient { Horz, Vert } orient;
 		enum { minSize = 1, maxSize = 4 };
-		//enum { minCount = 1, maxCount = 4 };
-		int size = 0; // minSize ... maxSize
+		int size = 0; // количество занимаемых клеток (от minSize до maxSize)
 		int alive = true; // корабль жив
 		QPoint cells[maxSize];
 	};
 
 	// клетка
 	struct Cell {
+		enum Status { Hidden, Miss, Injured, Killed };
 		bool visible = false; // true: открыта
 		bool occupied = false; // true: либо под кораблём, либо по соседству (тогда ship = null)
-		Ship* ship = nullptr;
-		QRect rect;
-	//	QPen pen;
+		Ship* ship = nullptr; // указатель на объект корабля, под которым находится клетка
+		QRect rect; // координаты прямоугольника клетки на форме
 	};
 
+	// количество кораблей
 	static const int maxShips = 10;
+	// количество клеток одной стороны квадрата
 	static const int maxCells = 10;
+	// отступ игрового поля от края окна
 	static const int padding = 50;
 
 public:
@@ -40,16 +42,20 @@ public:
 	~MainWindow();
 
 protected:
-	// обработчики событий
+	// обработчик события: нажатие кнопки мыши
 	void mousePressEvent(QMouseEvent* event) Q_DECL_OVERRIDE;
+	// обработчик события: перерисовка главного окна
 	void paintEvent(QPaintEvent *event) Q_DECL_OVERRIDE;
 
 private slots:
+	// слот: меню "Новая игра"
 	void on_actRestart_triggered();
 
 private:
 	// начать игру заново
 	void resetShips();
+	// проверить статус открытой клетки
+	Cell::Status getStatus(const Cell& cell);
 	// все ли корабли уничтожены
 	bool gameOver();
 	// открыть всё поле (в конце игры)

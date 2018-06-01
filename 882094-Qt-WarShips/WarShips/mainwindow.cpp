@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include <QDebug>
+//#include <QDebug>
 #include <QMouseEvent>
 #include <QColorDialog>
 #include <QTime>
@@ -16,9 +16,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->statusBar->addWidget(ui->lblStepResult);
 
 	int width = this->width() - padding * 2;
-	int height = width;
 	int cellSize = width / maxCells;
-	qDebug() << width << "x" << height;
+	//qDebug() << width << "x" << height;
 
 	for(int i = 0; i < maxCells; ++i) {
 		int y = padding + i * cellSize;
@@ -43,74 +42,74 @@ void MainWindow::mousePressEvent(QMouseEvent* event)
 			for(int j = 0; j < maxCells; ++j) {
 
 				if(field[i][j].rect.contains(event->pos(), true) && !field[i][j].visible) {
-					field[i][j].visible = true;
+					// ткнули в закрытую ячейку
 					stepCount++;
-					//ui->statusBar->showMessage(QString::number(stepCount), 1000);
-				}
+					ui->lblStepCount->setText(QString::number(stepCount));
+					// открываем её ..
+					field[i][j].visible = true;
+					// и проверяем наличие корабля
+					Cell::Status status = getStatus(field[i][j]);
+					switch(status) {
+					case Cell::Miss:
+						ui->lblStepResult->setText("Промах");
+						break;
+					case Cell::Injured:
+						ui->lblStepResult->setText("Ранил");
+						break;
+					case Cell::Killed:
+						field[i][j].ship->alive = false;
+						if(gameOver()) {
+							ui->lblStepResult->setText("Победа!");
+							openField();
+						} else {
+							ui->lblStepResult->setText("Убил");
+						}
+						break;
+					}
 
-			}
-		}
+				} // if(открыли клетку)
+
+			} // for(j)
+		} // for(i)
 		this->repaint();
 	}
 }
 
 void MainWindow::paintEvent(QPaintEvent *event)
 {
+	Q_UNUSED(event)
 	painter.begin(this);
 
+	// рисуем текущее игровое поле
 	int width = this->width() - padding * 2;
 	int height = width;
-
+	// надо проверить каждую клетку и нарисовать её,
+	// причем раскрасить в зависимости от её текущего статуса
+	// (закрытая или открытая, есть ли под ней корабль, ранен он или убит)
 	painter.setPen(QPen(Qt::darkBlue, 1));
-#if 1
 	for(int i = 0; i < maxCells; ++i) {
 		for(int j = 0; j < maxCells; ++j) {
-			Qt::BrushStyle brushStyle = Qt::Dense1Pattern;
 			Qt::GlobalColor clr = Qt::darkCyan;
-
-			if(field[i][j].visible) {
-				brushStyle = Qt::SolidPattern;
-				//if(field[i][j].occupied && !field[i][j].ship) {
-				//	brushStyle = Qt::Dense3Pattern;
-				//}
-				Ship* ship = field[i][j].ship;
-				if(ship) { // попадание в корабль
-					int k;
-					for(k = 0; k < ship->size; ++k) {
-						// если есть хоть одна закрытая клетка у
-						// корабля, тогда он ранен, иначе - убит
-						if(!field[ship->cells[k].y()][ship->cells[k].x()].visible) {
-							break; //  таки ранен
-						}
-					}
-					if(k < ship->size) {
-						clr = Qt::red;
-					} else {
-						clr = Qt::darkRed;
-						if(ship->alive) {
-							ship->alive = false;
-							if(gameOver()) {
-								qDebug() << "GAME OVER";
-								openField();
-							}
-						}
-					}
-				} else { // промах
-					clr = Qt::darkCyan;
-				}
-			} // if(visible)
-
+			Qt::BrushStyle brushStyle = Qt::SolidPattern;
+			Cell::Status status = getStatus(field[i][j]);
+			switch(status) {
+			case Cell::Hidden:
+				brushStyle = Qt::Dense1Pattern;
+				break;
+			case Cell::Miss:
+				clr = Qt::darkCyan;
+				break;
+			case Cell::Injured:
+				clr = Qt::red;
+				break;
+			case Cell::Killed:
+				clr = Qt::darkRed;
+				break;
+			}
 			painter.setBrush(QBrush(clr, brushStyle));
 			painter.drawRect(field[i][j].rect);
 		}
 	}
-#else // то же, но должно быть чуть быстрее
-	int cellSize = width / maxCells;
-	for(int i = 1, j = padding + cellSize; i < maxCells; ++i, j+= cellSize) {
-		painter.drawLine(QPoint(j, padding), QPoint(j, padding + height));
-		painter.drawLine(QPoint(padding, j), QPoint(padding + width, j));
-	}
-#endif
 #if 1 // границы игрового поля
 	painter.setPen(QPen(Qt::darkBlue, 2));
 	painter.drawLine(QPoint(padding, padding), QPoint(padding, padding + height));
@@ -120,8 +119,6 @@ void MainWindow::paintEvent(QPaintEvent *event)
 #endif
 
 	painter.end();
-
-	ui->lblStepCount->setText(QString::number(stepCount));
 }
 
 void MainWindow::on_actRestart_triggered()
@@ -135,7 +132,8 @@ void MainWindow::resetShips()
 	qsrand(QTime::currentTime().msec());
 
 	stepCount = 0;
-
+	ui->lblStepCount->setText(QString::number(stepCount));
+	// закрываем поле
 	for(int i = 0; i < maxCells; ++i) {
 		for(int j = 0; j < maxCells; ++j) {
 			field[i][j].visible = false;
@@ -143,10 +141,10 @@ void MainWindow::resetShips()
 			field[i][j].ship = nullptr;
 		}
 	}
-
+	// размещаем корабли случайным образом
 	int index = 0;
 	for(int size = Ship::maxSize, count = Ship::minSize; size >= Ship::minSize; --size, ++count) {
-		qDebug() << "size " << size << " count " << count;
+		//qDebug() << "size " << size << " count " << count;
 		for(int n = Ship::minSize; n <= count; ++n) {
 			Ship& ship = ships[index++];
 			ship.orient = static_cast<Ship::Orient>(qrand() & 1);
@@ -161,15 +159,13 @@ void MainWindow::resetShips()
 				rowLim -= (ship.size - 1);
 				break;
 			}
-			int attemptCount = 0;
 			int row, col;
 			bool placed;
-			do { // попытка разметить корабль
+			do { // попытка разместить корабль
 
 				placed = true;
 				col = qrand() % colLim;
 				row = qrand() % rowLim;
-				int x, y;
 				switch(ship.orient) {
 				case Ship::Horz:
 					for(int i = 0; i < ship.size; ++i) {
@@ -192,11 +188,6 @@ void MainWindow::resetShips()
 					}
 					break;
 				}
-				attemptCount++;
-				if(attemptCount == 1000) {
-					qDebug() << "!!!!!!!!!!!! EMERFTNCY EXIT !!!!!!!!!!!!";
-					break;
-				}
 			} while(!placed);
 			// занимаем клетки под кораблём и вокруг него
 			for(int i = 0; i < ship.size; ++i) {
@@ -206,27 +197,58 @@ void MainWindow::resetShips()
 			int rowMin = qMax(ship.cells[0].y() - 1, 0);
 			int colMax = qMin(ship.cells[ship.size - 1].x() + 2, maxCells);
 			int rowMax = qMin(ship.cells[ship.size - 1].y() + 2, maxCells);
-			//
+			// помечаем занятыми ячейки под кораблём и вокруг него на одну клетку
 			for(int i = rowMin; i < rowMax; ++i) {
 				for(int j = colMin; j < colMax; ++j) {
 					field[i][j].occupied = true;
 				}
 			}
-			char buffer[100];
+#if 0
 			QString line = ": ";
 			for(int i = 0; i < ship.size; ++i) {
 				line += "[";
-				line += QString(itoa(ship.cells[i].y(), buffer, 10));
+				line += QString::number(ship.cells[i].y());
 				line += ", ";
-				line += QString(itoa(ship.cells[i].x(), buffer, 10));
+				line += QString::number(ship.cells[i].x());
 				line += "]";
 			}
-
-			qDebug() << "\tship: " << ship.size << " orient " << ship.orient << "[" << row << "][" << col << "] attemps " << attemptCount << " min " << rowMin << ", " << colMin << " max " << rowMax << ", " << colMax << line;
-
+			qDebug() << "\tship: " << ship.size << " orient " << ship.orient << "[" << row << "][" << col << "] " << " min " << rowMin << ", " << colMin << " max " << rowMax << ", " << colMax << line;
+#endif
 		}
 	}
 	this->repaint();
+}
+
+MainWindow::Cell::Status MainWindow::getStatus(const Cell& cell)
+{
+	Cell::Status status = Cell::Hidden;
+	if(cell.visible) {
+		Ship* ship = cell.ship;
+		// можно как-то подсказывать игроку, что вокруг убитого корабля
+		// другие корабли не могут быть ближе, чем через одну клетку,
+		// но это будет совсем уж неинтересно играть
+		//if(field[i][j].occupied && !field[i][j].ship) {
+		//	brushStyle = Qt::Dense3Pattern;
+		//}
+		if(ship) { // попадание в корабль
+			int k;
+			for(k = 0; k < ship->size; ++k) {
+				// если есть хоть одна закрытая клетка у
+				// корабля, тогда он ранен, иначе - убит
+				if(!field[ship->cells[k].y()][ship->cells[k].x()].visible) {
+					break; //  таки ранен
+				}
+			}
+			if(k < ship->size) {
+				status = Cell::Injured;
+			} else {
+				status = Cell::Killed;
+			}
+		} else { // промах
+			status = Cell::Miss;
+		}
+	}
+	return status;
 }
 
 bool MainWindow::gameOver()
