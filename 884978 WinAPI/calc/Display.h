@@ -1,12 +1,14 @@
 #pragma once
 
+// Максимальное количество знаков после запятой
 static const UINT maxFract = 8;
 static const TCHAR* szRealFmt = _T("%.8f");
 
+// Вспомогательная функция - получить размер статического массива (на стадии компиляции)
 template<typename T, size_t N> 
 const size_t arrayLength(T (&array)[N])
 {
-  return N;
+	return N;
 }
 
 // Класс, моделирующий дисплей калькулятора

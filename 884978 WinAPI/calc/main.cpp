@@ -14,12 +14,17 @@
 
 #pragma comment(lib, "ComCtl32.lib")
 
+// Текущая операция
 Operation* op = nullptr;
+// Дисплей калькулятора
 Display* display = nullptr;
+// Флаг "запланирован сброс значения"
 bool reset = false;
+// Регистр памяти
 double memory = 0.0;
-
-int mode = 0; // режим: 0 - обычный, 1 - инжереный
+// Режим калькулятора: 0 - простой, 1 - инженерный
+int mode = 0;
+// Размеры окна для режимов
 const int modeWidth[] = { 215, 300 };
 const int modeHeight[] = { 290, 290 };
 
@@ -203,7 +208,7 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		действительно ли он хочет завершить работу (особенно при наличии несохранённых данных).
 		В приложении калькулятора мы просто отдаём команду на закрытие окна приложения. */
 		DestroyWindow(hDlg);
-		return TRUE; /* just continue reading on... */
+		return TRUE;
 
 	case WM_DESTROY: 
 		/* Мы должны обработать это сообщение, чтобы сказать системе, что хотим 
@@ -221,13 +226,12 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 // Точка входа приложения
 int WINAPI _tWinMain(HINSTANCE hInst, HINSTANCE h0, LPTSTR lpCmdLine, int nCmdShow)
 {
-	HWND hDlg;
 	MSG msg;
 	BOOL ret;
 
 	InitCommonControls();
 	// Создаём главное окно
-	hDlg = CreateDialogParam(hInst, MAKEINTRESOURCE(mainWnd), 0, DialogProc, 0);
+	HWND hDlg = CreateDialogParam(hInst, MAKEINTRESOURCE(mainWnd), 0, DialogProc, 0);
 	// Отображаем его на экране
 	ShowWindow(hDlg, nCmdShow);
 	// Стандартным образом обрабатываем поступающие сообщения в цикле
