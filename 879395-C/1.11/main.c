@@ -116,7 +116,7 @@ int main( int argc, char* argv[] )
 		}
 		size_t block_size = 1;
 		size_t nmemb = stat_buf.st_size;
-		size_t read = fread( buffer, block_size, nmemb, file );
+		ssize_t read = fread( buffer, block_size, nmemb, file );
 		//printf( "read %lu blocks of %lu bytes (%lu)\n", read, block_size, left_to_read );
 		if( read == 0 ) {
 			fprintf( stderr, "failed to read %lu blocks of %lu bytes\n", nmemb, block_size );
