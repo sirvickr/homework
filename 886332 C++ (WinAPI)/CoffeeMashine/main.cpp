@@ -4,6 +4,9 @@
 #include "CoffeeMashine.h"
 #include "Coffee.h"
 
+LPTSTR* argv = nullptr;
+int argc = 0;
+
 // Автомат по производству кофе
 CoffeeMashine* coffeeMashine = nullptr;
 
@@ -91,6 +94,10 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		coffeeMashine = new CoffeeMashine("coffee.cfg", "cash.cfg");
 
 		SetDlgItemText(hDlg, txtInputSum, _T("100.0"));
+		// отладка
+		//for (int i = 0; i < argc; ++i)
+		//	SendMessage(hlstCoffee, LB_ADDSTRING, (WPARAM)0, (LPARAM)argv[i]);
+		// Заполняем список выбора напитков
 		for (const auto coffeeKind : coffeeKinds) {
 			SendMessage(hlstCoffee, LB_ADDSTRING, (WPARAM)0, (LPARAM)coffeeKind.first.c_str());
 		}
@@ -121,6 +128,8 @@ int WINAPI _tWinMain(HINSTANCE hInst, HINSTANCE h0, LPTSTR lpCmdLine, int nCmdSh
 {
 	MSG msg;
 	BOOL ret;
+	// Получаем стандартные параметры командной строки
+	argv = CommandLineToArgvW(lpCmdLine, &argc);
 	// Создаём главное окно
 	HWND hDlg = CreateDialogParam(hInst, MAKEINTRESOURCE(mainWnd), 0, DialogProc, 0);
 	// Отображаем его на экране
