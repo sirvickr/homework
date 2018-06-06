@@ -21,7 +21,8 @@ public:
 	enum CoffeeKind {
 		Cappuccino,
 		Espresso,
-		Americano
+		Americano,
+		MaxKindValue
 	};
 	
 	typedef std::map<CashValue, int> Cash;
@@ -64,14 +65,23 @@ public:
 	};
 
 	// Конструктор
-	CoffeeMashine();
+	CoffeeMashine(const std::string& coffeeFileName = "", const std::string& cashFileName = "");
+	~CoffeeMashine() {
+		fclose(file);
+	}
 	// Приготовление кофе:
 	// принимает тип кофе и сумму денег
 	// возвращает порцию кофе и сдачу
 	std::pair<Coffee, CoffeeMashine::Cash> Cook(CoffeeKind kind, double sum);
+
+	// Позволяет получить ассортимент кофе
+	const CoffeeAvail& getCoffeeAvailable() const {
+		return coffeeAvail;
+	}
 private:
 	// доступные порции кофе
 	CoffeeAvail coffeeAvail;
 	// доступная наличность (пары номинал-количество)
 	Cash cashAvail;
+	FILE* file=0;
 };

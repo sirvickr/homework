@@ -88,7 +88,8 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		// В обработчике этого сообщения удобно проводить начальную настройку приложения
 		hlstCoffee = GetDlgItem(hDlg, lstCoffeeKind);
 		// Выделяем память для объекта "Автомат по производству кофе"
-		coffeeMashine = new CoffeeMashine;
+		coffeeMashine = new CoffeeMashine("coffee.cfg", "cash.cfg");
+
 		SetDlgItemText(hDlg, txtInputSum, _T("100.0"));
 		for (const auto coffeeKind : coffeeKinds) {
 			SendMessage(hlstCoffee, LB_ADDSTRING, (WPARAM)0, (LPARAM)coffeeKind.first.c_str());
