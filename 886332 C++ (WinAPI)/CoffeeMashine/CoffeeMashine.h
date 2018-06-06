@@ -13,9 +13,11 @@ enum CashValue {
 	note500 = 500,
 };
 
+// Кофейный автомат
 class CoffeeMashine
 {
 public:
+	// Типы кофейных напитков
 	enum CoffeeKind {
 		Cappuccino,
 		Espresso,
@@ -25,6 +27,8 @@ public:
 	typedef std::map<CashValue, int> Cash;
 	typedef std::list<Coffee> CoffeeAvail;
 
+	// Классы исключений:
+	// Базовый класс всех исключений
 	class Error {
 	public:
 		Error(CoffeeKind kind) : kind(kind) {
@@ -33,13 +37,13 @@ public:
 		// тип кофе
 		CoffeeKind kind;
 	};
-
+	// Порций данного типа нет в наличии
 	class NotAvail : public Error {
 	public:
 		NotAvail(CoffeeKind kind) : Error(kind) {
 		}
 	};
-
+	// На выбранную порцию не хватает внесённой суммы
 	class NotEnoughMoney : public Error {
 	public:
 		NotEnoughMoney(CoffeeKind kind, double diff) : Error(kind), diff(diff) {
@@ -47,7 +51,7 @@ public:
 		// сколько не хватает
 		double diff;
 	};
-
+	// Нет такого набора купюр, чтобы выдать сдачу с внес1нной суммы
 	class NoChange : public Error {
 	public:
 		NoChange(CoffeeKind kind, double remainder) : Error(kind), remainder(remainder) {
@@ -71,4 +75,3 @@ private:
 	// доступная наличность (пары номинал-количество)
 	Cash cashAvail;
 };
-

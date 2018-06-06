@@ -1,5 +1,6 @@
 #pragma once
 
+// Порция кофе
 class Coffee
 {
 public:

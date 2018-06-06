@@ -43,6 +43,7 @@ std::pair<Coffee, CoffeeMashine::Cash> CoffeeMashine::Cook(CoffeeKind kind, doub
 	// Набираем сдачу из имеющихся купюр и монет
 	Cash cash;
 	auto it = cashAvail.rbegin();
+	// Перебираем с конца (map отсортирован по ключу, так что в конце крупные)
 	while (it != cashAvail.rend()) {
 		bool ranOut = false;
 		CashValue value = it->first;
