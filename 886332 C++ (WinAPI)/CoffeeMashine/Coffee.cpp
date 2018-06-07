@@ -2,7 +2,7 @@
 
 #include "Coffee.h"
 
-Coffee::Coffee(const std::string& kind, double price, int count) : kind(kind), price(price), count(count)
+Coffee::Coffee(const tstring& kind, double price, int count) : kind(kind), price(price), count(count)
 {
 }
 

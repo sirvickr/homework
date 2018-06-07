@@ -18,28 +18,28 @@ class CoffeeMashine
 {
 public:
 	typedef std::map<CashValue, int> Cash;
-	typedef std::map<std::string, Coffee> CoffeeAvail;
+	typedef std::map<tstring, Coffee> CoffeeAvail;
 
 	// Классы исключений:
 	// Базовый класс всех исключений
 	class Error {
 	public:
-		Error(const std::string& kind) : kind(kind) {
+		Error(const tstring& kind) : kind(kind) {
 		}
 	private:
 		// тип кофе
-		std::string kind;
+		tstring kind;
 	};
 	// Порций данного типа нет в наличии
 	class NotAvail : public Error {
 	public:
-		NotAvail(const std::string& kind) : Error(kind) {
+		NotAvail(const tstring& kind) : Error(kind) {
 		}
 	};
 	// На выбранную порцию не хватает внесённой суммы
 	class NotEnoughMoney : public Error {
 	public:
-		NotEnoughMoney(const std::string& kind, double diff) : Error(kind), diff(diff) {
+		NotEnoughMoney(const tstring& kind, double diff) : Error(kind), diff(diff) {
 		}
 		// сколько не хватает
 		double diff;
@@ -47,7 +47,7 @@ public:
 	// Нет такого набора купюр, чтобы выдать сдачу с внес1нной суммы
 	class NoChange : public Error {
 	public:
-		NoChange(const std::string& kind, double remainder) : Error(kind), remainder(remainder) {
+		NoChange(const tstring& kind, double remainder) : Error(kind), remainder(remainder) {
 		}
 	private:
 		// сколько не удалось разменять
@@ -55,7 +55,7 @@ public:
 	};
 
 	// Конструктор
-	CoffeeMashine(const std::string& coffeeFileName = "", const std::string& cashFileName = "");
+	CoffeeMashine(const tstring& coffeeFileName = "", const tstring& cashFileName = "");
 
 	// Просмотр ассортимента с ценником:
 	// возвращает перечень имеющеегося в наличии кофе
@@ -66,7 +66,7 @@ public:
 	// Приготовление кофе:
 	// принимает тип кофе и сумму денег
 	// возвращает порцию кофе и сдачу
-	std::pair<Coffee, CoffeeMashine::Cash> Cook(const std::string& kind, double sum);
+	std::pair<Coffee, CoffeeMashine::Cash> Cook(const tstring& kind, double sum);
 
 	// Позволяет получить ассортимент кофе
 	const CoffeeAvail& getCoffeeAvailable() const {

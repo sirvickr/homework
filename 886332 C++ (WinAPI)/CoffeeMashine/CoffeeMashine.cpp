@@ -2,9 +2,9 @@
 #include "CoffeeMashine.h"
 #include "Coffee.h"
 
-CoffeeMashine::CoffeeMashine(const std::string& coffeeFileName, const std::string& cashFileName)
+CoffeeMashine::CoffeeMashine(const tstring& coffeeFileName, const tstring& cashFileName)
 {
-	std::string coffeeKind;
+	tstring coffeeKind;
 
 	if (coffeeFileName.empty()) {
 		// тестовая инициализация доступных порций кофе
@@ -46,7 +46,7 @@ CoffeeMashine::CoffeeMashine(const std::string& coffeeFileName, const std::strin
 	}
 }
 
-std::pair<Coffee, CoffeeMashine::Cash> CoffeeMashine::Cook(const std::string& kind, double sum)
+std::pair<Coffee, CoffeeMashine::Cash> CoffeeMashine::Cook(const tstring& kind, double sum)
 {
 	// Поиск имеющейся в наличии порции
 	auto coffee = coffeeAvail.find(kind);

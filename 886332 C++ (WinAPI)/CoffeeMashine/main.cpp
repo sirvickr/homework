@@ -8,6 +8,7 @@
 CoffeeMashine* coffeeMashine = nullptr;
 
 HWND hlstCoffee = nullptr;
+HWND hlstOutput = nullptr;
 
 // Главная оконная процедура (обработчик сообщений главного окна приложения)
 INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -27,10 +28,12 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			SendMessage(hDlg, WM_CLOSE, 0, 0);
 			return TRUE;
 		case btnCook: // Нажатие кнопки "Приготовить"
+			// очистить список результатов
+			SendMessage(hlstOutput, LB_RESETCONTENT, (WPARAM)0, (LPARAM)0);
 			try {
 				// прочитать денежную сумму
 				GetDlgItemText(hDlg, txtInputSum, buffer, sizeof(buffer) / sizeof(buffer[0]) - 1);
-				std::istringstream is(buffer);
+				tistringstream is(buffer);
 				double sum = 0;
 				is >> sum;
 				// прочитать выбранный вид кофе
@@ -39,35 +42,30 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				SendMessage(hlstCoffee, LB_GETTEXT, (WPARAM)index, (LPARAM)text);
 				// приготовить кофе и получить сдачу
 				std::pair<Coffee, CoffeeMashine::Cash> result = coffeeMashine->Cook(text, sum);
-				
-				std::string message, title;
-				{
-					std::ostringstream os;
-					os << _T("Сдача (сумма: ") << std::fixed << std::setprecision(2) << sum << _T(" руб.)");
-					title = os.str();
-				}
+				// вывод результатов
+				SendMessage(hlstOutput, LB_ADDSTRING, (WPARAM)0, (LPARAM)text);
 				if (result.second.empty()) {
-					message = _T("Сдача не требуется");
+					SendMessage(hlstOutput, LB_ADDSTRING, (WPARAM)0, (LPARAM)_T("Сдача не требуется"));
 				} else {
-					std::ostringstream os;
+					SendMessage(hlstOutput, LB_ADDSTRING, (WPARAM)0, (LPARAM)_T("Сдача:"));
 					for (auto it = result.second.begin(); it != result.second.end(); it++) {
-						os << _T("Номинал ") << it->first << _T(" количество ") << it->second << _T('\n');
+						tostringstream os;
+						os << _T("Номинал ") << it->first << _T(" количество ") << it->second;
+						SendMessage(hlstOutput, LB_ADDSTRING, (WPARAM)0, (LPARAM)os.str().c_str());
 					}
-					message = os.str();
 				}
-				MessageBox(hDlg, message.c_str(), title.c_str(), MB_ICONINFORMATION);
 			}
 			catch (CoffeeMashine::NotAvail& e) {
-				MessageBox(hDlg, _T("Нет такого кофе"), _T("Ошибка кофейного автомата"), MB_ICONERROR);
+				SendMessage(hlstOutput, LB_ADDSTRING, (WPARAM)0, (LPARAM)_T("Нет такого кофе"));
 			}
 			catch (CoffeeMashine::NotEnoughMoney& e) {
-				MessageBox(hDlg, _T("Недостаточно денег"), _T("Ошибка кофейного автомата"), MB_ICONERROR);
+				SendMessage(hlstOutput, LB_ADDSTRING, (WPARAM)0, (LPARAM)_T("Недостаточно денег"));
 			}
 			catch (CoffeeMashine::NoChange& e) {
-				MessageBox(hDlg, _T("Нет сдачи"), _T("Ошибка кофейного автомата"), MB_ICONERROR);
+				SendMessage(hlstOutput, LB_ADDSTRING, (WPARAM)0, (LPARAM)_T("Нет сдачи"));
 			}
 			catch (CoffeeMashine::Error& e) {
-				MessageBox(hDlg, _T("Не удалось приготовить кофе"), _T("Ошибка кофейного автомата"), MB_ICONERROR);
+				SendMessage(hlstOutput, LB_ADDSTRING, (WPARAM)0, (LPARAM)_T("Не удалось приготовить кофе"));
 			}
 			return TRUE;
 		}
@@ -76,6 +74,7 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_INITDIALOG:
 		// В обработчике этого сообщения удобно проводить начальную настройку приложения
 		hlstCoffee = GetDlgItem(hDlg, lstCoffeeKind);
+		hlstOutput = GetDlgItem(hDlg, lstOutput);
 		// Выделяем память для объекта "Автомат по производству кофе"
 		coffeeMashine = new CoffeeMashine("coffee.cfg", "cash.cfg");
 

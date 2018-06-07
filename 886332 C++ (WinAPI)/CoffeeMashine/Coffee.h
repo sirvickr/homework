@@ -15,9 +15,9 @@ public:
 	private:
 		int count;
 	};
-	Coffee(const std::string& kind = "", double price = 0.0, int count = 0);
-	inline std::string getKind() const { return kind; }
-	inline void setKind(const std::string& value) { kind = value; }
+	Coffee(const tstring& kind = "", double price = 0.0, int count = 0);
+	inline tstring getKind() const { return kind; }
+	inline void setKind(const tstring& value) { kind = value; }
 	inline double getPrice() const { return price; }
 	inline void setPrice(double value) { price = value; }
 	inline int getCount() const { return count; }
@@ -28,7 +28,7 @@ public:
 	int addSome(int count);
 private:
 	// тип кофе
-	std::string kind;
+	tstring kind;
 	// цена порции
 	double price;
 	// количество порций
