@@ -68,10 +68,6 @@ public:
 	// возвращает порцию кофе и сдачу
 	std::pair<Coffee, CoffeeMashine::Cash> Cook(const tstring& kind, double sum);
 
-	// Позволяет получить ассортимент кофе
-	const CoffeeAvail& getCoffeeAvailable() const {
-		return coffeeAvail;
-	}
 private:
 	// доступные порции кофе
 	CoffeeAvail coffeeAvail;
