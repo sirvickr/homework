@@ -17,37 +17,29 @@ enum CashValue {
 class CoffeeMashine
 {
 public:
-	// Типы кофейных напитков
-	enum CoffeeKind {
-		Cappuccino,
-		Espresso,
-		Americano,
-		MaxKindValue
-	};
-	
 	typedef std::map<CashValue, int> Cash;
-	typedef std::list<Coffee> CoffeeAvail;
+	typedef std::map<std::string, Coffee> CoffeeAvail;
 
 	// Классы исключений:
 	// Базовый класс всех исключений
 	class Error {
 	public:
-		Error(CoffeeKind kind) : kind(kind) {
+		Error(const std::string& kind) : kind(kind) {
 		}
 	private:
 		// тип кофе
-		CoffeeKind kind;
+		std::string kind;
 	};
 	// Порций данного типа нет в наличии
 	class NotAvail : public Error {
 	public:
-		NotAvail(CoffeeKind kind) : Error(kind) {
+		NotAvail(const std::string& kind) : Error(kind) {
 		}
 	};
 	// На выбранную порцию не хватает внесённой суммы
 	class NotEnoughMoney : public Error {
 	public:
-		NotEnoughMoney(CoffeeKind kind, double diff) : Error(kind), diff(diff) {
+		NotEnoughMoney(const std::string& kind, double diff) : Error(kind), diff(diff) {
 		}
 		// сколько не хватает
 		double diff;
@@ -55,24 +47,26 @@ public:
 	// Нет такого набора купюр, чтобы выдать сдачу с внес1нной суммы
 	class NoChange : public Error {
 	public:
-		NoChange(CoffeeKind kind, double remainder) : Error(kind), remainder(remainder) {
+		NoChange(const std::string& kind, double remainder) : Error(kind), remainder(remainder) {
 		}
 	private:
-		// тип кофе
-		CoffeeKind kind;
 		// сколько не удалось разменять
 		double remainder;
 	};
 
 	// Конструктор
 	CoffeeMashine(const std::string& coffeeFileName = "", const std::string& cashFileName = "");
-	~CoffeeMashine() {
-		fclose(file);
+
+	// Просмотр ассортимента с ценником:
+	// возвращает перечень имеющеегося в наличии кофе
+	const CoffeeAvail& getCoffeeAvail() const {
+		return coffeeAvail;
 	}
+
 	// Приготовление кофе:
 	// принимает тип кофе и сумму денег
 	// возвращает порцию кофе и сдачу
-	std::pair<Coffee, CoffeeMashine::Cash> Cook(CoffeeKind kind, double sum);
+	std::pair<Coffee, CoffeeMashine::Cash> Cook(const std::string& kind, double sum);
 
 	// Позволяет получить ассортимент кофе
 	const CoffeeAvail& getCoffeeAvailable() const {
@@ -83,5 +77,4 @@ private:
 	CoffeeAvail coffeeAvail;
 	// доступная наличность (пары номинал-количество)
 	Cash cashAvail;
-	FILE* file=0;
 };

@@ -4,21 +4,10 @@
 #include "CoffeeMashine.h"
 #include "Coffee.h"
 
-LPTSTR* argv = nullptr;
-int argc = 0;
-
 // Автомат по производству кофе
 CoffeeMashine* coffeeMashine = nullptr;
 
 HWND hlstCoffee = nullptr;
-
-typedef std::map<std::wstring, CoffeeMashine::CoffeeKind> CoffeeKinds;
-
-const CoffeeKinds coffeeKinds {
-	{ _T("Каппучино"), CoffeeMashine::Cappuccino },
-	{ _T("Эспрессо"), CoffeeMashine::Espresso },
-	{ _T("Американо"), CoffeeMashine::Americano },
-};
 
 // Главная оконная процедура (обработчик сообщений главного окна приложения)
 INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -41,29 +30,26 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			try {
 				// прочитать денежную сумму
 				GetDlgItemText(hDlg, txtInputSum, buffer, sizeof(buffer) / sizeof(buffer[0]) - 1);
-				std::wistringstream is(buffer);
+				std::istringstream is(buffer);
 				double sum = 0;
 				is >> sum;
 				// прочитать выбранный вид кофе
 				TCHAR text[256];
 				int index = SendMessage(hlstCoffee, LB_GETCURSEL, (WPARAM)0, (LPARAM)0);
 				SendMessage(hlstCoffee, LB_GETTEXT, (WPARAM)index, (LPARAM)text);
-				const auto kind = coffeeKinds.find(text);
-				if (kind == coffeeKinds.end()) {
-					break;
-				}
 				// приготовить кофе и получить сдачу
-				std::pair<Coffee, CoffeeMashine::Cash> result = coffeeMashine->Cook(kind->second, sum);
-				std::wstring message, title;
+				std::pair<Coffee, CoffeeMashine::Cash> result = coffeeMashine->Cook(text, sum);
+				
+				std::string message, title;
 				{
-					std::wostringstream os;
+					std::ostringstream os;
 					os << _T("Сдача (сумма: ") << std::fixed << std::setprecision(2) << sum << _T(" руб.)");
 					title = os.str();
 				}
 				if (result.second.empty()) {
 					message = _T("Сдача не требуется");
 				} else {
-					std::wostringstream os;
+					std::ostringstream os;
 					for (auto it = result.second.begin(); it != result.second.end(); it++) {
 						os << _T("Номинал ") << it->first << _T(" количество ") << it->second << _T('\n');
 					}
@@ -94,12 +80,12 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		coffeeMashine = new CoffeeMashine("coffee.cfg", "cash.cfg");
 
 		SetDlgItemText(hDlg, txtInputSum, _T("100.0"));
-		// отладка
-		//for (int i = 0; i < argc; ++i)
-		//	SendMessage(hlstCoffee, LB_ADDSTRING, (WPARAM)0, (LPARAM)argv[i]);
-		// Заполняем список выбора напитков
-		for (const auto coffeeKind : coffeeKinds) {
-			SendMessage(hlstCoffee, LB_ADDSTRING, (WPARAM)0, (LPARAM)coffeeKind.first.c_str());
+		{
+			CoffeeMashine::CoffeeAvail coffeeAvail = coffeeMashine->getCoffeeAvail();
+			// Заполняем список выбора напитков
+			for (const auto coffee : coffeeAvail) {
+				SendMessage(hlstCoffee, LB_ADDSTRING, (WPARAM)0, (LPARAM)coffee.first.c_str());
+			}
 		}
 		SendMessage(hlstCoffee, LB_SETCURSEL, (WPARAM)0, 0);
 		break;
@@ -128,8 +114,6 @@ int WINAPI _tWinMain(HINSTANCE hInst, HINSTANCE h0, LPTSTR lpCmdLine, int nCmdSh
 {
 	MSG msg;
 	BOOL ret;
-	// Получаем стандартные параметры командной строки
-	argv = CommandLineToArgvW(lpCmdLine, &argc);
 	// Создаём главное окно
 	HWND hDlg = CreateDialogParam(hInst, MAKEINTRESOURCE(mainWnd), 0, DialogProc, 0);
 	// Отображаем его на экране
