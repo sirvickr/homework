@@ -4,6 +4,17 @@
 #include "CoffeeMashine.h"
 #include "Coffee.h"
 
+// Common Controls (красивый вид элементов управления)
+#pragma comment(linker, \
+  "\"/manifestdependency:type='Win32' "\
+  "name='Microsoft.Windows.Common-Controls' "\
+  "version='6.0.0.0' "\
+  "processorArchitecture='*' "\
+  "publicKeyToken='6595b64144ccf1df' "\
+  "language='*'\"")
+
+#pragma comment(lib, "ComCtl32.lib")
+
 // Автомат по производству кофе
 CoffeeMashine* coffeeMashine = nullptr;
 
@@ -113,6 +124,7 @@ int WINAPI _tWinMain(HINSTANCE hInst, HINSTANCE h0, LPTSTR lpCmdLine, int nCmdSh
 {
 	MSG msg;
 	BOOL ret;
+	InitCommonControls();
 	// Создаём главное окно
 	HWND hDlg = CreateDialogParam(hInst, MAKEINTRESOURCE(mainWnd), 0, DialogProc, 0);
 	// Отображаем его на экране
