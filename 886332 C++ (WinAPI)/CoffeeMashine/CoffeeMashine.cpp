@@ -2,32 +2,45 @@
 #include "CoffeeMashine.h"
 #include "Coffee.h"
 
-CoffeeMashine::CoffeeMashine(const tstring& coffeeFileName, const tstring& cashFileName)
+bool CoffeeMashine::loadCoffee(const tstring& fileName)
 {
+	bool result = false;
 	tstring coffeeKind;
-
-	if (coffeeFileName.empty()) {
-		// тестовая инициализация доступных порций кофе
+	std::ifstream input(fileName);
+	if (input) {
+		int count;
+		double price;
+		while (input >> coffeeKind >> price >> count) {
+			for (int i = 0; i < count; i++) {
+				coffeeAvail.insert(CoffeeAvail::value_type(coffeeKind, Coffee(coffeeKind, price, count)));
+			}
+		}
+		result = true;
+	} else {
+		// не удалось открыть файл - заполняем по умолчанию
 		coffeeKind = "Капучино";
 		coffeeAvail.insert(CoffeeAvail::value_type(coffeeKind, Coffee(coffeeKind, 50.0, 10)));
 		coffeeKind = "Эспрессо";
 		coffeeAvail.insert(CoffeeAvail::value_type(coffeeKind, Coffee(coffeeKind, 25.0, 10)));
 		coffeeKind = "Американо";
 		coffeeAvail.insert(CoffeeAvail::value_type(coffeeKind, Coffee(coffeeKind, 30.0, 10)));
-	} else {
-		std::ifstream input(coffeeFileName);
-		if (input) {
-			int count;
-			double price;
-			while (input >> coffeeKind >> price >> count) {
-				for (int i = 0; i < count; i++) {
-					coffeeAvail.insert(CoffeeAvail::value_type(coffeeKind, Coffee(coffeeKind, price, count)));
-				}
-			}
-		}
+		result = false;
 	}
-	if (cashFileName.empty()) {
-		// тестовая инициализация доступных банкнот и монет
+	return result;
+}
+
+bool CoffeeMashine::loadCash(const tstring& fileName)
+{
+	bool result = false;
+	std::ifstream input(fileName);
+	if (input) {
+		int value, count;
+		while (input >> value >> count) {
+			cashAvail[static_cast<CashValue>(value)] = count;
+		}
+		result = true;
+	} else {
+		// не удалось открыть файл - заполняем по умолчанию
 		cashAvail[note500] = 1;
 		cashAvail[note100] = 10;
 		cashAvail[note50] = 20;
@@ -35,15 +48,15 @@ CoffeeMashine::CoffeeMashine(const tstring& coffeeFileName, const tstring& cashF
 		cashAvail[coin5] = 100;
 		cashAvail[coin2] = 100;
 		cashAvail[coin1] = 200;
-	} else {
-		std::ifstream input(cashFileName);
-		if (input) {
-			int value, count;
-			while (input >> value >> count) {
-				cashAvail[static_cast<CashValue>(value)] = count;
-			}
-		}
+		result = false;
 	}
+	return result;
+}
+
+CoffeeMashine::CoffeeMashine(const tstring& coffeeFileName, const tstring& cashFileName)
+{
+	loadCoffee(coffeeFileName);
+	loadCash(cashFileName);
 }
 
 std::pair<Coffee, CoffeeMashine::Cash> CoffeeMashine::Cook(const tstring& kind, double sum)

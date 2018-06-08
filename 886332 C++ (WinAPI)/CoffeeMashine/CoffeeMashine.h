@@ -73,4 +73,12 @@ private:
 	CoffeeAvail coffeeAvail;
 	// доступная наличность (пары номинал-количество)
 	Cash cashAvail;
+
+private:
+	// Загрузка порций кофе из файла:
+	// если не удалось открыть файл, заполняет по умолчанию и возвращает false
+	bool loadCoffee(const tstring& fileName);
+	// Загрузка банкнот/монет из файла:
+	// если не удалось открыть файл, заполняет по умолчанию и возвращает false
+	bool loadCash(const tstring& fileName);
 };
