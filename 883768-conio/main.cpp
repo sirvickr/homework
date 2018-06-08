@@ -7,7 +7,7 @@
 #include "menu.h"
 #include "dict.h"
 
-SMALL_RECT menu_rect = { 5, 0, 14, 12 };
+SMALL_RECT menu_rect = { 0, 0, 79, 1 };
 
 //enum item_names { MNUFILE, MNUDO, MNUCLEAR, MNUHELP, MNUEXIT };
 const int item_count = 6; // количество пунктов меню
@@ -36,8 +36,8 @@ int main(int argc, char* argv[])
 	//SetConsoleTitle("јнгло-русский словарь");
 	SetConsoleTitle("Dictionary");
 	memset(&menu, 0x00, sizeof(menu));
-//	InitMenu(&menu, menu_items, item_count, MENU_ORIENT_HORZ, &menu_rect);
-	InitMenu(&menu, menu_items, item_count, MENU_ORIENT_VERT, NULL);
+	InitMenu(&menu, menu_items, item_count, MENU_ORIENT_HORZ, &menu_rect);
+//	InitMenu(&menu, menu_items, item_count, MENU_ORIENT_HORZ, NULL);
 	DrawMenu(&menu);
 	ClearMenu(&menu);
 /*#if 1

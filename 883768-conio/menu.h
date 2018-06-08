@@ -49,7 +49,7 @@ void ClearMenu(MENU* menu);
 void DrawMenu(MENU* menu);
 void gotoxy(MENU* menu, int x, int y); // перевод курсока в точку x, y
 void itemMenu(MENU* menu, bool activate); // выделить пункт меню
-void menu_cls(MENU* menu, const SMALL_RECT& rect); // очистка консоли
+void menu_cls(MENU* menu); // очистка окна
 void saveCursorPosition(MENU* menu); // запомнить полодение курсора
 // в глобальную переменную curspos
 void showCursor(MENU* menu, bool visible); // скрыть/показать курсор
