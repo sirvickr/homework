@@ -5,23 +5,41 @@
 #include <stdlib.h>
 #pragma hdrstop
 #include "menu.h"
+#include "dict.h"
 
-extern HANDLE hStdOut; // дескриптор консольного окна
-extern CONSOLE_SCREEN_BUFFER_INFO csbInfo; // информация о консольном окне
-extern SMALL_RECT consolRect; // координаты углов консоли
-extern WORD workWindowAttributes; // атрибуты рабочей области консоли
+SMALL_RECT menu_rect = { 5, 0, 14, 12 };
+
+//enum item_names { MNUFILE, MNUDO, MNUCLEAR, MNUHELP, MNUEXIT };
+const int item_count = 6; // количество пунктов меню
+ITEM menu_items[item_count] = { // положение (x,y), заголовок, указатель на функцию
+#if 1
+	{ 0, 0, " Edit ", Edit },
+	{ 0, 0, " Search ", Search },
+	{ 0, 0, " Sort ", Sort },
+	{ 0, 0, " Save ", Save },
+	{ 0, 0, " Help ", Help },
+	{ 0, 0, " Exit ", Exit },
+#else
+	{ 1,  0, " Файл ", File },
+	{ 11, 0, " Действие ", Do },
+	{ 21, 0, " Очистить ", Clear },
+	{ 31, 0, " Справка ", Help },
+	{ 41, 0, " Выход ", Exit },
+#endif
+};
 
 #pragma argsused
 int main(int argc, char* argv[])
 {
-//	setlocale(LC_CTYPE, "rus"); // вызов функции настройки национальных параметров
-	//SetConsoleTitle("Пример создания строки меню");
-	hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-	GetConsoleScreenBufferInfo(hStdOut, &csbInfo);
-	consolRect = csbInfo.srWindow; // координаты углов консоли
-	SetConsoleTextAttribute(hStdOut, workWindowAttributes);
-	system("CLS"); // установка атрибутов цвета рабочей области
-	DrawMenu(); // рисуем меню в верхней строке консоли
+	MENU menu;
+	//setlocale(LC_CTYPE, "rus"); // вызов функции настройки национальных параметров
+	//SetConsoleTitle("Англо-русский словарь");
+	SetConsoleTitle("Dictionary");
+	memset(&menu, 0x00, sizeof(menu));
+//	InitMenu(&menu, menu_items, item_count, MENU_ORIENT_HORZ, &menu_rect);
+	InitMenu(&menu, menu_items, item_count, MENU_ORIENT_VERT, NULL);
+	DrawMenu(&menu);
+	ClearMenu(&menu);
 /*#if 1
 	//получение дескриптора стандартного устройства вывода
 	HANDLE wHnd = GetStdHandle(STD_OUTPUT_HANDLE);

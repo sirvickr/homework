@@ -9,135 +9,188 @@
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 
-#define KEY_ARROW_RIGHT 77
+#define KEY_ARROW_UP 72
 #define KEY_ARROW_LEFT 75
+#define KEY_ARROW_RIGHT 77
+#define KEY_ARROW_DOWN 80
 #define KEY_ENTER 13
 
-// Указатели на функции void f(void) - они будут выполнять пункты меню
-typedef int(*FUN) (void);
-// Структура для элемента меню
-typedef struct {
-	int x, y; // Столбец и строка консоли
-	char *str; // Наименование пункта меню
-	FUN cb; // Функция, привязанная к пункту меню
-} ITEM;
-// Глобальные переменные, используемые в функциях меню
-HANDLE hStdOut; // дескриптор консольного окна
-CONSOLE_SCREEN_BUFFER_INFO csbInfo;// информация о консольном окне в структуре csbInfo
-SMALL_RECT consolRect; // координаты углов консольного окна
-COORD curspos={0,1}; // координаты текстового курсора
-WORD workWindowAttributes = 158;// атрибуты рабочей области
-WORD inactiveItemAttributes = 31; // атрибуты цвета неактивного пункта меню
-WORD activeItemAttributes = 160; // атрибуты цвета активного пункта меню
-// Изменяемые элементы меню
-enum menuitems { MNUFILE, MNUDO, MNUCLEAR, MNUEXIT };
-extern const int numMenu = 4; // количество пунктов меню
-ITEM menu[numMenu] = { // положение (x,y), заголовок, указатель на функцию
-#if 1
-	{ 1,  0, " File     ", File },
-	{ 11, 0, " Action   ", Do },
-	{ 21, 0, " Clear    ", Clear },
-	{ 31, 0, " Exit     ", Exit }
-#else
-	{ 1,  0, " Файл     ", File },
-	{ 11, 0, " Действие ", Do },
-	{ 21, 0, " Очистить ", Clear },
-	{ 31, 0, " Выход    ", Exit }
-#endif
-};
-// Длина строк заголовков " Файл ", " Действие ", " Очистить ", " Выход "
-// должна быть подобрана в соответствии с их X - координатами в массиве menu[]
+int InitMenu(MENU* menu, ITEM* items, int item_count, int orient, const SMALL_RECT* prect) {
+	int i, len;
+	if(NULL == menu || NULL == items)
+		return -1;
+	// Получаем дескриптор консольного вывода
+	menu->hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	// Сохраняем полученные параметры
+	if(prect != NULL ) {
+		menu->wnd.rect.Left = prect->Left;//menu->csbInfo.srWindow.Left + hpad;
+		menu->wnd.rect.Top = prect->Top;//menu->csbInfo.srWindow.Top + vpad;
+		menu->wnd.rect.Right = prect->Right;//menu->csbInfo.srWindow.Right - hpad;
+		menu->wnd.rect.Bottom = prect->Bottom;//menu->csbInfo.srWindow.Bottom - vpad;
+	} else {
+		CONSOLE_SCREEN_BUFFER_INFO csbInfo;// информация о консольном окне в структуре csbInfo
+		// Получаем размеры консоли
+		GetConsoleScreenBufferInfo(menu->hStdOut, &csbInfo);
+		menu->wnd.rect.Left = csbInfo.srWindow.Left;
+		menu->wnd.rect.Top = csbInfo.srWindow.Top;
+		menu->wnd.rect.Right = csbInfo.srWindow.Right;
+		menu->wnd.rect.Bottom = csbInfo.srWindow.Bottom;
+	}
+	menu->wnd.M = menu->wnd.rect.Bottom - menu->wnd.rect.Top + 1;
+	menu->wnd.N = menu->wnd.rect.Right - menu->wnd.rect.Left + 1;
+	menu->wnd.m = (char**)malloc((menu->wnd.M) * sizeof(char*));
+	for(int i = 0; i < menu->wnd.M; i++) {
+		menu->wnd.m[i] = (char*)malloc((menu->wnd.N + 1) * sizeof(char));
+		memset(menu->wnd.m[i], ' ', menu->wnd.N * sizeof(char));
+		menu->wnd.m[i][menu->wnd.N] = '\0';
+	}
+	// координаты углов консоли
+//	menu->consolRect = csbInfo.srWindow;
+	menu->curspos.X = menu->wnd.rect.Left;///0;
+	menu->curspos.Y = menu->wnd.rect.Top;///1;
+	menu->workWindowAttributes = 158;
+	menu->inactiveItemAttributes = 31;
+	menu->activeItemAttributes = 160;
+	// Устанавливаем цветовые параметры текста
+	SetConsoleTextAttribute(menu->hStdOut, menu->workWindowAttributes);
 
-#define LINE_LEN 80
-char line[LINE_LEN] = { ' ' };
+	menu->orient = orient;
+	menu->current = 0;
+	int next = 0;
+	switch(orient) {
+	case MENU_ORIENT_HORZ:
+		next = menu->curspos.X;
+		for(i = 0; i < item_count; ++i) {
+			if(items[i].str) {
+				len = strlen(items[i].str) + 1;
+				items[i].x = next;
+				items[i].y = menu->curspos.Y;
+				next += len;
+			}
+		}
+		break;
+	case MENU_ORIENT_VERT:
+		next = menu->curspos.Y;
+		for(i = 0; i < item_count; ++i) {
+			if(items[i].str) {
+				len = strlen(items[i].str) + 1;
+				items[i].x = menu->curspos.X;
+				items[i].y = next;
+				next++;
+			}
+		}
+		break;
+	}
+	menu->item_count = item_count;
+	menu->items = items;
+
+#if 0
+	system("CLS"); // установка атрибутов цвета рабочей области
+#else
+	///menu_cls(menu, WholeWindow);
+#endif
+
+	return 0;
+}
+
+void ClearMenu(MENU* menu) {
+	int i;
+	for(i = 0; i < menu->wnd.M; i++)
+		free(menu->wnd.m[i]);
+	free(menu->wnd.m);
+//?	CloseHandle(menu->hStdOut);
+}
+
+void menu_prev(MENU* menu) {
+	itemMenu(menu, false); // сделать неактивным пункт меню
+	if (menu->current > 0) {
+		--menu->current;
+	} else {
+		menu->current = menu->item_count - 1; // прокрутка вправо
+	}
+	itemMenu(menu, true); // выделить активный пункт меню
+	showCursor(menu, false);
+}
+
+void menu_next(MENU* menu) {
+	itemMenu(menu, false); // сделать неактивным пункт меню
+	if (menu->current < menu->item_count - 1) {
+		++menu->current;
+	} else {
+		menu->current = 0; // прокрутка влево
+	}
+	itemMenu(menu, true); // выделить активный пункт меню
+	showCursor(menu, false);
+}
+
 // Управление меню
-void DrawMenu() {
-	memset(line, ' ', LINE_LEN);
-	line[LINE_LEN - 1] = '\0';
+void DrawMenu(MENU* menu) {
 	// Номер текущего пункта меню
-	menuitems sel = MNUFILE;
-	SetConsoleTextAttribute(hStdOut, inactiveItemAttributes);
-	//string s(80, ' ');
-	//cout << s; // залить фон строки меню
-	printf(line); fflush(stdout);
-	for (int i = 0; i < numMenu; i++) { // Напечатать заголовки пунктов меню
-		gotoxy(menu[i].x, menu[i].y);
-		printf(menu[i].str);
+	SetConsoleTextAttribute(menu->hStdOut, menu->inactiveItemAttributes);
+///	printf(menu->line);
+///	fflush(stdout);
+
+	for (int i = 0; i < menu->item_count; i++) { // Напечатать заголовки пунктов меню
+		gotoxy(menu, menu->items[i].x, menu->items[i].y);
+		printf(menu->items[i].str);
 	}
 	fflush(stdout);
-	itemMenu(sel, true); // выделить пункт меню
+
+	itemMenu(menu, true); // выделить пункт меню
+
 	fflush(stdin); // очистить буфер клавиатуры
+
+	int cb_retcode = 0;
 	int iKey = 67;
 	int run = 1;
 	while (run) {
 		if (kbhit()) {
 			iKey = _getch();
 			switch (iKey) {
-			case KEY_ARROW_RIGHT:
-				itemMenu(sel, false); // сделать неактивным пункт меню
-				if (sel < numMenu - 1) {
-					sel = (menuitems)(sel + 1);
-				} else {
-					sel = MNUFILE; // прокрутка влево
-				}
-				itemMenu(sel, true); // выделить активный пункт меню
-				showCursor(false);
-				break;
+			case KEY_ARROW_UP:
+				if(MENU_ORIENT_VERT == menu->orient)
+					menu_prev(menu);
 			case KEY_ARROW_LEFT:
-				itemMenu(sel, false); // сделать неактивным пункт меню
-				if (sel > 0) {
-					sel = (menuitems)(sel - 1);
-				} else {
-					sel = MNUEXIT; // прокрутка вправо
-				}
-				itemMenu(sel, true); // выделить активный пункт меню
-				showCursor(false);
+				if(MENU_ORIENT_HORZ == menu->orient)
+					menu_prev(menu);
+				break;
+			case KEY_ARROW_RIGHT:
+				if(MENU_ORIENT_HORZ == menu->orient)
+					menu_next(menu);
+				break;
+			case KEY_ARROW_DOWN:
+				if(MENU_ORIENT_VERT == menu->orient)
+					menu_next(menu);
+				break;
 				break;
 			case KEY_ENTER:
-				// возвращаем курсор из строки меню в прежнюю позицию
-				gotoxy(curspos.X, curspos.Y);
+				// Возвращаем курсор из строки меню в прежнюю позицию
+				gotoxy(menu, menu->curspos.X, menu->curspos.Y);
 				// Установить цвет рабочих сообщений
-				SetConsoleTextAttribute(hStdOut, workWindowAttributes);
-				showCursor(true);
-				switch (sel) {
-				case MNUFILE:
-					File();
-					getCursorPosition(); // запомнить положение курсора
-					break;
-				case MNUDO:
-					Do();
-					getCursorPosition(); // запомнить положение курсора
-					break;
-				case MNUCLEAR:
-					Clear();
-					// после очистки курсор в левый верхний угол консоли
-					///curspos = { 0, 1 };
-					curspos.X = 0;
-					curspos.Y = 1;
-					break;
-				case MNUEXIT:
-					if (Exit()) {
-						gotoxy(0, 0);
-						cls(1);
-						run = 0;
-						break;///exit(0);
-					}
-					// запомнить положение курсора, если отменили выход
-					getCursorPosition();
-					break;
+				SetConsoleTextAttribute(menu->hStdOut, menu->workWindowAttributes);
+				showCursor(menu, true);
+				// Вызываем обработчик пункта меню
+				cb_retcode = menu->items[menu->current].cb(menu);
+				if(-1 == cb_retcode) {
+					gotoxy(menu, 0, 0);
+					///menu_cls(menu, WholeWindow);
+					run = 0;
+					break;///exit(0);
+				} else if(0 == cb_retcode) {
+					saveCursorPosition(menu);
 				}
 				// очистить буфер клавиатуры
 				fflush(stdin);
 				// курсор в текущий пункт меню
-				gotoxy(menu[sel].x, menu[sel].y);
+				gotoxy(menu, menu->items[menu->current].x, menu->items[menu->current].y);
 				// спрятать курсор
-				showCursor(false);
+				showCursor(menu, false);
 				break;
 			case 120: // выход по клавише x
 			case 88: // выход по клавише X
 			case 27: // выход по клавише ESC
-				gotoxy(0, 0);
-				cls(1);
+				gotoxy(menu, 0, 0);
+				///menu_cls(menu, WholeWindow);
 				run = 0;///exit(0);
 			} // switch(iKey)
 		} // if(kbhit())
@@ -145,68 +198,58 @@ void DrawMenu() {
 }
 
 // Текстовый курсор в точку x,y
-void gotoxy(int x, int y)
+void gotoxy(MENU* menu, int x, int y)
 {
 	COORD cursorPos = { x, y };
-	SetConsoleCursorPosition(hStdOut, cursorPos);
+	SetConsoleCursorPosition(menu->hStdOut, cursorPos);
 	///SetConsoleCursorPosition(hStdOut, {x,y});
 }
 // Запись текущего положения текстового курсора в глобальную переменную curspos
-void getCursorPosition(void)
+void saveCursorPosition(MENU* menu)
 {
-	GetConsoleScreenBufferInfo(hStdOut, &csbInfo);
-	curspos = csbInfo.dwCursorPosition;
-}         
+	CONSOLE_SCREEN_BUFFER_INFO csbInfo;// информация о консольном окне в структуре csbInfo
+	GetConsoleScreenBufferInfo(menu->hStdOut, &csbInfo);
+	menu->curspos = csbInfo.dwCursorPosition;
+}
 // Очистка тестовой области консоли. Если it == 0, то очистка со строки,
 // следующей за строкой меню, иначе очистка с левого верхнего угла консоли
-void cls(int it)
+/*void menu_cls(MENU* menu, const SMALL_RECT& rect)
 {
-	int i;
-	//string s(80, ' ');
-	SetConsoleTextAttribute(hStdOut, workWindowAttributes);
-	if (it == 0)
-		gotoxy(0, consolRect.Top + 1);
-	else
-		gotoxy(0, consolRect.Top);
-	for (i = consolRect.Top; i < curspos.Y + 1; i++) // очистка от
-	// первой строки до строки с курсором
-	//cout << s; // залить фон строки меню
-	printf(line);
-	gotoxy(0, 0);
-}
-/*
-void mycls(HANDLE hConsole)
-{
-	COORD coordScreen = {0,0}; // начальное положение курсора
-	CONSOLE_SCREEN_BUFFER_INFO csbi;
-	DWORD dwConSize;
-	DWORD cCharsWritten;
-	GetConsoleScreenBufferInfo(hConsole, &csbi);
-	dwConSize = csbi.dwSize.X * csbi.dwSize.Y; // количество
-	// символьных ячеек в буфере консоли
-	FillConsoleOutputCharacter(hConsole,(TCHAR)' ',
-	dwConSize, coordScreen, &cCharsWritten);
-	FillConsoleOutputAttribute(hConsole, csbi.wAttributes,
-	dwConSize, coordScreen, &cCharsWritten);
-	SetConsoleCursorPosition(hConsole, coordScreen);
-}*/
-// Выделить пункт меню с номером sel
-void itemMenu(int sel, bool activate)
+	int i, y;
+	SetConsoleTextAttribute(menu->hStdOut, menu->workWindowAttributes);
+	//gotoxy(menu, rect.Left, rect.Top);
+	// очистка окна
+	#if 0
+	for (i = rect.Top; i < rect.Bottom + 1; i++) {
+		gotoxy(menu, rect.Left, i);
+		printf(menu->line); // залить фон строки меню
+	}
+	#else
+	for (i = 0, y = menu->wnd.rect.Top; i < menu->wnd.M; i++, y++) {
+		gotoxy(menu, menu->wnd.rect.Left, y);
+		printf(menu->wnd.m[i]); // залить фон строки меню
+	}
+	#endif
+	gotoxy(menu, 0, 0);
+}*/
+
+// Выделить пункт меню с номером current
+void itemMenu(MENU* menu, bool activate)
 {
 	WORD itemAttributes;
 	if (activate)
-		itemAttributes = activeItemAttributes;
+		itemAttributes = menu->activeItemAttributes;
 	else
-		itemAttributes = inactiveItemAttributes;
-	gotoxy(menu[sel].x, menu[sel].y);
-	SetConsoleTextAttribute(hStdOut, itemAttributes);
-	printf(menu[sel].str);
+		itemAttributes = menu->inactiveItemAttributes;
+	gotoxy(menu, menu->items[menu->current].x, menu->items[menu->current].y);
+	SetConsoleTextAttribute(menu->hStdOut, itemAttributes);
+	printf(menu->items[menu->current].str);
 }
 // Скрыть/показать текстовый курсор в консоли
-void showCursor(bool visible)
+void showCursor(MENU* menu, bool visible)
 {
 	CONSOLE_CURSOR_INFO ccInfo;
 	ccInfo.bVisible = visible;
 	ccInfo.dwSize = 20;
-	SetConsoleCursorInfo(hStdOut, &ccInfo);
+	SetConsoleCursorInfo(menu->hStdOut, &ccInfo);
 }
