@@ -15,12 +15,16 @@
 
 #pragma comment(lib, "ComCtl32.lib")
 
+// Вспомогательный текстовый буфер
+TCHAR szText[256];
 // Автомат по производству кофе
 CoffeeMashine* coffeeMashine = nullptr;
-
-HWND hlstCoffee = nullptr;
+// Оконные дескрипторы некоторых элементов управления (которые используем)
 HWND hlstOutput = nullptr;
-
+HWND hlvwCoffee = nullptr;
+// Переменные для работы с ListView
+LVCOLUMN lvColumn;
+LVITEM lvItem;
 // Главная оконная процедура (обработчик сообщений главного окна приложения)
 INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -48,13 +52,12 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				double sum = 0;
 				is >> sum;
 				// прочитать выбранный вид кофе
-				TCHAR text[256];
-				int index = SendMessage(hlstCoffee, LB_GETCURSEL, (WPARAM)0, (LPARAM)0);
-				SendMessage(hlstCoffee, LB_GETTEXT, (WPARAM)index, (LPARAM)text);
+				int index = ListView_GetNextItem(hlvwCoffee, -1, LVNI_SELECTED);
+				ListView_GetItemText(hlvwCoffee, index, 0, szText, sizeof(szText) / sizeof(szText[0]));
 				// приготовить кофе и получить сдачу
-				std::pair<Coffee, CoffeeMashine::Cash> result = coffeeMashine->Cook(text, sum);
+				std::pair<Coffee, CoffeeMashine::Cash> result = coffeeMashine->Cook(szText, sum);
 				// вывод результатов
-				SendMessage(hlstOutput, LB_ADDSTRING, (WPARAM)0, (LPARAM)text);
+				SendMessage(hlstOutput, LB_ADDSTRING, (WPARAM)0, (LPARAM)szText);
 				if (result.second.empty()) {
 					SendMessage(hlstOutput, LB_ADDSTRING, (WPARAM)0, (LPARAM)_T("Сдача не требуется"));
 				} else {
@@ -84,20 +87,54 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_INITDIALOG:
 		// В обработчике этого сообщения удобно проводить начальную настройку приложения
-		hlstCoffee = GetDlgItem(hDlg, lstCoffeeKind);
-		hlstOutput = GetDlgItem(hDlg, lstOutput);
 		// Выделяем память для объекта "Автомат по производству кофе"
 		coffeeMashine = new CoffeeMashine("coffee.cfg", "cash.cfg");
-
+		// Сумма предоплаты по умолчанию
 		SetDlgItemText(hDlg, txtInputSum, _T("100.0"));
+		// Получаем оконные дескрипторы, которые понадобятся в работе
+		hlstOutput = GetDlgItem(hDlg, lstOutput);
+		hlvwCoffee = GetDlgItem(hDlg, lvwCoffee);
+		// Заголовки списка напитков
+		SendMessage(hlvwCoffee, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+		memset(&lvColumn, 0x00, sizeof(lvColumn));
+		lvColumn.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
+		lvColumn.cx = 80; // Ширина столбца
+		lvColumn.pszText = _T("Кофе");
+		SendMessage(hlvwCoffee, LVM_INSERTCOLUMN, (WPARAM)0, (LPARAM)&lvColumn);
+		
+		lvColumn.cx = 40;
+		lvColumn.pszText = _T("Цена");
+		SendMessage(hlvwCoffee, LVM_INSERTCOLUMN, (WPARAM)1, (LPARAM)&lvColumn);
+		lvColumn.cx = 50;
+		lvColumn.pszText = _T("Кол-во");
+		SendMessage(hlvwCoffee, LVM_INSERTCOLUMN, (WPARAM)2, (LPARAM)&lvColumn);
+		// Заполняем список выбора напитков
+		memset(&lvItem, 0x00, sizeof(lvItem));
+		lvItem.mask = LVIF_TEXT; // текстовый стиль
+		lvItem.cchTextMax = 256; // максимальный размер строки
 		{
 			CoffeeMashine::CoffeeAvail coffeeAvail = coffeeMashine->getCoffeeAvail();
-			// Заполняем список выбора напитков
+			int i = 0;
 			for (const auto coffee : coffeeAvail) {
-				SendMessage(hlstCoffee, LB_ADDSTRING, (WPARAM)0, (LPARAM)coffee.first.c_str());
+				lvItem.iItem = 0;
+				lvItem.iSubItem = 0;
+				lvItem.pszText = (LPSTR)coffee.first.c_str();
+				SendMessage(hlvwCoffee, LVM_INSERTITEM, (WPARAM)0, (LPARAM)&lvItem);
+				// цена
+				lvItem.iSubItem = 1;
+				_stprintf(szText, _T("%.2f"), coffee.second.getPrice());
+				lvItem.pszText = szText;
+				SendMessage(hlvwCoffee, LVM_SETITEM, (WPARAM)0, (LPARAM)&lvItem);
+				// количество
+				lvItem.iSubItem = 2;
+				_stprintf(szText, _T("%d"), coffee.second.getCount());
+				lvItem.pszText = szText;
+				SendMessage(hlvwCoffee, LVM_SETITEM, (WPARAM)0, (LPARAM)&lvItem);
+				i++;
 			}
+			// выделяем первый элемент
+			ListView_SetItemState(hlvwCoffee, 0, LVFIS_FOCUSED | LVIS_SELECTED, 0x000F);
 		}
-		SendMessage(hlstCoffee, LB_SETCURSEL, (WPARAM)0, 0);
 		break;
 
 	case WM_CLOSE:
