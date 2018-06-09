@@ -7,30 +7,36 @@
 #include "menu.h"
 #include "dict.h"
 
-SMALL_RECT menu_rect = { 0, 0, 79, 1 };
+SMALL_RECT menu_rect = { 0, 0, 99, 9 };
 
-//enum item_names { MNUFILE, MNUDO, MNUCLEAR, MNUHELP, MNUEXIT };
 const int item_count = 6; // количество пунктов меню
-ITEM menu_items[item_count] = { // положение (x,y), заголовок, указатель на функцию
+// положение (x,y), заголовок, указатель на функцию
+ITEM menu_items[item_count] = {
 #if 1
-	{ 0, 0, " Edit ", Edit },
-	{ 0, 0, " Search ", Search },
-	{ 0, 0, " Sort ", Sort },
-	{ 0, 0, " Save ", Save },
-	{ 0, 0, " Help ", Help },
-	{ 0, 0, " Exit ", Exit },
+	{ 0, 0, "Edit", Edit },
+	{ 0, 0, "Search", Search },
+	{ 0, 0, "Sort", Sort },
+	{ 0, 0, "Save", Save },
+	{ 0, 0, "Help", Help },
+	{ 0, 0, "Exit", Exit },
 #else
-	{ 1,  0, " Файл ", File },
-	{ 11, 0, " Действие ", Do },
-	{ 21, 0, " Очистить ", Clear },
-	{ 31, 0, " Справка ", Help },
-	{ 41, 0, " Выход ", Exit },
+	{ 1,  0, "Файл", File },
+	{ 11, 0, "Действие", Do },
+	{ 21, 0, "Очистить", Clear },
+	{ 31, 0, "Справка", Help },
+	{ 41, 0, "Выход", Exit },
 #endif
 };
+
+int Run();
 
 #pragma argsused
 int main(int argc, char* argv[])
 {
+	return Run();
+}
+
+int Run() {
 	MENU menu;
 	//setlocale(LC_CTYPE, "rus"); // вызов функции настройки национальных параметров
 	//SetConsoleTitle("Англо-русский словарь");
@@ -77,5 +83,3 @@ int main(int argc, char* argv[])
 	//getchar();
 	return 0;
 }
-//---------------------------------------------------------------------------
- 

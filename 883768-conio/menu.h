@@ -36,6 +36,7 @@ typedef struct MENU {
 
 	ITEM* items;
 	int item_count;
+	int item_width;
 	int orient;
 	int current;
 } MENU;

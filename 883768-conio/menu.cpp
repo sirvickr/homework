@@ -53,36 +53,68 @@ int InitMenu(MENU* menu, ITEM* items, int item_count, int orient, const SMALL_RE
 	menu->activeItemAttributes = 160;
 	// Устанавливаем цветовые параметры текста
 	SetConsoleTextAttribute(menu->hStdOut, menu->workWindowAttributes);
-
+	#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+	menu->items = (ITEM*)malloc(item_count * sizeof(ITEM));
 	menu->orient = orient;
 	menu->current = 0;
-	int next = 0;
+	int next = 0, width;
 	switch(orient) {
 	case MENU_ORIENT_HORZ:
+		menu->item_width = (menu->wnd.rect.Right - menu->wnd.rect.Left + 1) / item_count;
 		next = menu->curspos.X;
 		for(i = 0; i < item_count; ++i) {
 			if(items[i].str) {
-				len = strlen(items[i].str) + 1;
-				items[i].x = next;
-				items[i].y = menu->curspos.Y;
-				next += len;
+				len = strlen(items[i].str);
+				memset(&menu->items[i], 0x00, sizeof(ITEM));
+				menu->items[i].x = next;
+				menu->items[i].y = menu->curspos.Y;
+				width = MAX(len, menu->item_width);
+				menu->items[i].str = (char*)malloc((width + 1) * sizeof(char));
+
+				memset(menu->items[i].str, ' ', width);
+				if(len < menu->item_width) {
+					int indent = (menu->item_width - len) / 2;
+					memcpy(menu->items[i].str + indent, items[i].str, len);
+				} else {
+					memcpy(menu->items[i].str, items[i].str, menu->item_width - 1);
+					menu->items[i].str[menu->item_width - 1] = '...';
+				}
+				menu->items[i].str[width] = '\0';
+
+				menu->items[i].cb = items[i].cb;
+				next += menu->item_width;
 			}
 		}
 		break;
 	case MENU_ORIENT_VERT:
+		menu->item_width = (menu->wnd.rect.Right - menu->wnd.rect.Left + 1);
 		next = menu->curspos.Y;
 		for(i = 0; i < item_count; ++i) {
 			if(items[i].str) {
-				len = strlen(items[i].str) + 1;
-				items[i].x = menu->curspos.X;
-				items[i].y = next;
+				len = strlen(items[i].str);
+				memset(&menu->items[i], 0x00, sizeof(ITEM));
+				menu->items[i].x = menu->curspos.X;
+				menu->items[i].y = next;
+				width = MAX(len, menu->item_width);
+				menu->items[i].str = (char*)malloc((width + 1) * sizeof(char));
+
+				memset(menu->items[i].str, ' ', width);
+				if(len < menu->item_width) {
+					int indent = 0;//(menu->item_width - len) / 2;
+					memcpy(menu->items[i].str + indent, items[i].str, len);
+				} else {
+					memcpy(menu->items[i].str, items[i].str, menu->item_width - 1);
+					menu->items[i].str[menu->item_width - 1] = '...';
+				}
+				menu->items[i].str[width] = '\0';
+
+				menu->items[i].cb = items[i].cb;
 				next++;
 			}
 		}
 		break;
 	}
 	menu->item_count = item_count;
-	menu->items = items;
 
 #if 0
 	system("CLS"); // установка атрибутов цвета рабочей области
@@ -95,8 +127,13 @@ int InitMenu(MENU* menu, ITEM* items, int item_count, int orient, const SMALL_RE
 
 void ClearMenu(MENU* menu) {
 	int i;
+	for (i = 0; i < menu->item_count; i++)
+		if(menu->items[i].str)
+			free(menu->items[i].str);
+	free(menu->items);
 	for(i = 0; i < menu->wnd.M; i++)
-		free(menu->wnd.m[i]);
+		if(menu->wnd.m[i])
+			free(menu->wnd.m[i]);
 	free(menu->wnd.m);
 //?	CloseHandle(menu->hStdOut);
 }
@@ -120,30 +157,12 @@ void menu_cls(MENU* menu)
 	// очистка окна
 	switch(menu->orient) {
 	case MENU_ORIENT_HORZ:
-		/*next = menu->curspos.X;
-		for(i = 0; i < item_count; ++i) {
-			if(items[i].str) {
-				len = strlen(items[i].str) + 1;
-				items[i].x = next;
-				items[i].y = menu->curspos.Y;
-				next += len;
-			}
-		}*/
 		for (i = 0, y = menu->wnd.rect.Top; i < menu->wnd.M; i++, y++) {
 			gotoxy(menu, menu->wnd.rect.Left, y);
 			printf(menu->wnd.m[i]); // залить фон строки меню
 		}
 		break;
 	case MENU_ORIENT_VERT:
-		/*next = menu->curspos.Y;
-		for(i = 0; i < item_count; ++i) {
-			if(items[i].str) {
-				len = strlen(items[i].str) + 1;
-				items[i].x = menu->curspos.X;
-				items[i].y = next;
-				next++;
-			}
-		}*/
 		for (i = 0, y = menu->wnd.rect.Top; i < menu->wnd.M; i++, y++) {
 			gotoxy(menu, menu->wnd.rect.Left, y);
 			printf(menu->wnd.m[i]); // залить фон строки меню
@@ -269,4 +288,5 @@ void showCursor(MENU* menu, bool visible)
 	ccInfo.bVisible = visible;
 	ccInfo.dwSize = 20;
 	SetConsoleCursorInfo(menu->hStdOut, &ccInfo);
-}
+}
+
