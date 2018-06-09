@@ -135,9 +135,6 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		lvColumn.cx = 40;
 		lvColumn.pszText = _T("Цена");
 		SendMessage(hlvwCoffee, LVM_INSERTCOLUMN, (WPARAM)1, (LPARAM)&lvColumn);
-		lvColumn.cx = 50;
-		lvColumn.pszText = _T("Кол-во");
-		SendMessage(hlvwCoffee, LVM_INSERTCOLUMN, (WPARAM)2, (LPARAM)&lvColumn);
 		// Заполняем список выбора напитков
 		memset(&lvItem, 0x00, sizeof(lvItem));
 		lvItem.mask = LVIF_TEXT; // текстовый стиль
@@ -153,11 +150,6 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				// цена
 				lvItem.iSubItem = 1;
 				_stprintf(szText, _T("%.2f"), coffee.second.getPrice());
-				lvItem.pszText = szText;
-				SendMessage(hlvwCoffee, LVM_SETITEM, (WPARAM)0, (LPARAM)&lvItem);
-				// количество
-				lvItem.iSubItem = 2;
-				_stprintf(szText, _T("%d"), coffee.second.getCount());
 				lvItem.pszText = szText;
 				SendMessage(hlvwCoffee, LVM_SETITEM, (WPARAM)0, (LPARAM)&lvItem);
 				i++;
