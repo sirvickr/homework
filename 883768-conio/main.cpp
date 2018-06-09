@@ -8,17 +8,18 @@
 #include "dict.h"
 
 // верхнее меню
-SMALL_RECT top_menu_rect = { 0, 0, 99, 9 };
+//SMALL_RECT top_menu_rect = { 0, 0, 99, 2 };
+SMALL_RECT top_menu_rect = { 0, 0, 99, 0 };
 const int top_item_count = 6; // количество пунктов меню
 // положение (x,y), заголовок, указатель на функцию
-ITEM top_menu_items[top_item_count] = {
+ITEM_DEF top_menu_items[top_item_count] = {
 #if 1
-	{ 0, 0, "Edit", Edit },
-	{ 0, 0, "Search", Search },
-	{ 0, 0, "Sort", Sort },
-	{ 0, 0, "Save", Save },
-	{ 0, 0, "Help", Help },
-	{ 0, 0, "Exit", Exit },
+	{ { "Edit", 0 }, 1, Edit },
+	{ { "Search", 0 }, 1, Search },
+	{ { "Sort", 0 }, 1, Sort },
+	{ { "Save", 0 }, 1, Save },
+	{ { "Help", 0 }, 1, Help },
+	{ { "Exit", 0 }, 1, Exit },
 #else
 	{ 1,  0, "Файл", File },
 	{ 11, 0, "Действие", Do },
@@ -29,14 +30,15 @@ ITEM top_menu_items[top_item_count] = {
 };
 
 // главное меню (таблица)
+//SMALL_RECT main_menu_rect = { 0, 3, 99, 19 };
 SMALL_RECT main_menu_rect = { 0, 1, 99, 19 };
 const int main_item_count = 4; // количество пунктов меню
 // положение (x,y), заголовок, указатель на функцию
-ITEM main_menu_items[main_item_count] = {
-	{ 0, 0, "Hello", Edit },
-	{ 0, 0, "World", Edit },
-	{ 0, 0, "All", Edit },
-	{ 0, 0, "Dictionary", Edit },
+ITEM_DEF main_menu_items[main_item_count] = {
+	{ { "Hello", "Noun", "Privet", "5", 0 }, 4, Edit },
+	{ { "World", "Noun", "Mir", "5", 0 }, 4, Edit },
+	{ { "Go", "Verb", "Idti", "2", 0 }, 4, Edit },
+	{ { "Dictionary", "Noun", "Slovar", "10", 0 }, 4, Edit },
 };
 
 int Run();
@@ -55,16 +57,28 @@ int Run() {
 	SetConsoleTitle("Dictionary");
 
 	memset(&top_menu, 0x00, sizeof(top_menu));
-	InitMenu(&top_menu, top_menu_items, top_item_count, MENU_ORIENT_HORZ, &top_menu_rect);
-	DrawMenu(&top_menu, 0);
+	menu_init(&top_menu, top_menu_items, top_item_count, MENU_ORIENT_HORZ, &top_menu_rect);
+	menu_active_color(&top_menu, BACKGROUND_INTENSITY | BACKGROUND_BLUE | BACKGROUND_GREEN);
+	menu_inactive_color(&top_menu, BACKGROUND_BLUE | BACKGROUND_GREEN);
+	menu_draw(&top_menu, 0);
 
+	#if 1
 	memset(&main_menu, 0x00, sizeof(main_menu));
-	InitMenu(&main_menu, main_menu_items, main_item_count, MENU_ORIENT_VERT, &main_menu_rect);
-	DrawMenu(&main_menu, 1);
+	menu_init(&main_menu, main_menu_items, main_item_count, MENU_ORIENT_VERT, &main_menu_rect);
+	menu_active_color(&main_menu,
+		BACKGROUND_BLUE | BACKGROUND_GREEN
+		| FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE
+	);
+	menu_inactive_color(&main_menu,
+		BACKGROUND_INTENSITY | BACKGROUND_BLUE
+		| FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE
+	);
+	menu_draw(&main_menu, 1);
 
-	ClearMenu(&main_menu);
+	menu_clear(&main_menu);
+	#endif
 
-	ClearMenu(&top_menu);
+	menu_clear(&top_menu);
 /*#if 1
 	//получение дескриптора стандартного устройства вывода
 	HANDLE wHnd = GetStdHandle(STD_OUTPUT_HANDLE);

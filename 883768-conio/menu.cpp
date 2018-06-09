@@ -15,9 +15,19 @@
 #define KEY_ARROW_DOWN 80
 #define KEY_ENTER 13
 
-int InitMenu(MENU* menu, ITEM* items, int item_count, int orient, const SMALL_RECT* prect) {
-	int i, len;
-	if(NULL == menu || NULL == items)
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+
+void menu_active_color(MENU* menu, WORD attr) {
+	menu->activeItemAttributes = attr;
+}
+
+void menu_inactive_color(MENU* menu, WORD attr) {
+	menu->inactiveItemAttributes = attr;
+}
+
+int menu_init(MENU* menu, ITEM_DEF* item_defs, int item_count, int orient, const SMALL_RECT* prect) {
+	int i, j, len;
+	if(NULL == menu || NULL == item_defs)
 		return -1;
 	// Получаем дескриптор консольного вывода
 	menu->hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -45,15 +55,13 @@ int InitMenu(MENU* menu, ITEM* items, int item_count, int orient, const SMALL_RE
 		menu->wnd.m[i][menu->wnd.N] = '\0';
 	}
 	// координаты углов консоли
-//	menu->consolRect = csbInfo.srWindow;
 	menu->curspos.X = menu->wnd.rect.Left;///0;
 	menu->curspos.Y = menu->wnd.rect.Top;///1;
-	menu->workWindowAttributes = 158;
-	menu->inactiveItemAttributes = 31;
-	menu->activeItemAttributes = 160;
-	// Устанавливаем цветовые параметры текста
-	SetConsoleTextAttribute(menu->hStdOut, menu->workWindowAttributes);
-	#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+
+	menu->workWindowAttributes = BACKGROUND_RED | BACKGROUND_GREEN;//0x9E;
+	menu->inactiveItemAttributes = 0x1F;
+	menu->activeItemAttributes = 0xA0;
+	// Инициализация элементов меню
 	menu->items = (ITEM*)malloc(item_count * sizeof(ITEM));
 	menu->orient = orient;
 	menu->current = 0;
@@ -63,78 +71,88 @@ int InitMenu(MENU* menu, ITEM* items, int item_count, int orient, const SMALL_RE
 		menu->item_width = (menu->wnd.rect.Right - menu->wnd.rect.Left + 1) / item_count;
 		next = menu->curspos.X;
 		for(i = 0; i < item_count; ++i) {
-			if(items[i].str) {
-				len = strlen(items[i].str);
-				memset(&menu->items[i], 0x00, sizeof(ITEM));
-				menu->items[i].x = next;
-				menu->items[i].y = menu->curspos.Y;
+			memset(&menu->items[i], 0x00, sizeof(ITEM));
+			menu->items[i].cb = item_defs[i].cb;
+			menu->items[i].x = next;
+			menu->items[i].y = menu->curspos.Y;
+			int next_cell = 0; // смещение очередной ячейки от начала столбца
+			if(item_defs[i].str[0]) {
+				len = strlen(item_defs[i].str[0]);
 				width = MAX(len, menu->item_width);
 				menu->items[i].str = (char*)malloc((width + 1) * sizeof(char));
 
 				memset(menu->items[i].str, ' ', width);
 				if(len < menu->item_width) {
 					int indent = (menu->item_width - len) / 2;
-					memcpy(menu->items[i].str + indent, items[i].str, len);
+					memcpy(menu->items[i].str + indent, item_defs[i].str[0], len);
 				} else {
-					memcpy(menu->items[i].str, items[i].str, menu->item_width - 1);
-					menu->items[i].str[menu->item_width - 1] = '...';
+					memcpy(menu->items[i].str, item_defs[i].str[0], menu->item_width - 1);
+					menu->items[i].str[menu->item_width - 1] = '_';
 				}
 				menu->items[i].str[width] = '\0';
+				menu->items[i].cell_count = item_defs[i].cell_count;
 
-				menu->items[i].cb = items[i].cb;
 				next += menu->item_width;
 			}
-		}
+		} // for(item)
 		break;
 	case MENU_ORIENT_VERT:
 		menu->item_width = (menu->wnd.rect.Right - menu->wnd.rect.Left + 1);
 		next = menu->curspos.Y;
 		for(i = 0; i < item_count; ++i) {
-			if(items[i].str) {
-				len = strlen(items[i].str);
-				memset(&menu->items[i], 0x00, sizeof(ITEM));
-				menu->items[i].x = menu->curspos.X;
-				menu->items[i].y = next;
-				width = MAX(len, menu->item_width);
-				menu->items[i].str = (char*)malloc((width + 1) * sizeof(char));
+			memset(&menu->items[i], 0x00, sizeof(ITEM));
+			menu->items[i].cb = item_defs[i].cb;
+			menu->items[i].x = menu->curspos.X;
+			menu->items[i].y = next;
+			menu->items[i].cell_count = item_defs[i].cell_count;
+			int next_cell = 0; // смещение очередной ячейки от начала строки
+			int cell_width = menu->item_width / item_defs[i].cell_count;
+			menu->items[i].str = (char*)malloc((menu->item_width + 1) * sizeof(char));
+			memset(menu->items[i].str, ' ', menu->item_width);
+			menu->items[i].str[menu->item_width] = '\0';
+			for (j = 0; j < item_defs[i].cell_count; j++) {
+				if(item_defs[i].str[j]) {
+					len = strlen(item_defs[i].str[j]);
+					width = MAX(len, cell_width);
+					//menu->items[i].str[j] = (char*)malloc((width + 1) * sizeof(char));
 
-				memset(menu->items[i].str, ' ', width);
-				if(len < menu->item_width) {
-					int indent = 0;//(menu->item_width - len) / 2;
-					memcpy(menu->items[i].str + indent, items[i].str, len);
-				} else {
-					memcpy(menu->items[i].str, items[i].str, menu->item_width - 1);
-					menu->items[i].str[menu->item_width - 1] = '...';
+					//memset(menu->items[i].str[j], ' ', width);
+					if(len < cell_width) {
+						memcpy(menu->items[i].str + next_cell, item_defs[i].str[j], len);
+					} else {
+						memcpy(menu->items[i].str + next_cell, item_defs[i].str[j], cell_width - 1);
+						menu->items[i].str[cell_width - 1] = '_';
+					}
+					//menu->items[i].str[j][cell_width] = '\0';
+
+					next_cell += cell_width;
 				}
-				menu->items[i].str[width] = '\0';
-
-				menu->items[i].cb = items[i].cb;
-				next++;
-			}
-		}
+			} // for(cell)
+			next++;
+		} // for(item)
 		break;
 	}
 	menu->item_count = item_count;
 
-#if 0
-	system("CLS"); // установка атрибутов цвета рабочей области
-#else
-	menu_cls(menu);
-#endif
-
 	return 0;
 }
 
-void ClearMenu(MENU* menu) {
+void menu_clear(MENU* menu) {
 	int i;
 	for (i = 0; i < menu->item_count; i++)
-		if(menu->items[i].str)
+		if(menu->items[i].str) {
 			free(menu->items[i].str);
+			menu->items[i].str = NULL;
+		}
 	free(menu->items);
+	menu->items = NULL;
 	for(i = 0; i < menu->wnd.M; i++)
-		if(menu->wnd.m[i])
+		if(menu->wnd.m[i]) {
 			free(menu->wnd.m[i]);
+			menu->wnd.m[i] = NULL;
+		}
 	free(menu->wnd.m);
+	menu->wnd.m = NULL;
 //?	CloseHandle(menu->hStdOut);
 }
 
@@ -160,7 +178,11 @@ void menu_next(MENU* menu) {
 	showCursor(menu, false);
 }
 
-void DrawMenu(MENU* menu, int loop) {
+void menu_draw(MENU* menu, int loop) {
+	// Устанавливаем цветовые параметры текста
+	SetConsoleTextAttribute(menu->hStdOut, menu->workWindowAttributes);
+	//system("CLS"); // установка атрибутов цвета рабочей области
+	menu_cls(menu);
 	// Номер текущего пункта меню
 	SetConsoleTextAttribute(menu->hStdOut, menu->inactiveItemAttributes);
 ///	printf(menu->line);

@@ -6,12 +6,23 @@ struct MENU;
 #define MENU_ORIENT_HORZ 0
 #define MENU_ORIENT_VERT 1
 
+#define MAX_CELLS 50
+
 // Указатели на функции void f(void) - они будут выполнять пункты меню
 typedef int(*FUN) (MENU*);
+
+// Структура для элемента меню
+typedef struct {
+	char* str[MAX_CELLS]; // Наименование пункта меню (несколько ячеек)
+	int cell_count;
+	FUN cb; // Функция, привязанная к пункту меню
+} ITEM_DEF;
+
 // Структура для элемента меню
 typedef struct {
 	int x, y; // Столбец и строка консоли
-	char *str; // Наименование пункта меню
+	char* str; // Наименование пункта меню (несколько ячеек)
+	int cell_count;
 	FUN cb; // Функция, привязанная к пункту меню
 } ITEM;
 
@@ -42,16 +53,22 @@ typedef struct MENU {
 } MENU;
 
 // инициализация экземляра меню (0 - успех)
-int InitMenu(MENU* menu, ITEM* items, int item_count, int orient, const SMALL_RECT*);
+int menu_init(MENU* menu, ITEM_DEF* item_defs, int item_count, int orient, const SMALL_RECT*);
 // инициализация очитка меню
-void ClearMenu(MENU* menu);
-
-// создание меню
-void DrawMenu(MENU* menu, int loop);
-void gotoxy(MENU* menu, int x, int y); // перевод курсока в точку x, y
-void itemMenu(MENU* menu, bool activate); // выделить пункт меню
-void menu_cls(MENU* menu); // очистка окна
-void saveCursorPosition(MENU* menu); // запомнить полодение курсора
+void menu_clear(MENU* menu);
+//
+void menu_draw(MENU* menu, int loop);
+//
+void menu_active_color(MENU* menu, WORD attr);
+void menu_inactive_color(MENU* menu, WORD attr);
+// перевод курсока в точку x, y
+void gotoxy(MENU* menu, int x, int y);
+// выделить пункт меню
+void itemMenu(MENU* menu, bool activate);
+ // запомнить положение курсора
+void saveCursorPosition(MENU* menu);
+// очистка окна
+void menu_cls(MENU* menu);
 // в глобальную переменную curspos
 void showCursor(MENU* menu, bool visible); // скрыть/показать курсор
 
