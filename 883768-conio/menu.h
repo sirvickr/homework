@@ -47,7 +47,7 @@ int InitMenu(MENU* menu, ITEM* items, int item_count, int orient, const SMALL_RE
 void ClearMenu(MENU* menu);
 
 // создание меню
-void DrawMenu(MENU* menu);
+void DrawMenu(MENU* menu, int loop);
 void gotoxy(MENU* menu, int x, int y); // перевод курсока в точку x, y
 void itemMenu(MENU* menu, bool activate); // выделить пункт меню
 void menu_cls(MENU* menu); // очистка окна

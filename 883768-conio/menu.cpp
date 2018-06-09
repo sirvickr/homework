@@ -149,29 +149,6 @@ void menu_prev(MENU* menu) {
 	showCursor(menu, false);
 }
 
-void menu_cls(MENU* menu)
-{
-	int i, y;
-	SetConsoleTextAttribute(menu->hStdOut, menu->workWindowAttributes);
-	//gotoxy(menu, rect.Left, rect.Top);
-	// очистка окна
-	switch(menu->orient) {
-	case MENU_ORIENT_HORZ:
-		for (i = 0, y = menu->wnd.rect.Top; i < menu->wnd.M; i++, y++) {
-			gotoxy(menu, menu->wnd.rect.Left, y);
-			printf(menu->wnd.m[i]); // залить фон строки меню
-		}
-		break;
-	case MENU_ORIENT_VERT:
-		for (i = 0, y = menu->wnd.rect.Top; i < menu->wnd.M; i++, y++) {
-			gotoxy(menu, menu->wnd.rect.Left, y);
-			printf(menu->wnd.m[i]); // залить фон строки меню
-		}
-		break;
-	}
-	//gotoxy(menu, 0, 0);
-}
-
 void menu_next(MENU* menu) {
 	itemMenu(menu, false); // сделать неактивным пункт меню
 	if (menu->current < menu->item_count - 1) {
@@ -183,7 +160,7 @@ void menu_next(MENU* menu) {
 	showCursor(menu, false);
 }
 
-void DrawMenu(MENU* menu) {
+void DrawMenu(MENU* menu, int loop) {
 	// Номер текущего пункта меню
 	SetConsoleTextAttribute(menu->hStdOut, menu->inactiveItemAttributes);
 ///	printf(menu->line);
@@ -194,6 +171,9 @@ void DrawMenu(MENU* menu) {
 		printf(menu->items[i].str);
 	}
 	fflush(stdout);
+
+	if(0 == loop)
+		return;
 
 	itemMenu(menu, true); // выделить пункт меню
 
@@ -288,5 +268,28 @@ void showCursor(MENU* menu, bool visible)
 	ccInfo.bVisible = visible;
 	ccInfo.dwSize = 20;
 	SetConsoleCursorInfo(menu->hStdOut, &ccInfo);
+}
+
+void menu_cls(MENU* menu)
+{
+	int i, y;
+	SetConsoleTextAttribute(menu->hStdOut, menu->workWindowAttributes);
+	//gotoxy(menu, rect.Left, rect.Top);
+	// очистка окна
+	switch(menu->orient) {
+	case MENU_ORIENT_HORZ:
+		for (i = 0, y = menu->wnd.rect.Top; i < menu->wnd.M; i++, y++) {
+			gotoxy(menu, menu->wnd.rect.Left, y);
+			printf(menu->wnd.m[i]); // залить фон строки меню
+		}
+		break;
+	case MENU_ORIENT_VERT:
+		for (i = 0, y = menu->wnd.rect.Top; i < menu->wnd.M; i++, y++) {
+			gotoxy(menu, menu->wnd.rect.Left, y);
+			printf(menu->wnd.m[i]); // залить фон строки меню
+		}
+		break;
+	}
+	//gotoxy(menu, 0, 0);
 }
 

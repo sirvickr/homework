@@ -7,11 +7,11 @@
 #include "menu.h"
 #include "dict.h"
 
-SMALL_RECT menu_rect = { 0, 0, 99, 9 };
-
-const int item_count = 6; // количество пунктов меню
+// верхнее меню
+SMALL_RECT top_menu_rect = { 0, 0, 99, 9 };
+const int top_item_count = 6; // количество пунктов меню
 // положение (x,y), заголовок, указатель на функцию
-ITEM menu_items[item_count] = {
+ITEM top_menu_items[top_item_count] = {
 #if 1
 	{ 0, 0, "Edit", Edit },
 	{ 0, 0, "Search", Search },
@@ -28,6 +28,17 @@ ITEM menu_items[item_count] = {
 #endif
 };
 
+// главное меню (таблица)
+SMALL_RECT main_menu_rect = { 0, 1, 99, 19 };
+const int main_item_count = 4; // количество пунктов меню
+// положение (x,y), заголовок, указатель на функцию
+ITEM main_menu_items[main_item_count] = {
+	{ 0, 0, "Hello", Edit },
+	{ 0, 0, "World", Edit },
+	{ 0, 0, "All", Edit },
+	{ 0, 0, "Dictionary", Edit },
+};
+
 int Run();
 
 #pragma argsused
@@ -37,15 +48,23 @@ int main(int argc, char* argv[])
 }
 
 int Run() {
-	MENU menu;
+	MENU top_menu, main_menu;
 	//setlocale(LC_CTYPE, "rus"); // вызов функции настройки национальных параметров
+
 	//SetConsoleTitle("Англо-русский словарь");
 	SetConsoleTitle("Dictionary");
-	memset(&menu, 0x00, sizeof(menu));
-	InitMenu(&menu, menu_items, item_count, MENU_ORIENT_HORZ, &menu_rect);
-//	InitMenu(&menu, menu_items, item_count, MENU_ORIENT_HORZ, NULL);
-	DrawMenu(&menu);
-	ClearMenu(&menu);
+
+	memset(&top_menu, 0x00, sizeof(top_menu));
+	InitMenu(&top_menu, top_menu_items, top_item_count, MENU_ORIENT_HORZ, &top_menu_rect);
+	DrawMenu(&top_menu, 0);
+
+	memset(&main_menu, 0x00, sizeof(main_menu));
+	InitMenu(&main_menu, main_menu_items, main_item_count, MENU_ORIENT_VERT, &main_menu_rect);
+	DrawMenu(&main_menu, 1);
+
+	ClearMenu(&main_menu);
+
+	ClearMenu(&top_menu);
 /*#if 1
 	//получение дескриптора стандартного устройства вывода
 	HANDLE wHnd = GetStdHandle(STD_OUTPUT_HANDLE);
