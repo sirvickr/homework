@@ -14,7 +14,6 @@ typedef int(*FUN) (MENU*);
 // Структура для элемента меню
 typedef struct {
 	char* str[MAX_CELLS]; // Наименование пункта меню (несколько ячеек)
-	int cell_count;
 	FUN cb; // Функция, привязанная к пункту меню
 } ITEM_DEF;
 
@@ -22,7 +21,6 @@ typedef struct {
 typedef struct {
 	int x, y; // Столбец и строка консоли
 	char* str; // Наименование пункта меню (несколько ячеек)
-	int cell_count;
 	FUN cb; // Функция, привязанная к пункту меню
 } ITEM;
 
@@ -45,15 +43,21 @@ typedef struct MENU {
 
 	MENU_WND wnd;
 
+	char* hdr;
 	ITEM* items;
 	int item_count;
+	int cell_count;
 	int item_width;
 	int orient;
-	int current;
+	int border; // 0 - нет рамки, 1 - есть рамка
+	int left_pad;
+	int top_pad;
+	int current; // текущий пункт меню
 } MENU;
 
 // инициализация экземляра меню (0 - успех)
-int menu_init(MENU* menu, ITEM_DEF* item_defs, int item_count, int orient, const SMALL_RECT*);
+int menu_init(MENU* menu, HANDLE hstdout, ITEM_DEF* item_defs, int item_count, int cell_count,
+		int orient, const SMALL_RECT* prect, int border, const char* headers[]);
 // инициализация очитка меню
 void menu_clear(MENU* menu);
 //

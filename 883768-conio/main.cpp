@@ -8,18 +8,17 @@
 #include "dict.h"
 
 // верхнее меню
-//SMALL_RECT top_menu_rect = { 0, 0, 99, 2 };
-SMALL_RECT top_menu_rect = { 0, 0, 99, 0 };
+SMALL_RECT top_menu_rect = { 0, 0, 99, 3 };
 const int top_item_count = 6; // количество пунктов меню
 // положение (x,y), заголовок, указатель на функцию
 ITEM_DEF top_menu_items[top_item_count] = {
 #if 1
-	{ { "Edit", 0 }, 1, Edit },
-	{ { "Search", 0 }, 1, Search },
-	{ { "Sort", 0 }, 1, Sort },
-	{ { "Save", 0 }, 1, Save },
-	{ { "Help", 0 }, 1, Help },
-	{ { "Exit", 0 }, 1, Exit },
+	{ { "Edit", "Cell[0][1]", 0 }, Edit },
+	{ { "Search", "Cell[1][1]", 0 }, Search },
+	{ { "Sort", "Cell[2][1]", 0 }, Sort },
+	{ { "Save", "Cell[3][1]", 0 }, Save },
+	{ { "Help", "Cell[4][1]", 0 }, Help },
+	{ { "Exit", "Cell[5][1]", 0 }, Exit },
 #else
 	{ 1,  0, "Файл", File },
 	{ 11, 0, "Действие", Do },
@@ -30,15 +29,18 @@ ITEM_DEF top_menu_items[top_item_count] = {
 };
 
 // главное меню (таблица)
-//SMALL_RECT main_menu_rect = { 0, 3, 99, 19 };
-SMALL_RECT main_menu_rect = { 0, 1, 99, 19 };
+SMALL_RECT main_menu_rect = { 0, 5, 49, 19 };
 const int main_item_count = 4; // количество пунктов меню
 // положение (x,y), заголовок, указатель на функцию
 ITEM_DEF main_menu_items[main_item_count] = {
-	{ { "Hello", "Noun", "Privet", "5", 0 }, 4, Edit },
-	{ { "World", "Noun", "Mir", "5", 0 }, 4, Edit },
-	{ { "Go", "Verb", "Idti", "2", 0 }, 4, Edit },
-	{ { "Dictionary", "Noun", "Slovar", "10", 0 }, 4, Edit },
+	{ { "Hello", "Noun", "Privet", "5", 0 }, Edit },
+	{ { "World", "Noun", "Mir", "5", 0 }, Edit },
+	{ { "Go", "Verb", "Idti", "2", 0 }, Edit },
+	{ { "Run", "Noun", "Beg", "10", 0 }, Edit },
+};
+const int main_column_count = 4;
+const char* main_headers[main_column_count] = {
+	"Word", "Part", "Trans", "Size"
 };
 
 int Run();
@@ -51,20 +53,35 @@ int main(int argc, char* argv[])
 
 int Run() {
 	MENU top_menu, main_menu;
+	SMALL_RECT rect;
 	//setlocale(LC_CTYPE, "rus"); // вызов функции настройки национальных параметров
 
 	//SetConsoleTitle("Англо-русский словарь");
 	SetConsoleTitle("Dictionary");
 
-	memset(&top_menu, 0x00, sizeof(top_menu));
-	menu_init(&top_menu, top_menu_items, top_item_count, MENU_ORIENT_HORZ, &top_menu_rect);
+	HANDLE hstdout = GetStdHandle(STD_OUTPUT_HANDLE);// = INVALID_HANDLE_VALUE; // дескриптор консольного окна
+	if(INVALID_HANDLE_VALUE == hstdout) {
+		return -1;
+	}
+	// Получаем размеры консоли
+	CONSOLE_SCREEN_BUFFER_INFO csbInfo;
+	GetConsoleScreenBufferInfo(hstdout, &csbInfo);
+	rect.Left = csbInfo.srWindow.Left + 1;
+	rect.Right = csbInfo.srWindow.Right - 1;
+	rect.Top = csbInfo.srWindow.Top + 1;
+	rect.Bottom = rect.Top;
+
+	menu_init(&top_menu, hstdout, top_menu_items, top_item_count, 2,
+		MENU_ORIENT_HORZ, &rect, 0, NULL);
 	menu_active_color(&top_menu, BACKGROUND_INTENSITY | BACKGROUND_BLUE | BACKGROUND_GREEN);
 	menu_inactive_color(&top_menu, BACKGROUND_BLUE | BACKGROUND_GREEN);
 	menu_draw(&top_menu, 0);
 
 	#if 1
-	memset(&main_menu, 0x00, sizeof(main_menu));
-	menu_init(&main_menu, main_menu_items, main_item_count, MENU_ORIENT_VERT, &main_menu_rect);
+	rect.Top++;
+	rect.Bottom = csbInfo.srWindow.Bottom - 1;
+	menu_init(&main_menu, hstdout, main_menu_items, main_item_count, main_column_count,
+		MENU_ORIENT_VERT, &rect, 1, main_headers);
 	menu_active_color(&main_menu,
 		BACKGROUND_BLUE | BACKGROUND_GREEN
 		| FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE
