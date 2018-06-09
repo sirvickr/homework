@@ -59,7 +59,13 @@ CoffeeMashine::CoffeeMashine(const tstring& coffeeFileName, const tstring& cashF
 	loadCash(cashFileName);
 }
 
-std::pair<Coffee, CoffeeMashine::Cash> CoffeeMashine::Cook(const tstring& kind, double sum)
+double CoffeeMashine::depositMoney(double money)
+{
+	balance += money;
+	return balance;
+}
+
+Coffee CoffeeMashine::Cook(const tstring& kind)
 {
 	// Поиск имеющейся в наличии порции
 	auto coffee = coffeeAvail.find(kind);
@@ -67,18 +73,29 @@ std::pair<Coffee, CoffeeMashine::Cash> CoffeeMashine::Cook(const tstring& kind, 
 	if (coffee == coffeeAvail.end())
 		throw NotAvail(kind);
 	// Расчёт сдачи
-	double change = sum - coffee->second.getPrice();
+	double change = balance - coffee->second.getPrice();
 	if(change < 0)
 		throw NotEnoughMoney(kind, -change);
+	balance -= coffee->second.getPrice();
+	// забираем одну порцию кофе из запасов
+	Coffee result = coffee->second;
+	if (0 == coffee->second.takeSome(1)) {
+		// порции этого кофе закончились
+		coffeeAvail.erase(coffee);
+	}
+	return result;
+}
 
+CoffeeMashine::Cash CoffeeMashine::getChange()
+{
 	// Набираем сдачу из имеющихся купюр и монет
 	Cash cash;
 	auto it = cashAvail.rbegin();
 	// Перебираем с конца (map отсортирован по ключу, так что в конце крупные)
 	while (it != cashAvail.rend()) {
 		bool ranOut = false;
-		while (change >= it->first) {
-			change -= it->first;
+		while (balance >= it->first) {
+			balance -= it->first;
 			cash[it->first]++;
 			it->second--;
 			if (!it->second) {
@@ -89,20 +106,13 @@ std::pair<Coffee, CoffeeMashine::Cash> CoffeeMashine::Cook(const tstring& kind, 
 				}
 			}
 		}
-		if (change == 0) {
+		if (balance == 0) {
 			break;
 		}
 		if (!ranOut) {
 			it++;
 		}
 	}
-	if (change != 0)
-		throw NoChange(kind, change);
-	// забираем одну порцию кофе из запасов
-	std::pair<Coffee, Cash> result(coffee->second, cash);
-	if(0 == coffee->second.takeSome(1)) {
-		// порции этого кофе закончились
-		coffeeAvail.erase(coffee);
-	}
-	return result;
+	balance = 0;
+	return cash;
 }

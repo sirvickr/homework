@@ -44,7 +44,7 @@ public:
 		// сколько не хватает
 		double diff;
 	};
-	// Нет такого набора купюр, чтобы выдать сдачу с внес1нной суммы
+	// Нет такого набора купюр, чтобы выдать сдачу с внесённой суммы
 	class NoChange : public Error {
 	public:
 		NoChange(const tstring& kind, double remainder) : Error(kind), remainder(remainder) {
@@ -57,22 +57,37 @@ public:
 	// Конструктор
 	CoffeeMashine(const tstring& coffeeFileName = "", const tstring& cashFileName = "");
 
+	// Возвращает текущий баланс
+	double getBalance() const {
+		return balance;
+	}
+
 	// Просмотр ассортимента с ценником:
 	// возвращает перечень имеющеегося в наличии кофе
 	const CoffeeAvail& getCoffeeAvail() const {
 		return coffeeAvail;
 	}
 
+	// Внесение предоплаты:
+	// принимает сумму денег
+	// возвращает сумму депозита
+	double depositMoney(double money);
+
 	// Приготовление кофе:
 	// принимает тип кофе и сумму денег
 	// возвращает порцию кофе и сдачу
-	std::pair<Coffee, CoffeeMashine::Cash> Cook(const tstring& kind, double sum);
+	Coffee Cook(const tstring& kind);
+
+	// Возвращает сдачу
+	Cash getChange();
 
 private:
 	// доступные порции кофе
 	CoffeeAvail coffeeAvail;
 	// доступная наличность (пары номинал-количество)
 	Cash cashAvail;
+	// сумма внесённой предоплаты (останок на текущий момент)
+	double balance;
 
 private:
 	// Загрузка порций кофе из файла:

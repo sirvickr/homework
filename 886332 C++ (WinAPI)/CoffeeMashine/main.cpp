@@ -36,13 +36,13 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		// Идентификатор элемента управления, являющегося источниом сообщения
 		ctrlID = LOWORD(wParam);
 		switch (ctrlID) {
-		case IDCANCEL: // Нажатие ESC
+		case IDCANCEL: // Клавиша ESC
 			SetDlgItemText(hDlg, txtInputSum, _T("0.0"));
 			return TRUE;
-		case btnClose: // Нажатие кнопки "Закрыть"
+		case btnClose: // Кнопка "Закрыть"
 			SendMessage(hDlg, WM_CLOSE, 0, 0);
 			return TRUE;
-		case btnCook: // Нажатие кнопки "Приготовить"
+		case btnDeposit: // Кнопка "Внести деньги"
 			// очистить список результатов
 			SendMessage(hlstOutput, LB_RESETCONTENT, (WPARAM)0, (LPARAM)0);
 			try {
@@ -51,23 +51,31 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				tistringstream is(buffer);
 				double sum = 0;
 				is >> sum;
+				// внести деньги
+				double balance = coffeeMashine->depositMoney(sum);
+				// отобразить текущий баланс
+				tostringstream os;
+				os << std::fixed << std::setprecision(2) << balance;
+				SetDlgItemText(hDlg, txtBalance, os.str().c_str());
+			}
+			catch (CoffeeMashine::Error& e) {
+				SendMessage(hlstOutput, LB_ADDSTRING, (WPARAM)0, (LPARAM)_T("Не удалось внести деньги"));
+			}
+			return TRUE;
+		case btnCook: // Кнопка "Приготовить"
+			try {
 				// прочитать выбранный вид кофе
 				int index = ListView_GetNextItem(hlvwCoffee, -1, LVNI_SELECTED);
 				ListView_GetItemText(hlvwCoffee, index, 0, szText, sizeof(szText) / sizeof(szText[0]));
+
 				// приготовить кофе и получить сдачу
-				std::pair<Coffee, CoffeeMashine::Cash> result = coffeeMashine->Cook(szText, sum);
+				Coffee coffee = coffeeMashine->Cook(szText);
 				// вывод результатов
 				SendMessage(hlstOutput, LB_ADDSTRING, (WPARAM)0, (LPARAM)szText);
-				if (result.second.empty()) {
-					SendMessage(hlstOutput, LB_ADDSTRING, (WPARAM)0, (LPARAM)_T("Сдача не требуется"));
-				} else {
-					SendMessage(hlstOutput, LB_ADDSTRING, (WPARAM)0, (LPARAM)_T("Сдача:"));
-					for (auto it = result.second.begin(); it != result.second.end(); it++) {
-						tostringstream os;
-						os << _T("Номинал ") << it->first << _T(" количество ") << it->second;
-						SendMessage(hlstOutput, LB_ADDSTRING, (WPARAM)0, (LPARAM)os.str().c_str());
-					}
-				}
+				// отобразить текущий баланс
+				tostringstream os;
+				os << std::fixed << std::setprecision(2) << coffeeMashine->getBalance();
+				SetDlgItemText(hDlg, txtBalance, os.str().c_str());
 			}
 			catch (CoffeeMashine::NotAvail& e) {
 				SendMessage(hlstOutput, LB_ADDSTRING, (WPARAM)0, (LPARAM)_T("Нет такого кофе"));
@@ -82,15 +90,37 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				SendMessage(hlstOutput, LB_ADDSTRING, (WPARAM)0, (LPARAM)_T("Не удалось приготовить кофе"));
 			}
 			return TRUE;
+		case btnChange:
+			try {
+				CoffeeMashine::Cash change = coffeeMashine->getChange();
+				if (change.empty()) {
+					SendMessage(hlstOutput, LB_ADDSTRING, (WPARAM)0, (LPARAM)_T("Сдачи нет"));
+				} else {
+					SendMessage(hlstOutput, LB_ADDSTRING, (WPARAM)0, (LPARAM)_T("Сдача:"));
+					for (auto it = change.begin(); it != change.end(); it++) {
+						tostringstream os;
+						os << _T("Номинал ") << it->first << _T(" количество ") << it->second;
+						SendMessage(hlstOutput, LB_ADDSTRING, (WPARAM)0, (LPARAM)os.str().c_str());
+					}
+				}
+				// отобразить текущий баланс
+				tostringstream os;
+				os << std::fixed << std::setprecision(2) << coffeeMashine->getBalance();
+				SetDlgItemText(hDlg, txtBalance, os.str().c_str());
+			}
+			catch (CoffeeMashine::NoChange& e) {
+				SendMessage(hlstOutput, LB_ADDSTRING, (WPARAM)0, (LPARAM)_T("Нет сдачи"));
+			}
+			return TRUE;
 		}
-		break;
-
+		return TRUE;
 	case WM_INITDIALOG:
 		// В обработчике этого сообщения удобно проводить начальную настройку приложения
 		// Выделяем память для объекта "Автомат по производству кофе"
 		coffeeMashine = new CoffeeMashine("coffee.cfg", "cash.cfg");
 		// Сумма предоплаты по умолчанию
-		SetDlgItemText(hDlg, txtInputSum, _T("100.0"));
+		SetDlgItemText(hDlg, txtInputSum, _T("100.00"));
+		SetDlgItemText(hDlg, txtBalance, _T("0.00"));
 		// Получаем оконные дескрипторы, которые понадобятся в работе
 		hlstOutput = GetDlgItem(hDlg, lstOutput);
 		hlvwCoffee = GetDlgItem(hDlg, lvwCoffee);
