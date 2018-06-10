@@ -7,8 +7,9 @@
 #include "menu.h"
 #include "dict.h"
 
+//#define TEST_MAIN_TABLE
+
 // верхнее меню
-SMALL_RECT top_menu_rect = { 0, 0, 99, 3 };
 const int top_item_count = 6; // количество пунктов меню
 // положение (x,y), заголовок, указатель на функцию
 ITEM_DEF top_menu_items[top_item_count] = {
@@ -28,21 +29,6 @@ ITEM_DEF top_menu_items[top_item_count] = {
 #endif
 };
 
-// главное меню (таблица)
-SMALL_RECT main_menu_rect = { 0, 5, 49, 19 };
-const int main_item_count = 4; // количество пунктов меню
-// положение (x,y), заголовок, указатель на функцию
-ITEM_DEF main_menu_items[main_item_count] = {
-	{ { "Hello", "Noun", "Privet", "5", 0 }, Edit },
-	{ { "World", "Noun", "Mir", "5", 0 }, Edit },
-	{ { "Go", "Verb", "Idti", "2", 0 }, Edit },
-	{ { "Run", "Noun", "Beg", "10", 0 }, Edit },
-};
-const int main_column_count = 4;
-const char* main_headers[main_column_count] = {
-	"Word", "Part", "Trans", "Size"
-};
-
 int Run();
 
 #pragma argsused
@@ -52,9 +38,56 @@ int main(int argc, char* argv[])
 }
 
 int Run() {
+	/*
+	//CharToOemA(text, text);
+	system("chcp");
+	//SetConsoleOutputCP(1251);
+	//SetConsoleCP(1251);
+	//setlocale(LC_CTYPE, "rus");
+	//setlocale(LC_ALL,"russian");
+	//setlocale(LC_ALL, "");
+	//system("chcp 1251");
+	system("chcp");
+	//system("chcp 65001"); // utf8
+	//system("chcp");
+	*/
+	/*#if 1
+	if(-1 == dict_new("Hello", "Noun", "Привет"))
+		return -1;
+	if(-1 == dict_new("World", "Noun", "Мир"))
+		return -1;
+	if(-1 == dict_new("Go", "Verb", "Идти"))
+		return -1;
+	if(-1 == dict_new("Run", "Noun", "Бежать"))
+		return -1;
+	if(-1 == dict_new("Star", "Noun", "Звезда"))
+		return -1;
+	if(-1 == dict_save(dict_file_name))
+		return -1;
+	dict_clear();
+	getchar();
+	#else
+	if(-1 == dict_load(dict_file_name))
+		return -1;
+	{
+		DICT_ENTRY* curr = dict_head;
+		while(curr) {
+			printf("%s:", curr->field[2]);
+			char* pc = curr->field[2];
+			while(*pc != 0) {
+				printf(" %d", (int)*pc);
+				pc++;
+			}
+			printf(" \n");
+			curr = curr->next;
+		}
+		getchar();
+	}
+	#endif
+	return 0;*/
+
 	MENU top_menu, main_menu;
 	SMALL_RECT rect;
-	//setlocale(LC_CTYPE, "rus"); // вызов функции настройки национальных параметров
 
 	//SetConsoleTitle("Англо-русский словарь");
 	SetConsoleTitle("Dictionary");
@@ -77,9 +110,44 @@ int Run() {
 	menu_inactive_color(&top_menu, BACKGROUND_BLUE | BACKGROUND_GREEN);
 	menu_draw(&top_menu, 0);
 
-	#if 1
+#if 1
+
+	const int main_column_count = 4;
+	const char* main_headers[main_column_count] = {
+		"Word", "Part", "Trans", "Size"
+	};
+	#ifdef TEST_MAIN_TABLE  
+	// главное меню (таблица)
+	const int main_item_count = 4; // количество пунктов меню
+	// положение (x,y), заголовок, указатель на функцию
+	ITEM_DEF main_menu_items[main_item_count] = {
+		{ { "Hello", "Noun", "Privet", "5", 0 }, Edit },
+		{ { "World", "Noun", "Mir", "5", 0 }, Edit },
+		{ { "Go", "Verb", "Idti", "2", 0 }, Edit },
+		{ { "Run", "Noun", "Beg", "10", 0 }, Edit },
+	};
+	#else
+	if(-1 == dict_load(dict_file_name))
+		return -1;
+
+	int main_item_count = dict_size; // количество пунктов меню
+	ITEM_DEF* main_menu_items = (ITEM_DEF*)malloc(main_item_count * sizeof(ITEM_DEF));
+	memset(main_menu_items, 0x00, main_item_count * sizeof(ITEM_DEF));
+	DICT_ENTRY* curr = dict_head;
+	char** buffers = (char**)malloc(main_item_count * sizeof(char*));
+	for(int i = 0; i < main_item_count; i++) {
+		for(int fld = 0; fld < DICT_FLD_CNT; fld++)
+			main_menu_items[i].str[fld] = curr->field[fld];
+		buffers[i] = (char*)malloc(32 * sizeof(char));
+		main_menu_items[i].str[DICT_FLD_CNT] = itoa(strlen(curr->field[0]), buffers[i], 10);
+		main_menu_items[i].cb = Edit;
+		curr = curr->next;
+	}
+	#endif
+
 	rect.Top++;
 	rect.Bottom = csbInfo.srWindow.Bottom - 1;
+
 	menu_init(&main_menu, hstdout, main_menu_items, main_item_count, main_column_count,
 		MENU_ORIENT_VERT, &rect, 1, main_headers);
 	menu_active_color(&main_menu,
@@ -93,7 +161,16 @@ int Run() {
 	menu_draw(&main_menu, 1);
 
 	menu_clear(&main_menu);
+
+	#ifndef TEST_MAIN_TABLE
+	free(main_menu_items);
+	for(int i = 0; i < main_item_count; i++)
+		free(buffers[i]);
+	free(buffers);
 	#endif
+
+
+#endif
 
 	menu_clear(&top_menu);
 /*#if 1
