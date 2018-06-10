@@ -2,6 +2,12 @@
 #include "CoffeeMashine.h"
 #include "Coffee.h"
 
+CoffeeMashine::CoffeeMashine(const tstring& coffeeFileName, const tstring& cashFileName)
+{
+	loadCoffee(coffeeFileName);
+	loadCash(cashFileName);
+}
+
 bool CoffeeMashine::loadCoffee(const tstring& fileName)
 {
 	bool result = false;
@@ -51,12 +57,6 @@ bool CoffeeMashine::loadCash(const tstring& fileName)
 		result = false;
 	}
 	return result;
-}
-
-CoffeeMashine::CoffeeMashine(const tstring& coffeeFileName, const tstring& cashFileName)
-{
-	loadCoffee(coffeeFileName);
-	loadCash(cashFileName);
 }
 
 double CoffeeMashine::depositMoney(CashValue money)
