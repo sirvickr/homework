@@ -1,0 +1,368 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<sim-project version="11.50" multi-file="no" uid="simp832307ba866e47be85d8143b53904e73">
+  <meta>
+    <name>Project</name>
+    <authors> </authors>
+    <description />
+  </meta>
+  <counters models="1">
+    <entity-names>
+      <counter>
+        <item-type type-id="class" type="UmlClass" />
+        <value>2</value>
+      </counter>
+      <counter>
+        <item-type stereotype="enumeration" type-id="enumeration" type="UmlEnumeration" />
+        <value>1</value>
+      </counter>
+      <counter>
+        <item-type stereotype="table" type-id="class" type="UmlClass" />
+        <value>1</value>
+      </counter>
+    </entity-names>
+    <entity-ids>
+      <counter>
+        <item-type type-id="" type="AbstractElementGroup" />
+        <value>55</value>
+      </counter>
+      <counter>
+        <item-type type-id="class" type="UmlClass" />
+        <value>4</value>
+      </counter>
+      <counter>
+        <item-type type-id="universal-connector" type="UniversalConnector" />
+        <value>4</value>
+      </counter>
+      <counter>
+        <item-type type-id="enumeration" type="UmlEnumeration" />
+        <value>2</value>
+      </counter>
+      <counter>
+        <item-type type-id="dependency" type="UmlDependency" />
+        <value>2</value>
+      </counter>
+      <counter>
+        <item-type type-id="relationship" type="UmlAssociation" />
+        <value>3</value>
+      </counter>
+    </entity-ids>
+    <diagrams>
+      <counter>
+        <type>SoftwareIdeasModeler.Core.Diagrams.UmlDiagrams.UmlClassDiagram</type>
+        <value>1</value>
+      </counter>
+    </diagrams>
+    <fields />
+  </counters>
+  <alias-groups />
+  <management uid="md-46ee84931b454c5eb905de7a7919a401" name="" task-id-sequence="0">
+    <persons>
+      <person id="P942fe249462b46ebb2ec03e16ee72bbf">
+        <first-name />
+        <last-name />
+        <role />
+        <e-mail />
+        <phone-number />
+        <description />
+        <color>#00000000</color>
+      </person>
+    </persons>
+    <teams />
+    <sprints />
+    <projects />
+    <modules />
+    <tasks />
+    <to-dos />
+  </management>
+  <glossary id="glsr-663b8da46fad4b5d9f746f2b9af84d3f" />
+  <types default="UML">
+    <type-sets>
+      <type-set file="UmlTypes.xml" />
+    </type-sets>
+    <custom-types />
+  </types>
+  <items />
+  <models>
+    <model id="p0010b9492d2f498c84b8a9627de39a98_769565605" name="Model1" namespace="" order-index="1">
+      <meta>
+        <authors>
+          <author> </author>
+        </authors>
+        <description />
+        <creation-date>06/10/2018 10:52:29</creation-date>
+        <change-date>01/01/0001 00:00:00</change-date>
+        <revision-count>0</revision-count>
+        <version />
+      </meta>
+      <abstract-items />
+      <sub-models />
+      <diagram type="uml-class" id="pd9e6aa143449423486fc46973acbdca9_525219936" name="ClassDiagram1" order-index="1" uid="" show-id="false" show-name="true" show-parent-name="false" name-style="local-auto-parents" show-stereotypes="true" show-tagged-values="false" show-template-parameters="true" show-fields="true" show-empty-compartments="true" show-special-indicators="false" show-attributes="true" show-attribute-visibility="true" show-operations="true" show-operation-parameters="true" show-operation-visibility="true" show-nullability="true" show-sequence-number="false" show-extension-points="false" show-relationship-texts="true" show-description="false" show-field-description="false" auto-routed-paths="false">
+        <style>
+          <background-color index="1" color="#FFFFFFFF" />
+          <background-color index="2" color="#FFFFFFFF" />
+          <background-type type="solid" />
+        </style>
+        <meta>
+          <authors>
+            <author> </author>
+          </authors>
+          <description />
+          <creation-date>06/10/2018 10:52:30</creation-date>
+          <change-date>06/10/2018 11:14:30</change-date>
+          <revision-count>0</revision-count>
+          <version />
+        </meta>
+        <abstract-items>
+          <item id="di854304565285020115" cid="C001" type="class" name="Coffee" style-class="" visibility="package" change-tracking-state="added" creator="P942fe249462b46ebb2ec03e16ee72bbf" creation-date="06/10/2018 10:52:56">
+            <style class="default" />
+            <attributes>
+              <attribute id="ace59d5b20c724324a716942409f1008436" cid="kind" name="kind" creation-date="01/01/0001 00:00:00" type="String" type-id="Uml.String" visibility="private">
+                <style class="default" />
+                <source-codes>
+                  <source-code language="ActionScript" uid="scs-db24f480-8ddb-495e-80a4-68b014921846" />
+                </source-codes>
+              </attribute>
+              <attribute id="a8e0bdd89e17f4319b5eec829cc03521b156" cid="price" name="price" creation-date="01/01/0001 00:00:00" type="Real" type-id="Uml.Real" visibility="private">
+                <style class="default" />
+                <source-codes>
+                  <source-code language="ActionScript" uid="scs-aadd6359-f9a2-4f1a-b06a-05dc68ff00e6" />
+                </source-codes>
+              </attribute>
+              <attribute id="a285ff21f8de34124847792a00efb3fd2812" cid="count" name="count" creation-date="01/01/0001 00:00:00" type="Integer" type-id="Uml.Integer" visibility="private">
+                <style class="default" />
+                <source-codes>
+                  <source-code language="ActionScript" uid="scs-be70f672-82be-4a81-b38f-5ad0d466f84b" />
+                </source-codes>
+              </attribute>
+            </attributes>
+            <operations>
+              <operation id="oa268df8d462d4ae7960af4eb7a31faa3688" cid="takeSome" name="takeSome" creation-date="01/01/0001 00:00:00" type="Integer" type-id="Uml.Integer" visibility="public">
+                <style class="default" />
+                <parameters>
+                  <parameter id="p17699af226924d7b9e3a8a72c13134c9" name="count" type="Integer" type-id="Uml.Integer" direction="In" />
+                </parameters>
+                <source-codes>
+                  <source-code language="ActionScript" />
+                </source-codes>
+              </operation>
+              <operation id="o6bd8049cbfa74a18988b32ae67cb338a180" cid="addSome" name="addSome" creation-date="01/01/0001 00:00:00" type="Integer" type-id="Uml.Integer" visibility="public">
+                <style class="default" />
+                <parameters>
+                  <parameter id="pc6eadb31f5af49e29fb947849dec322c" name="value" type="Integer" type-id="Uml.Integer" direction="In" />
+                </parameters>
+                <source-codes>
+                  <source-code language="ActionScript" />
+                </source-codes>
+              </operation>
+              <operation id="of910278696fb4615889bc41c04beceef1" cid="getKind" name="getKind" creation-date="01/01/0001 00:00:00" type="String" type-id="Uml.String" visibility="public">
+                <style class="default" />
+                <source-codes>
+                  <source-code language="ActionScript" />
+                </source-codes>
+              </operation>
+              <operation id="o0039c8422cfa4e68a7d961e2c5bb734d980" cid="getPrice" name="getPrice" creation-date="01/01/0001 00:00:00" type="Real" type-id="Uml.Real" visibility="public">
+                <style class="default" />
+                <source-codes>
+                  <source-code language="ActionScript" />
+                </source-codes>
+              </operation>
+              <operation id="o108e1d6bb15b40b985a67529fc78a02f61" cid="getCount" name="getCount" creation-date="01/01/0001 00:00:00" type="Integer" type-id="Uml.Integer" visibility="public">
+                <style class="default" />
+                <source-codes>
+                  <source-code language="ActionScript" />
+                </source-codes>
+              </operation>
+              <operation id="o6706047bbe074bbf91003cc99e15997413" cid="setKind" name="setKind" creation-date="01/01/0001 00:00:00" type="" type-id="" visibility="public">
+                <style class="default" />
+                <parameters>
+                  <parameter id="p0c8c2d9ba3c3448fa8bb78919121bc7b" name="value" type="String" type-id="Uml.String" direction="In" />
+                </parameters>
+                <source-codes>
+                  <source-code language="ActionScript" />
+                </source-codes>
+              </operation>
+              <operation id="o965f8940fad54926ac66d772d71c1ab0984" cid="setPrice" name="setPrice" creation-date="01/01/0001 00:00:00" type="" type-id="" visibility="public">
+                <style class="default" />
+                <parameters>
+                  <parameter id="p4274433e52d34ea5a86bbc93436338b5" name="value" type="Real" type-id="Uml.Real" direction="In" />
+                </parameters>
+                <source-codes>
+                  <source-code language="ActionScript" />
+                </source-codes>
+              </operation>
+              <operation id="o1a57c782b73848588249ecf5d90e368b614" cid="setCount" name="setCount" creation-date="01/01/0001 00:00:00" type="" type-id="" visibility="public">
+                <style class="default" />
+                <parameters>
+                  <parameter id="p348f55e6a72b47f49d4155236f8c82e2" name="value" type="Integer" type-id="Uml.Integer" direction="In" />
+                </parameters>
+                <source-codes>
+                  <source-code language="ActionScript" />
+                </source-codes>
+              </operation>
+            </operations>
+            <source-codes>
+              <source-code language="ActionScript" />
+            </source-codes>
+          </item>
+          <item id="di153189520904610844" cid="C002" type="class" name="CoffeeMashine" style-class="" visibility="package" change-tracking-state="added" creator="P942fe249462b46ebb2ec03e16ee72bbf" creation-date="06/10/2018 10:53:23">
+            <style class="default" />
+            <attributes>
+              <attribute id="a7a1c8297aac142f2877290b18cd8b531180" cid="balance" name="balance" creation-date="01/01/0001 00:00:00" type="Real" type-id="Uml.Real" visibility="private" default-value="0">
+                <style class="default" />
+                <source-codes>
+                  <source-code language="ActionScript" uid="scs-9e9a5d4d-13b5-4139-87ae-a8c11dff33bd" />
+                </source-codes>
+              </attribute>
+              <attribute id="ae6d2ab650d6f49ae8aa187f844d2b8db444" cid="coffeeAvail" name="coffeeAvail" creation-date="01/01/0001 00:00:00" type="Object" type-id="Uml.Object" visibility="private">
+                <style class="default" />
+                <source-codes>
+                  <source-code language="ActionScript" uid="scs-60d1ab4b-9402-491c-8718-b77073d92c61" />
+                </source-codes>
+              </attribute>
+              <attribute id="a2fd7b87b9e37479481c1c242602ea95b266" cid="cashAvail" name="cashAvail" creation-date="01/01/0001 00:00:00" type="Object" type-id="Uml.Object" visibility="private">
+                <style class="default" />
+                <source-codes>
+                  <source-code language="ActionScript" uid="scs-f03cb8c5-6b5e-45ef-9d35-df37d16165d6" />
+                </source-codes>
+              </attribute>
+            </attributes>
+            <operations>
+              <operation id="oc1b823ca806e4b3f9d6b8529046fa2ce925" cid="loadCoffee" name="loadCoffee" creation-date="01/01/0001 00:00:00" type="Boolean" type-id="Uml.Boolean" visibility="private">
+                <style class="default" />
+                <parameters>
+                  <parameter id="p27f971cdb5254a98ad0230c2e0d1d9d3" name="fileName" type="String" type-id="Uml.String" direction="In" />
+                </parameters>
+                <source-codes>
+                  <source-code language="ActionScript" />
+                </source-codes>
+              </operation>
+              <operation id="oba0211ff4a3f460f9df264facfbaab57502" cid="loadCash" name="loadCash" creation-date="01/01/0001 00:00:00" type="Boolean" type-id="Uml.Boolean" visibility="private">
+                <style class="default" />
+                <parameters>
+                  <parameter id="pf01ea501babc49ddbe234df26da08249" name="fileName" type="String" type-id="Uml.String" direction="In" />
+                </parameters>
+                <source-codes>
+                  <source-code language="ActionScript" />
+                </source-codes>
+              </operation>
+              <operation id="ode3cef9885ef4dc991f5b9b8ad185b3781" cid="getBalance" name="getBalance" creation-date="01/01/0001 00:00:00" type="Real" type-id="Uml.Real" visibility="public">
+                <style class="default" />
+                <source-codes>
+                  <source-code language="ActionScript" />
+                </source-codes>
+              </operation>
+              <operation id="o2be91c0154f64fb2afa2008dc952f7c7519" cid="getCoffeeAvail" name="getCoffeeAvail" creation-date="01/01/0001 00:00:00" type="Object" type-id="Uml.Object" visibility="public">
+                <style class="default" />
+                <source-codes>
+                  <source-code language="ActionScript" />
+                </source-codes>
+              </operation>
+              <operation id="oe5e024b4b6c74c98bfb712bde220a4e2702" cid="getCoffeeAvail" name="depositMoney" creation-date="01/01/0001 00:00:00" type="Real" type-id="Uml.Real" visibility="public">
+                <style class="default" />
+                <parameters>
+                  <parameter id="p33509c174845486daea845a17d35d077" name="money" type="Real" type-id="Uml.Real" direction="In" />
+                </parameters>
+                <source-codes>
+                  <source-code language="ActionScript" />
+                </source-codes>
+              </operation>
+              <operation id="o3f0be104a3574ea3a2ac9d27eb525227596" cid="Cook" name="Cook" creation-date="01/01/0001 00:00:00" type="Object" type-id="Uml.Object" visibility="public">
+                <style class="default" />
+                <parameters>
+                  <parameter id="p08b452885cee4d6fa8880c01e54f6ac2" name="kind" type="String" type-id="Uml.String" direction="In" />
+                </parameters>
+                <source-codes>
+                  <source-code language="ActionScript" />
+                </source-codes>
+              </operation>
+              <operation id="o0a78085b3e1e4014b444f380a21ca1c6684" cid="getChange" name="getChange" creation-date="01/01/0001 00:00:00" type="Object" type-id="Uml.Object" visibility="public">
+                <style class="default" />
+                <source-codes>
+                  <source-code language="ActionScript" />
+                </source-codes>
+              </operation>
+            </operations>
+            <source-codes>
+              <source-code language="ActionScript" />
+            </source-codes>
+          </item>
+          <item id="di713435114359060837" cid="E001" type="enumeration" name="CashValue" style-class="" visibility="package" change-tracking-state="added" creator="P942fe249462b46ebb2ec03e16ee72bbf" creation-date="06/10/2018 11:02:13">
+            <stereotypes>
+              <stereotype name="enumeration" />
+            </stereotypes>
+            <style class="default" />
+            <enumeration-items>
+              <enumeration-item id="a5ebb4552b6e44a35808032c5daa47e28187" cid="coin1" name="coin1" creation-date="01/01/0001 00:00:00" value="1">
+                <style class="default" />
+              </enumeration-item>
+              <enumeration-item id="a5e08d43227b64e9ba4d55cbe72f555ce461" cid="coin2" name="coin2" creation-date="01/01/0001 00:00:00" value="2">
+                <style class="default" />
+              </enumeration-item>
+              <enumeration-item id="a89c04f3ead6e4a45987710c50830ed5a915" cid="coin5" name="coin5" creation-date="01/01/0001 00:00:00" value="5">
+                <style class="default" />
+              </enumeration-item>
+              <enumeration-item id="a7a1f37cf85624f49a9e315fbd4b26127862" cid="coin10" name="coin10" creation-date="01/01/0001 00:00:00" value="10">
+                <style class="default" />
+              </enumeration-item>
+              <enumeration-item id="a42c52fd848764cb2ad024e0deb5170bd628" cid="note50" name="note50" creation-date="01/01/0001 00:00:00" value="50">
+                <style class="default" />
+              </enumeration-item>
+              <enumeration-item id="a59f854fe9cb049f8adb499affbb262c7635" cid="note100" name="note100" creation-date="01/01/0001 00:00:00" value="100">
+                <style class="default" />
+              </enumeration-item>
+              <enumeration-item id="adcffc4c189c94d67ac7bcd4f9b763704902" cid="note500" name="note500" creation-date="01/01/0001 00:00:00" value="500">
+                <style class="default" />
+              </enumeration-item>
+            </enumeration-items>
+          </item>
+          <item id="di103774811144084601" cid="REL001" type="relationship" name="" style-class="" visibility="package" change-tracking-state="added" creator="P942fe249462b46ebb2ec03e16ee72bbf" creation-date="06/10/2018 11:14:13" from="di153189520904610844" to="di854304565285020115">
+            <style class="default" />
+            <relation from="di153189520904610844" to="di854304565285020115">
+              <start-role id="umlar-a6a04df0-32a7-4755-9296-0f5527ecec64" name="" navigability="" association-type="composition" visibility="private" />
+              <end-role id="umlar-0210486f-7f68-474a-b5e0-1d30cd6fc615" name="" navigability="" association-type="association" visibility="private" />
+            </relation>
+          </item>
+          <item id="di347679909305711499" cid="REL002" type="relationship" name="" style-class="" visibility="package" change-tracking-state="added" creator="P942fe249462b46ebb2ec03e16ee72bbf" creation-date="06/10/2018 11:14:30" from="di153189520904610844" to="di713435114359060837">
+            <style class="default" />
+            <relation from="di153189520904610844" to="di713435114359060837">
+              <start-role id="umlar-e8baf17c-6743-47e4-8067-94b87aab78c9" name="" navigability="" association-type="association" visibility="private" />
+              <end-role id="umlar-3aac2787-9cd8-4f3a-8648-9733edb74d54" name="" navigability="" association-type="association" visibility="private" />
+            </relation>
+          </item>
+        </abstract-items>
+        <layer id="a32e405114cb45de954b5d3621303faa" name="Default" visible="true" enabled="true" locked="false">
+          <item id="di854304565285020115" iid="5993116084714fe88bd34508e8c22f00" creation-date="06/10/2018 10:52:56" order-index="0" type="entity">
+            <layout ax="386" ay="194" awidth="274" aheight="239" x="386" y="194" width="274" height="239" />
+            <class />
+          </item>
+          <item id="di153189520904610844" iid="b756b92e6cfb4cf096152ee1a6d1f436" creation-date="06/10/2018 10:53:23" order-index="1" type="entity">
+            <layout ax="16" ay="204" awidth="287" aheight="219" x="16" y="204" width="287" height="219" />
+            <class />
+          </item>
+          <item id="di713435114359060837" iid="809fe1c9297b412782a3ecd1c860cbe7" creation-date="06/10/2018 11:02:13" order-index="2" type="entity">
+            <layout ax="109" ay="476" awidth="140" aheight="160" x="109" y="476" width="140" height="160" />
+            <enumeration />
+          </item>
+          <item id="di103774811144084601" iid="54deece1a2c649549ef21e6527eb1926" creation-date="06/10/2018 11:14:13" order-index="3" type="relation">
+            <layout start-role-position="25,15" end-role-position="25,-15" start-multiplicity-position="25,-15" end-multiplicity-position="25,15" line-style="oblique" lock-start-point="true" lock-end-point="true" lock-to-fields="false" auto-path="" x1="303" y1="314" x2="386" y2="314" start-border-pos="0.375570776255708" end-border-pos="0.874476987447699" name-position="0,0">
+              <points>
+                <point x="303" y="314" />
+                <point x="386" y="314" />
+              </points>
+            </layout>
+            <relation from="di153189520904610844" from-iid="b756b92e6cfb4cf096152ee1a6d1f436" to="di854304565285020115" to-iid="5993116084714fe88bd34508e8c22f00" />
+          </item>
+          <item id="di347679909305711499" iid="d1e3738410dc47a5a40305d4a2aab499" creation-date="06/10/2018 11:14:30" order-index="4" type="relation">
+            <layout start-role-position="25,15" end-role-position="25,-15" start-multiplicity-position="25,-15" end-multiplicity-position="25,15" line-style="oblique" lock-start-point="true" lock-end-point="true" lock-to-fields="true" auto-path="" x1="160" y1="423" x2="159" y2="476" start-border-pos="0.624564459930314" end-border-pos="0.0892857142857143" name-position="0,0">
+              <points>
+                <point x="160" y="423" />
+                <point x="159" y="476" />
+              </points>
+            </layout>
+            <relation from="di153189520904610844" from-iid="b756b92e6cfb4cf096152ee1a6d1f436" to="di713435114359060837" to-iid="809fe1c9297b412782a3ecd1c860cbe7" to-field="enumeration" />
+          </item>
+        </layer>
+      </diagram>
+    </model>
+  </models>
+</sim-project>
