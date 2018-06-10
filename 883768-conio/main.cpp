@@ -210,3 +210,164 @@ int Run() {
 	//getchar();
 	return 0;
 }
+// Функция меню <Выход>. Заполняется кодом пользователя
+int Exit(MENU* menu) {
+	int i;
+	MENU exit_menu;
+	SMALL_RECT rect;
+	#if 1
+	const int width = 10;
+	const int height = 6;
+	rect.Left = (csbInfo.srWindow.Right - csbInfo.srWindow.Left - width) / 2;
+	rect.Right = rect.Left + width - 1;
+	rect.Top = (csbInfo.srWindow.Bottom - csbInfo.srWindow.Top - height) / 2;
+	rect.Bottom = rect.Top + height - 1;
+	#else
+	rect.Left = menu->wnd.rect.Left + 5;
+	rect.Right = menu->wnd.rect.Right - 5;
+	rect.Top = menu->wnd.rect.Top + 5;
+	rect.Bottom = menu->wnd.rect.Bottom - 5;
+	#endif
+	menu_init(&exit_menu, &main_menu, menu->hStdOut, exit_menu_items, exit_item_count,
+		exit_column_count, MENU_ORIENT_VERT, &rect, 1, exit_headers);
+	menu_active_color(&exit_menu, BACKGROUND_INTENSITY | BACKGROUND_BLUE | BACKGROUND_GREEN);
+	menu_inactive_color(&exit_menu, BACKGROUND_BLUE | BACKGROUND_GREEN);
+	menu_draw(&exit_menu, MENU_MSG_LOOP);
+	menu_clear(&exit_menu);
+	return -1;
+
+}
+//---------------------------------------------------------------------------
+// Функции меню
+//---------------------------------------------------------------------------
+// Функция меню <Изменить>
+int Edit(MENU* menu) {
+	SMALL_RECT wndRect = { 5, 5, 19, 14 }; // [5][10]
+	SHORT width = wndRect.Right - wndRect.Left + 1;
+	SHORT height = wndRect.Bottom - wndRect.Top + 1;
+
+	SMALL_RECT srctReadRect;
+	SMALL_RECT srctWriteRect;
+	COORD coordBufSize;
+	COORD coordBufCoord;
+	BOOL fSuccess;
+	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	//CHAR_INFO chiBuffer[160]; 		// [2][80];
+	CHAR_INFO* chiBuffer = NULL;
+	if (hStdout == INVALID_HANDLE_VALUE)
+		return -1;
+	// Установим прямоугольник источника
+	srctReadRect.Top = wndRect.Top;       ///0;
+	srctReadRect.Left = wndRect.Left;     ///0;
+	srctReadRect.Bottom = wndRect.Bottom; ///1;
+	srctReadRect.Right = wndRect.Right;   ///79;
+	// Размер временного буфера равен 2 x 80
+	coordBufSize.Y = height;  ///2;
+	coordBufSize.X = width;  ///80;
+	// Верхняя левая ячейка назначения
+	coordBufCoord.X = 0; ///0;               wndRect.Left
+	coordBufCoord.Y = 0; ///0;               wndRect.Top
+	chiBuffer = (CHAR_INFO*)malloc(height * width * sizeof(CHAR_INFO));
+	if(!chiBuffer) {
+		return -1;
+	}
+	// Скопируем блок из экранного буфера во временный буфер
+	fSuccess = ReadConsoleOutput(
+	   hStdout,        	// экранный буфер, из которого читаем
+	   chiBuffer,      	// буфер, в который копируем
+	   coordBufSize,   	// размеры chiBuffer: колонки/строки
+	   coordBufCoord,  	// верхняя левая ячейка назначения в chiBuffer
+	   &srctReadRect); 	// источник - прямоугольник экранного буфера
+	if (! fSuccess) {
+		//MyErrorExit("ReadConsoleOutput");
+		free(chiBuffer);
+		return -1;
+	}
+
+	{
+		int wndCellCount = height * width;
+		CHAR_INFO* wndBuffer = (CHAR_INFO*)malloc(wndCellCount * sizeof(CHAR_INFO));
+		for(int i = 0; i < wndCellCount; ++i) {
+			wndBuffer[i].Char.AsciiChar = 'x';
+			wndBuffer[i].Attributes = BACKGROUND_INTENSITY | BACKGROUND_GREEN |
+				FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE
+				;
+		}
+
+		fSuccess = WriteConsoleOutput(
+			hStdout, 	        // экранный буфер, в который пишем
+			wndBuffer,        	// буфер, из которого копируем
+			coordBufSize,     	// размеры chiBuffer: колонки/строки
+			coordBufCoord,    	// исходная верхняя левая ячейка в chiBuffer
+			&srctReadRect);  	// приёмник - прямоугольник экранного буфера
+		Sleep(1000);
+
+		/*gotoxy(menu, wndRect.Left, wndRect.Top);
+		printf("EXIT");
+		Sleep(1000);*/
+
+		free(wndBuffer);
+	}
+
+	// Устанавливаем прямоугольник назначения
+	srctWriteRect.Top = wndRect.Top; ///10;
+	srctWriteRect.Left = wndRect.Left; ///0;
+	srctWriteRect.Bottom = wndRect.Bottom; ///11;
+	srctWriteRect.Right = wndRect.Right; ///79;
+	//
+	fSuccess = WriteConsoleOutput(
+		hStdout, 	        // экранный буфер, в который пишем
+		chiBuffer,        	// буфер, из которого копируем
+		coordBufSize,     	// размеры chiBuffer: колонки/строки
+		coordBufCoord,    	// исходная верхняя левая ячейка в chiBuffer
+		&srctWriteRect);  	// приёмник - прямоугольник экранного буфера
+	if (! fSuccess) {
+		//MyErrorExit("WriteConsoleOutput");
+		free(chiBuffer);
+		return -1;
+	}
+	//Sleep(1000);
+	/*int resp;
+	//cout << "Вы уверены, что хотите выйти з программы (y/n)?";
+	printf("Quit? (y/n)?");
+	resp = getchar();
+	if (resp == 'y' || resp == 'Y') {
+		return -1;
+	} */
+	free(chiBuffer);
+	return 0;
+}
+// Функция меню <Удалить>
+int Delete(MENU* menu) {
+	//printf("Search\n");
+	return 0;
+}
+// Функция меню <Поиск>
+int Search(MENU* menu) {
+	//printf("Search\n");
+	return 0;
+}
+// Функция меню <Сортировка>
+int Sort(MENU* menu) {
+	//printf("Sort\n");
+	return 0;
+}
+// Функция меню <Сохранить>
+int Save(MENU* menu) {
+	//printf("Save\n");
+	return 0;
+}
+// Функция меню <Помощь>. Заполняется кодом пользователя
+int Help(MENU* menu) {
+	//printf("Help\n");
+	return 0;
+}
+// Функция меню <Очистить>. Заполняется кодом пользователя
+/*int Clear(MENU* menu)
+{
+	cls(menu, 0);
+	menu->curspos.X = 0;
+	menu->curspos.Y = 1;
+	return 1;
+}*/
+

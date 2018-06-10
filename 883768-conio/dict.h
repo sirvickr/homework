@@ -17,13 +17,6 @@ typedef struct DICT_ENTRY {
 } DICT_ENTRY;
 //---------------------------------------------------------------------------
 struct MENU;
-// Описание функций, которые подключаются к пунктам меню
-int Edit(MENU* menu);
-int Search(MENU* menu);
-int Sort(MENU* menu);
-int Save(MENU* menu);
-int Help(MENU* menu);
-int Exit(MENU* menu);
 //
 int dict_new(const char* word_eng, const char* word_part, const char* word_rus);
 //
