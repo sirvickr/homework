@@ -18,13 +18,13 @@
 // Список доступных денежных номиналов
 typedef std::pair<CashValue, tstring> CashChoice;
 const CashChoice cashChoice[] = {
-	{ note500, "500 рублей" },
-	{ note100, "100 рублей" },
-	{ note50, "50 рублей" },
-	{ coin10, "10 рублей" },
-	{ coin5, "5 рублей" },
-	{ coin2, "2 рубля" },
-	{ coin1, "1 рубль" },
+	{ note500, _T("500 рублей") },
+	{ note100, _T("100 рублей") },
+	{ note50, _T("50 рублей") },
+	{ coin10, _T("10 рублей") },
+	{ coin5, _T("5 рублей") },
+	{ coin2, _T("2 рубля") },
+	{ coin1, _T("1 рубль") },
 };
 
 // Вспомогательный текстовый буфер
@@ -130,7 +130,7 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		hlvwCoffee = GetDlgItem(hDlg, lvwCoffee);
 		hlstMoney = GetDlgItem(hDlg, lstMoney);
 		// Выделяем память для объекта "Автомат по производству кофе"
-		coffeeMashine = new CoffeeMashine("coffee.cfg", "cash.cfg");
+		coffeeMashine = new CoffeeMashine(_T("coffee.cfg"), _T("cash.cfg"));
 		// Заполняем список доступных денежных знаков
 		for (const auto item : cashChoice)
 			SendMessage(hlstMoney, CB_ADDSTRING, (WPARAM)0, (LPARAM)item.second.c_str());
@@ -158,7 +158,7 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			for (const auto coffee : coffeeAvail) {
 				lvItem.iItem = 0;
 				lvItem.iSubItem = 0;
-				lvItem.pszText = (LPSTR)coffee.first.c_str();
+				lvItem.pszText = (LPTSTR)coffee.first.c_str();
 				SendMessage(hlvwCoffee, LVM_INSERTITEM, (WPARAM)0, (LPARAM)&lvItem);
 				// цена
 				lvItem.iSubItem = 1;

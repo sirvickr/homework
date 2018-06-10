@@ -6,7 +6,7 @@ bool CoffeeMashine::loadCoffee(const tstring& fileName)
 {
 	bool result = false;
 	tstring coffeeKind;
-	std::ifstream input(fileName);
+	tifstream input(fileName);
 	if (input) {
 		int count;
 		double price;
@@ -18,11 +18,11 @@ bool CoffeeMashine::loadCoffee(const tstring& fileName)
 		result = true;
 	} else {
 		// не удалось открыть файл - заполняем по умолчанию
-		coffeeKind = "Капучино";
+		coffeeKind = _T("Капучино");
 		coffeeAvail.insert(CoffeeAvail::value_type(coffeeKind, Coffee(coffeeKind, 50.0, 10)));
-		coffeeKind = "Эспрессо";
+		coffeeKind = _T("Эспрессо");
 		coffeeAvail.insert(CoffeeAvail::value_type(coffeeKind, Coffee(coffeeKind, 25.0, 10)));
-		coffeeKind = "Американо";
+		coffeeKind = _T("Американо");
 		coffeeAvail.insert(CoffeeAvail::value_type(coffeeKind, Coffee(coffeeKind, 30.0, 10)));
 		result = false;
 	}
@@ -32,7 +32,7 @@ bool CoffeeMashine::loadCoffee(const tstring& fileName)
 bool CoffeeMashine::loadCash(const tstring& fileName)
 {
 	bool result = false;
-	std::ifstream input(fileName);
+	tifstream input(fileName);
 	if (input) {
 		int value, count;
 		while (input >> value >> count) {

@@ -15,7 +15,7 @@ public:
 	private:
 		int count;
 	};
-	Coffee(const tstring& kind = "", double price = 0.0, int count = 0);
+	Coffee(const tstring& kind = _T(""), double price = 0.0, int count = 0);
 	inline tstring getKind() const { return kind; }
 	inline void setKind(const tstring& value) { kind = value; }
 	inline double getPrice() const { return price; }

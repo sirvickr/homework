@@ -55,7 +55,7 @@ public:
 	};
 
 	// Конструктор
-	CoffeeMashine(const tstring& coffeeFileName = "", const tstring& cashFileName = "");
+	CoffeeMashine(const tstring& coffeeFileName = _T(""), const tstring& cashFileName = _T(""));
 
 	// Возвращает текущий баланс
 	double getBalance() const {

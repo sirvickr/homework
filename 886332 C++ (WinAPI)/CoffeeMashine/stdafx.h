@@ -33,11 +33,14 @@ typedef std::basic_ostream<TCHAR> tostream;
 typedef std::basic_istream<TCHAR> tistream;
 typedef std::basic_ostringstream<TCHAR> tostringstream;
 typedef std::basic_istringstream<TCHAR> tistringstream;
-
 #if defined(UNICODE) || defined(_UNICODE)
 #define tcout std::wcout
 #define tcerr std::wcerr
+#define tofstream std::wofstream
+#define tifstream std::wifstream
 #else
 #define tcout std::cout
 #define tcerr std::cerr
+#define tofstream std::ofstream
+#define tifstream std::ifstream
 #endif
