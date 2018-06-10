@@ -6,6 +6,11 @@ struct MENU;
 #define MENU_ORIENT_HORZ 0
 #define MENU_ORIENT_VERT 1
 
+// Этапы частичной отрисовки меню
+#define MENU_DRAW_WND 0 // Только отрисовка элементов меню
+#define MENU_DRAW_SEL 1 // Отрисовка элементов меню и выделение текцщего
+#define MENU_MSG_LOOP 2 // Полноценный запуск окна меню с циклом сообщений
+// Максимальное число ячеек в одном пункте меню (минимум одна)
 #define MAX_CELLS 50
 
 // Указатели на функции void f(void) - они будут выполнять пункты меню
@@ -33,6 +38,8 @@ typedef struct {
 
 // Структура для всего меню
 typedef struct MENU {
+	// Указатель на родительское меню (не вызывающее, а то, которое перекрываем)
+	struct MENU* parent;
 	// Глобальные переменные, используемые в функциях меню
 	HANDLE hStdOut;// = INVALID_HANDLE_VALUE; // дескриптор консольного окна
 	///SMALL_RECT consolRect; // координаты углов консольного окна
@@ -42,6 +49,10 @@ typedef struct MENU {
 	WORD activeItemAttributes;// = 160; // атрибуты цвета активного пункта меню
 
 	MENU_WND wnd;
+
+	int hk_list[20];
+	FUN hk_cb[20];
+	int hk_count;
 
 	char* hdr;
 	ITEM* items;
@@ -55,25 +66,33 @@ typedef struct MENU {
 	int current; // текущий пункт меню
 } MENU;
 
-// инициализация экземляра меню (0 - успех)
-int menu_init(MENU* menu, HANDLE hstdout, ITEM_DEF* item_defs, int item_count, int cell_count,
-		int orient, const SMALL_RECT* prect, int border, const char* headers[]);
-// инициализация очитка меню
+// Инициализация экземляра меню (0 - успех)
+int menu_init(MENU* menu, MENU* parent, HANDLE hstdout, ITEM_DEF* item_defs, int item_count, int cell_count,
+		int orient, const SMALL_RECT* prect, int border, char* headers[]);
+// Добавить обработчик горячей клавиши
+int menu_add_hotkey(MENU* menu, int code, FUN cb) {
+	if(20 == menu->hk_count)
+		return -1;
+	menu->hk_list[menu->hk_count] = code;
+	menu->hk_cb[menu->hk_count] = cb;
+	return ++menu->hk_count;
+}
+// Очистка меню
 void menu_clear(MENU* menu);
-//
+// Прорисовка меню
 void menu_draw(MENU* menu, int loop);
 //
 void menu_active_color(MENU* menu, WORD attr);
 void menu_inactive_color(MENU* menu, WORD attr);
-// перевод курсока в точку x, y
+// Перевод курсора в точку x, y
 void gotoxy(MENU* menu, int x, int y);
-// выделить пункт меню
+// Выделить пункт меню
 void itemMenu(MENU* menu, bool activate);
- // запомнить положение курсора
+ // Запомнить положение курсора
 void saveCursorPosition(MENU* menu);
-// очистка окна
+// Очистка окна
 void menu_cls(MENU* menu);
-// в глобальную переменную curspos
+// Сохранить координаты курсора в переменную curspos
 void showCursor(MENU* menu, bool visible); // скрыть/показать курсор
 
 //---------------------------------------------------------------------------

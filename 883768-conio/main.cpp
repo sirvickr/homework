@@ -4,30 +4,32 @@
 #include <stdio.h>
 #include <stdlib.h>
 #pragma hdrstop
-#include "menu.h"
+#include "main.h"
 #include "dict.h"
+#include "codes.h"
 
 //#define TEST_MAIN_TABLE
 
 // верхнее меню
-const int top_item_count = 6; // количество пунктов меню
+static const int top_item_count = 6; // количество пунктов меню
 // положение (x,y), заголовок, указатель на функцию
 ITEM_DEF top_menu_items[top_item_count] = {
-#if 1
-	{ { "Edit", "Cell[0][1]", 0 }, Edit },
-	{ { "Search", "Cell[1][1]", 0 }, Search },
-	{ { "Sort", "Cell[2][1]", 0 }, Sort },
-	{ { "Save", "Cell[3][1]", 0 }, Save },
-	{ { "Help", "Cell[4][1]", 0 }, Help },
-	{ { "Exit", "Cell[5][1]", 0 }, Exit },
-#else
-	{ 1,  0, "Файл", File },
-	{ 11, 0, "Действие", Do },
-	{ 21, 0, "Очистить", Clear },
-	{ 31, 0, "Справка", Help },
-	{ 41, 0, "Выход", Exit },
-#endif
+	{ { "Изменить", "Cell[0][1]", 0 }, Edit },
+	{ { "Поиск", "Cell[1][1]", 0 }, Search },
+	{ { "Сортировка", "Cell[2][1]", 0 }, Sort },
+	{ { "Сохранить", "Cell[3][1]", 0 }, Save },
+	{ { "Помощь", "Cell[4][1]", 0 }, Help },
+	{ { "Выйти", "Cell[5][1]", 0 }, Exit },
 };
+
+static const int main_column_count = 4;
+static char* main_headers[main_column_count] = {
+	"Слово", "Часть речи", "Перевод", "Количество букв"
+};
+
+static CONSOLE_SCREEN_BUFFER_INFO csbInfo;
+
+static MENU top_menu, main_menu;
 
 int Run();
 
@@ -37,7 +39,55 @@ int main(int argc, char* argv[])
 	return Run();
 }
 
+int ExitYes(MENU* menu) {
+	return -1;
+}
+
+int ExitNo(MENU* menu) {
+	return -1;
+}
+
+// количество ячеек меню (столбцов)
+const int exit_column_count = 1;
+char* exit_headers[exit_column_count] = { "Выйти?" };
+// количество пунктов меню
+static const int exit_item_count = 2;
+static ITEM_DEF exit_menu_items[exit_item_count] = {
+	{ { "Да", 0 }, ExitYes },
+	{ { "Нет", 0 }, ExitNo },
+};
+
+int F1(MENU* menu) {
+	int i;
+	SMALL_RECT rect;
+	rect.Left = menu->wnd.rect.Left + 5;
+	rect.Right = menu->wnd.rect.Right - 5;
+	rect.Top = menu->wnd.rect.Top + 5;
+	rect.Bottom = menu->wnd.rect.Bottom - 5;
+	MENU exit_menu;
+
+	menu_init(&exit_menu, menu, menu->hStdOut, exit_menu_items, exit_item_count, 1,
+		MENU_ORIENT_VERT, &rect, 0, NULL);
+	menu_active_color(&exit_menu, BACKGROUND_INTENSITY | BACKGROUND_BLUE | BACKGROUND_GREEN);
+	menu_inactive_color(&exit_menu, BACKGROUND_BLUE | BACKGROUND_GREEN);
+	menu_draw(&exit_menu, MENU_MSG_LOOP);
+	menu_clear(&exit_menu);
+	return 0;
+}
+
+int F9(MENU* menu) {
+	menu_draw(&top_menu, MENU_MSG_LOOP);
+	return 0;
+}
+
 int Run() {
+	int i;
+	for(i = 0; i < main_column_count; i++)
+		CharToOemA(main_headers[i], main_headers[i]);
+	for(i = 0; i < exit_column_count; i++)
+		CharToOemA(exit_headers[i], exit_headers[i]);
+	for(i = 0; i < exit_item_count; i++)
+		CharToOemA(exit_menu_items[i].str[0], exit_menu_items[i].str[0]);
 	/*
 	//CharToOemA(text, text);
 	system("chcp");
@@ -86,37 +136,31 @@ int Run() {
 	#endif
 	return 0;*/
 
-	MENU top_menu, main_menu;
 	SMALL_RECT rect;
-
-	//SetConsoleTitle("Англо-русский словарь");
-	SetConsoleTitle("Dictionary");
+	char* title = "Англо-русский словарь";
+	CharToOemA(title, title);
+	SetConsoleTitle(title);
 
 	HANDLE hstdout = GetStdHandle(STD_OUTPUT_HANDLE);// = INVALID_HANDLE_VALUE; // дескриптор консольного окна
 	if(INVALID_HANDLE_VALUE == hstdout) {
 		return -1;
 	}
 	// Получаем размеры консоли
-	CONSOLE_SCREEN_BUFFER_INFO csbInfo;
 	GetConsoleScreenBufferInfo(hstdout, &csbInfo);
 	rect.Left = csbInfo.srWindow.Left + 1;
 	rect.Right = csbInfo.srWindow.Right - 1;
 	rect.Top = csbInfo.srWindow.Top + 1;
 	rect.Bottom = rect.Top;
 
-	menu_init(&top_menu, hstdout, top_menu_items, top_item_count, 2,
+	menu_init(&top_menu, NULL, hstdout, top_menu_items, top_item_count, 2,
 		MENU_ORIENT_HORZ, &rect, 0, NULL);
 	menu_active_color(&top_menu, BACKGROUND_INTENSITY | BACKGROUND_BLUE | BACKGROUND_GREEN);
 	menu_inactive_color(&top_menu, BACKGROUND_BLUE | BACKGROUND_GREEN);
-	menu_draw(&top_menu, 0);
+	menu_draw(&top_menu, MENU_DRAW_WND);
 
 #if 1
 
-	const int main_column_count = 4;
-	const char* main_headers[main_column_count] = {
-		"Word", "Part", "Trans", "Size"
-	};
-	#ifdef TEST_MAIN_TABLE  
+	#ifdef TEST_MAIN_TABLE
 	// главное меню (таблица)
 	const int main_item_count = 4; // количество пунктов меню
 	// положение (x,y), заголовок, указатель на функцию
@@ -148,8 +192,11 @@ int Run() {
 	rect.Top++;
 	rect.Bottom = csbInfo.srWindow.Bottom - 1;
 
-	menu_init(&main_menu, hstdout, main_menu_items, main_item_count, main_column_count,
+	menu_init(&main_menu, NULL, hstdout, main_menu_items, main_item_count, main_column_count,
 		MENU_ORIENT_VERT, &rect, 1, main_headers);
+	menu_add_hotkey(&main_menu, KEY_F1, F1);
+	menu_add_hotkey(&main_menu, KEY_F9, F9);
+	menu_add_hotkey(&main_menu, KEY_DEL, Delete);
 	menu_active_color(&main_menu,
 		BACKGROUND_BLUE | BACKGROUND_GREEN
 		| FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE
@@ -158,7 +205,7 @@ int Run() {
 		BACKGROUND_INTENSITY | BACKGROUND_BLUE
 		| FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE
 	);
-	menu_draw(&main_menu, 1);
+	menu_draw(&main_menu, MENU_MSG_LOOP);
 
 	menu_clear(&main_menu);
 

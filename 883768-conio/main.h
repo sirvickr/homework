@@ -5,6 +5,7 @@
 
 // Описание функций, которые подключаются к пунктам меню
 int Edit(MENU* menu);
+int Delete(MENU* menu);
 int Search(MENU* menu);
 int Sort(MENU* menu);
 int Save(MENU* menu);

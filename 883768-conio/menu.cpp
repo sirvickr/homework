@@ -6,28 +6,12 @@
 #pragma hdrstop
 #include "menu.h"
 #include "dict.h"
+#include "codes.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
-#define KEY_ARROW_UP 72
-#define KEY_ARROW_LEFT 75
-#define KEY_ARROW_RIGHT 77
-#define KEY_ARROW_DOWN 80
-#define KEY_ENTER 13
-
-#define CHAR_BORDER_HORZ 205
-#define CHAR_BORDER_VERT 186
-#define CHAR_BORDER_LEFT_TOP 201
-#define CHAR_BORDER_LEFT_BOTTOM 200
-#define CHAR_BORDER_RIGHT_TOP 187
-#define CHAR_BORDER_RIGHT_BOTTOM 188
-#define CHAR_BORDER_LEFT_JOINT 204
-#define CHAR_BORDER_RIGHT_JOINT 185
-#define CHAR_BORDER_TOP_JOINT 203
-#define CHAR_BORDER_BOTTOM_JOINT 202
-#define CHAR_BORDER_CROSS_JOINT 206
 #define MENU_WHITESPACE ' '
 
 void menu_active_color(MENU* menu, WORD attr) {
@@ -36,17 +20,20 @@ void menu_active_color(MENU* menu, WORD attr) {
 
 void menu_inactive_color(MENU* menu, WORD attr) {
 	menu->inactiveItemAttributes = attr;
+	menu->workWindowAttributes = attr;
 }
 
-int menu_init(MENU* menu, HANDLE hstdout, ITEM_DEF* item_defs, int item_count, int cell_count,
-	int orient, const SMALL_RECT* prect, int border, const char* headers[])
+int menu_init(MENU* menu, MENU* parent, HANDLE hstdout, ITEM_DEF* item_defs, int item_count, int cell_count,
+	int orient, const SMALL_RECT* prect, int border, char* headers[])
 {
+	int left_indent = 1;
 	int i, j, len, next_cell;
 	int border_bottom_index = 0; // для окна
 	if(NULL == menu || NULL == item_defs || INVALID_HANDLE_VALUE == hstdout)
 		return -1;
 	memset(menu, 0x00, sizeof(MENU));
-	// Получаем дескриптор консольного вывода
+	menu->parent = parent;
+	// Сохраняем дескриптор консольного вывода
 	menu->hStdOut = hstdout;
 	//
 	menu->border = border;
@@ -132,13 +119,14 @@ int menu_init(MENU* menu, HANDLE hstdout, ITEM_DEF* item_defs, int item_count, i
 			menu->items[i].cb = item_defs[i].cb;
 			menu->items[i].x = next + menu->left_pad;
 			menu->items[i].y = menu->curspos.Y + menu->top_pad;
-			int next_cell = 0; // смещение очередной ячейки вниз
+			//int next_cell = 0; // смещение очередной ячейки вниз
 			if(item_defs[i].str[0]) {
 				len = strlen(item_defs[i].str[0]);
 				width = MAX(len, menu->item_width);
 				menu->items[i].str = (char*)malloc((width + 1) * sizeof(char));
 
 				memset(menu->items[i].str, MENU_WHITESPACE, width);
+				CharToOemA(item_defs[i].str[0], item_defs[i].str[0]);
 				if(len < menu->item_width) {
 					int indent = (menu->item_width - len) / 2;
 					memcpy(menu->items[i].str + indent, item_defs[i].str[0], len);
@@ -167,11 +155,12 @@ int menu_init(MENU* menu, HANDLE hstdout, ITEM_DEF* item_defs, int item_count, i
 				if(headers[j]) {
 					len = strlen(headers[j]);
 					width = MAX(len, cell_width);
-					if(len < cell_width) {
-						memcpy(menu->hdr + next_cell, headers[j], len);
+					//CharToOemA(headers[j], headers[j]);
+					if(len + left_indent < cell_width) {
+						memcpy(menu->hdr + next_cell + left_indent, headers[j], len);
 					} else {
-						memcpy(menu->hdr + next_cell, headers[j], cell_width - 1);
-						menu->hdr[next_cell + cell_width - 1] = '_';
+						memcpy(menu->hdr + next_cell + left_indent, headers[j], cell_width - 1 - left_indent);
+						menu->hdr[next_cell + cell_width - 1 - left_indent] = '_';
 					}
 					if(border && j < cell_count - 1) {
 						menu->wnd.m[0][next_cell + cell_width - 0] = CHAR_BORDER_TOP_JOINT;
@@ -197,14 +186,12 @@ int menu_init(MENU* menu, HANDLE hstdout, ITEM_DEF* item_defs, int item_count, i
 				if(item_defs[i].str[j]) {
 					len = strlen(item_defs[i].str[j]);
 					width = MAX(len, cell_width);
-					//menu->items[i].str[j] = (char*)malloc((width + 1) * sizeof(char));
-
-					//memset(menu->items[i].str[j], MENU_WHITESPACE, width);
-					if(len < cell_width) {
-						memcpy(menu->items[i].str + next_cell, item_defs[i].str[j], len);
+					// нехорошо менять каждый раз оригиналы CharToOemA(item_defs[i].str[j], item_defs[i].str[j]);
+					if(len + left_indent < cell_width) {
+						memcpy(menu->items[i].str + next_cell + left_indent, item_defs[i].str[j], len);
 					} else {
-						memcpy(menu->items[i].str + next_cell, item_defs[i].str[j], cell_width - 1);
-						menu->items[i].str[next_cell + cell_width - 1] = '_';
+						memcpy(menu->items[i].str + next_cell + left_indent, item_defs[i].str[j], cell_width - 1 - left_indent);
+						menu->items[i].str[next_cell + cell_width - 1 - left_indent] = '_';
 					}
 					if(border && j < cell_count - 1) {
 						int top_shift;
@@ -221,6 +208,7 @@ int menu_init(MENU* menu, HANDLE hstdout, ITEM_DEF* item_defs, int item_count, i
 					next_cell += cell_width;
 				}
 			} // for(cell)
+			//портит псевдографику CharToOemA(menu->items[i].str, menu->items[i].str);
 			next++;
 		} // for(item)
 		break;
@@ -279,6 +267,7 @@ void menu_next(MENU* menu) {
 }
 
 void menu_draw(MENU* menu, int loop) {
+	int i;
 	// Устанавливаем цветовые параметры текста
 	SetConsoleTextAttribute(menu->hStdOut, menu->workWindowAttributes);
 	//system("CLS"); // установка атрибутов цвета рабочей области
@@ -295,24 +284,27 @@ void menu_draw(MENU* menu, int loop) {
 		printf(menu->hdr);
 	}
 	// рисуем меню
-	for (int i = 0; i < menu->item_count; i++) { // Напечатать заголовки пунктов меню
+	for (i = 0; i < menu->item_count; i++) { // Напечатать заголовки пунктов меню
 		gotoxy(menu, menu->items[i].x, menu->items[i].y);
 		printf(menu->items[i].str);
 	}
 	fflush(stdout);
 
-	if(0 == loop)
+	if(MENU_DRAW_WND == loop)
 		return;
 
 	itemMenu(menu, true); // выделить пункт меню
 
+	if(MENU_DRAW_SEL == loop)
+		return;
+
 	fflush(stdin); // очистить буфер клавиатуры
 
-	int cb_retcode = 0;
-	int iKey = 67;
+	int iKey;
 	int run = 1;
 	while (run) {
 		if (kbhit()) {
+			int cb_retcode = 0;
 			iKey = _getch();
 			switch (iKey) {
 			case KEY_ARROW_UP:
@@ -330,7 +322,6 @@ void menu_draw(MENU* menu, int loop) {
 				if(MENU_ORIENT_VERT == menu->orient)
 					menu_next(menu);
 				break;
-				break;
 			case KEY_ENTER:
 				// Возвращаем курсор из строки меню в прежнюю позицию
 				///gotoxy(menu, menu->curspos.X, menu->curspos.Y);
@@ -342,6 +333,7 @@ void menu_draw(MENU* menu, int loop) {
 				if(-1 == cb_retcode) {
 					///gotoxy(menu, 0, 0);
 					///menu_cls(menu, WholeWindow);
+					itemMenu(menu, false); // сделать неактивным пункт меню
 					run = 0;
 					break;///exit(0);
 				} else if(0 == cb_retcode) {
@@ -357,12 +349,22 @@ void menu_draw(MENU* menu, int loop) {
 			case 120: // выход по клавише x
 			case 88: // выход по клавише X
 			case 27: // выход по клавише ESC
+				itemMenu(menu, false); // сделать неактивным пункт меню
 				gotoxy(menu, 0, 0);
 				///menu_cls(menu, WholeWindow);
 				run = 0;///exit(0);
 			} // switch(iKey)
+			// обработка горячих клавиш
+			for (i = 0; i < menu->hk_count; i++) {
+				if(iKey == menu->hk_list[i]) {
+					menu->hk_cb[i](menu);
+				}
+			}
 		} // if(kbhit())
 	} // while(1)
+	if(menu->parent) {
+		menu_draw(menu->parent, MENU_DRAW_SEL);
+	}
 }
 
 void gotoxy(MENU* menu, int x, int y)
