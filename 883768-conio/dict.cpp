@@ -137,6 +137,32 @@ int dict_add(DICT_ENTRY* new_entry) {
 	return 0;
 }
 //
+int dict_del(const char* word) {
+	DICT_ENTRY *curr, *prev;
+	if(NULL == word)
+		return -1;
+	if(0 == dict_size)
+		return 0;
+	curr = dict_head;
+	prev = dict_head;
+	while(curr) {
+		DICT_ENTRY* next = curr->next;
+		if(0 == strcmp(curr->field[0], word)) {
+			if(curr != dict_head) {
+				prev->next = curr->next;
+			} else {
+				dict_head = curr->next;
+			}
+			dict_entry_clear(curr);
+			dict_size--;
+			break;
+		}
+		prev = curr;
+		curr = next;
+	}
+	return 1;
+}
+//
 void dict_clear() {
 	DICT_ENTRY* curr = dict_head;
 	while(curr) {
