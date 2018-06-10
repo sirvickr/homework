@@ -15,6 +15,18 @@
 
 #pragma comment(lib, "ComCtl32.lib")
 
+// Список доступных денежных номиналов
+typedef std::pair<CashValue, tstring> CashChoice;
+const CashChoice cashChoice[] = {
+	{ note500, "500 рублей" },
+	{ note100, "100 рублей" },
+	{ note50, "50 рублей" },
+	{ coin10, "10 рублей" },
+	{ coin5, "5 рублей" },
+	{ coin2, "2 рубля" },
+	{ coin1, "1 рубль" },
+};
+
 // Вспомогательный текстовый буфер
 TCHAR szText[256];
 // Автомат по производству кофе
@@ -22,6 +34,7 @@ CoffeeMashine* coffeeMashine = nullptr;
 // Оконные дескрипторы некоторых элементов управления (которые используем)
 HWND hlstOutput = nullptr;
 HWND hlvwCoffee = nullptr;
+HWND hlstMoney = nullptr;
 // Переменные для работы с ListView
 LVCOLUMN lvColumn;
 LVITEM lvItem;
@@ -37,7 +50,7 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		ctrlID = LOWORD(wParam);
 		switch (ctrlID) {
 		case IDCANCEL: // Клавиша ESC
-			SetDlgItemText(hDlg, txtInputSum, _T("0.0"));
+			//SetDlgItemText(hDlg, txtInputSum, _T("0.0"));
 			return TRUE;
 		case btnClose: // Кнопка "Закрыть"
 			SendMessage(hDlg, WM_CLOSE, 0, 0);
@@ -47,12 +60,8 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			SendMessage(hlstOutput, LB_RESETCONTENT, (WPARAM)0, (LPARAM)0);
 			try {
 				// прочитать денежную сумму
-				GetDlgItemText(hDlg, txtInputSum, buffer, sizeof(buffer) / sizeof(buffer[0]) - 1);
-				tistringstream is(buffer);
-				double sum = 0;
-				is >> sum;
-				// внести деньги
-				double balance = coffeeMashine->depositMoney(sum);
+				int index = SendMessage(hlstMoney, CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+				double balance = coffeeMashine->depositMoney(cashChoice[index].first);
 				// отобразить текущий баланс
 				tostringstream os;
 				os << std::fixed << std::setprecision(2) << balance;
@@ -116,14 +125,18 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		return TRUE;
 	case WM_INITDIALOG:
 		// В обработчике этого сообщения удобно проводить начальную настройку приложения
-		// Выделяем память для объекта "Автомат по производству кофе"
-		coffeeMashine = new CoffeeMashine("coffee.cfg", "cash.cfg");
-		// Сумма предоплаты по умолчанию
-		SetDlgItemText(hDlg, txtInputSum, _T("100.00"));
-		SetDlgItemText(hDlg, txtBalance, _T("0.00"));
 		// Получаем оконные дескрипторы, которые понадобятся в работе
 		hlstOutput = GetDlgItem(hDlg, lstOutput);
 		hlvwCoffee = GetDlgItem(hDlg, lvwCoffee);
+		hlstMoney = GetDlgItem(hDlg, lstMoney);
+		// Выделяем память для объекта "Автомат по производству кофе"
+		coffeeMashine = new CoffeeMashine("coffee.cfg", "cash.cfg");
+		// Заполняем список доступных денежных знаков
+		for (const auto item : cashChoice)
+			SendMessage(hlstMoney, CB_ADDSTRING, (WPARAM)0, (LPARAM)item.second.c_str());
+		SendMessage(hlstMoney, CB_SETCURSEL, (WPARAM)1, (LPARAM)0);
+		// Указываем нудевой баланс в текстовом поле
+		SetDlgItemText(hDlg, txtBalance, _T("0.00"));
 		// Заголовки списка напитков
 		SendMessage(hlvwCoffee, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 		memset(&lvColumn, 0x00, sizeof(lvColumn));

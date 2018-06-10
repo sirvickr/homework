@@ -71,7 +71,7 @@ public:
 	// Внесение предоплаты:
 	// принимает сумму денег
 	// возвращает сумму депозита
-	double depositMoney(double money);
+	double depositMoney(CashValue money);
 
 	// Приготовление кофе:
 	// принимает тип кофе и сумму денег

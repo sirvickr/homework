@@ -59,9 +59,13 @@ CoffeeMashine::CoffeeMashine(const tstring& coffeeFileName, const tstring& cashF
 	loadCash(cashFileName);
 }
 
-double CoffeeMashine::depositMoney(double money)
+double CoffeeMashine::depositMoney(CashValue money)
 {
+	// Увеличиваем текущий баланс
 	balance += money;
+	// Добавляем денежные знаки для сдачи
+	cashAvail[money]++;
+	// Возвращаем новое значение баланса
 	return balance;
 }
 
