@@ -11,12 +11,12 @@ typedef struct LIST1_ITEM {
 
 // односвязный список
 
-typedef void (*LIST_ITEM_FREE)(void*);
-typedef void (*LIST_ITEM_PROC)(void* data, void* param);
+typedef void (*LIST_ITEM_FREE)(void* item);
+typedef void (*LIST_ITEM_PROC)(void* item, int index, void* param);
+typedef int (*LIST_ITEM_FIND)(void* item, void* param);
 // структура односвязного списка
 typedef struct LIST1 {
-	struct LIST1_ITEM* head;
-	struct LIST1_ITEM* tail;
+	struct LIST1_ITEM *head, *tail, *curr;
 	LIST_ITEM_FREE item_free;
 	int count;
 } LIST1;
@@ -34,6 +34,22 @@ int list1_push_front(LIST1* list, void* data);
 //
 int list1_push_back(LIST1* list, void* item);
 //
-int list1_for_each(LIST1* list, LIST_ITEM_PROC cb, void* param);
+int list1_for_each(LIST1* list, LIST_ITEM_PROC find, void* param);
+// Прокрутить текущий указатель вперёд
+void* list1_curr_fwd(LIST1* list, int wrap);
+// Прокрутить текущий указатель назад
+void* list1_curr_rev(LIST1* list, int wrap);
+//
+void* list1_front(LIST1* list);
+//
+void* list1_back(LIST1* list);
+//
+void* list1_curr(LIST1* list);
+// Удалить элемент списка
+// возвращает текущий элемент (возможно, новый)
+void* list1_erase(LIST1* list, LIST_ITEM_FIND cb, void* param);
+// Удалить текущий элемент списка
+// возвращает новый текущий элемент
+void* list1_erase_current(LIST1* list);
 
 #endif
