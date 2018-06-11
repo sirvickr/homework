@@ -4,6 +4,7 @@
 #include "Display.h"
 #include "Operation.h"
 
+HINSTANCE g_hInst = nullptr;
 // Текущая операция
 Operation* op = nullptr;
 // Дисплей калькулятора
@@ -16,7 +17,7 @@ double memory = 0.0;
 int mode = 0;
 // Размеры окна для режимов
 const int modeWidth[] = { 215, 300 };
-const int modeHeight[] = { 290, 290 };
+const int modeHeight[] = { 310, 310 };
 
 // Установка размеров окна для режимов "Простой" и "Инженерный"
 void SetMode(HWND hDlg, int mode)
@@ -24,6 +25,43 @@ void SetMode(HWND hDlg, int mode)
 	SetWindowPos(hDlg, NULL, 0, 0, modeWidth[mode], modeHeight[mode], SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
 	SetWindowPos(GetDlgItem(hDlg, txtDisplay), hDlg, 0, 0, modeWidth[mode] - 40, 23, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
 	SetWindowPos(GetDlgItem(hDlg, btnSwitchView), hDlg, 0, 0, modeWidth[mode] - 40, 25, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+}
+
+// Оконная процедура диалога выбора режима
+INT_PTR CALLBACK DlgProcMode(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	UINT ctrlID = 0;
+	switch(uMsg) {
+	// Сообщение от одного из элементов управления, размещённых на диалоговом окне
+	case WM_COMMAND:
+		// Идентификатор элемента управления, являющегося источниом сообщения
+		ctrlID = LOWORD(wParam);
+		switch(ctrlID) {
+		case IDCANCEL: // Нажатие ESC
+			EndDialog(hDlg, FALSE);
+			//SendMessage(hDlg, WM_CLOSE, 0, 0);
+			break;
+		case IDOK: // Нажатие OK
+			if(IsDlgButtonChecked(hDlg, optSimple))
+				mode = 0;
+			else
+				mode = 1;
+			EndDialog(hDlg, TRUE);
+			break;
+		}
+		return TRUE;
+	case WM_INITDIALOG:
+		switch(mode) {
+		case 0:
+			CheckDlgButton(hDlg, optSimple, BST_CHECKED);
+			break;
+		case 1:
+			CheckDlgButton(hDlg, optAdvanced, BST_CHECKED);
+			break;
+		}
+		return TRUE;
+	}
+	return FALSE;
 }
 
 // Главная оконная процедура (обработчик сообщений главного окна приложения)
@@ -49,6 +87,14 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		switch(ctrlID) {
 		case IDCANCEL: // Нажатие ESC
 			display->Reset();
+			return TRUE;
+		case IDM_MODE:
+			{
+				// Отображаем диалог выбора режима
+				if(DialogBox(g_hInst, MAKEINTRESOURCE(dlgMode), hDlg, DlgProcMode) == IDOK) {
+					SetMode(hDlg, mode);
+				}
+			}
 			return TRUE;
 		case btnSwitchView: // Нажатие кнопки "Переключить режим"
 			mode ^= 1;
@@ -185,13 +231,14 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_INITDIALOG:
 		// В обработчике этого сообщения удобно проводить начальную настройку приложения
+		SetMenu(hDlg, LoadMenu(g_hInst, MAKEINTRESOURCE(IDR_MENU1)));
 		// Выделяем память для вычислитеного объекта
 		op = new Operation(new Operation, new Operation);
 		// Выделяем память для объекта дисплея
 		display = new Display(hDlg, txtDisplay);
 		// Задаём размеры окна для текущего режима
 		SetMode(hDlg, mode);
-		break;
+		return TRUE;
 
 	case WM_CLOSE:
 		/* Это сообщение вызывается перед закрытием окна. Здесь можно спросить пользователя, 
@@ -218,6 +265,8 @@ int WINAPI _tWinMain(HINSTANCE hInst, HINSTANCE h0, LPTSTR lpCmdLine, int nCmdSh
 {
 	MSG msg;
 	BOOL ret;
+	// Запоминаем дескриптор приложения
+	g_hInst = hInst;
 	// Создаём главное окно
 	HWND hDlg = CreateDialogParam(hInst, MAKEINTRESOURCE(mainWnd), 0, DialogProc, 0);
 	// Отображаем его на экране
