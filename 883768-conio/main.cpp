@@ -7,8 +7,11 @@
 #include "main.h"
 #include "dict.h"
 #include "codes.h"
-
+extern "C" {
+#include "list.h"
+}
 //#define TEST_MAIN_TABLE
+//#define TEST_LIST1
 
 // верхнее меню
 static const int top_item_count = 6; // количество пунктов меню
@@ -79,8 +82,47 @@ int F9(MENU* menu) {
 	menu_draw(&top_menu, MENU_MSG_LOOP);
 	return 0;
 }
+#ifdef TEST_LIST1
+void dict_entry_release(void* data) {
+	int i;
+	if(data) {
+		DICT_ENTRY* entry = (DICT_ENTRY*)data;
+		for(i = 0; i < DICT_FLD_CNT; i++)
+			if(entry->field[i])
+				free(entry->field[i]);
+		free(entry);
+	}
+}
 
+void dict_entry_print(void* data, void*) {
+	DICT_ENTRY* entry = (DICT_ENTRY*)data;
+	printf("%s %s %s\n", entry->field[0], entry->field[1], entry->field[2]);
+}
+#endif
 int Run() {
+#ifdef TEST_LIST1
+	DICT_ENTRY* entry;
+	LIST1 list;
+	list1_init(&list);
+	list.item_free = dict_entry_release;
+
+	if(entry = dict_new("Hello", "Noun", "1"))
+		list1_push_front(&list, entry);
+	if(entry = dict_new("World", "Noun", "2"))
+		list1_push_front(&list, entry);
+	if(entry = dict_new("Go", "Verb", "3"))
+		list1_push_front(&list, entry);
+	if(entry = dict_new("Run", "Noun", "4"))
+		list1_push_back(&list, entry);
+	if(entry = dict_new("Star", "Noun", "5"))
+		list1_push_back(&list, entry);
+
+	list1_for_each(&list, dict_entry_print, NULL);
+
+	list1_clear(&list);
+	getchar();
+	return 0;
+#endif
 	int i;
 	for(i = 0; i < main_column_count; i++)
 		CharToOemA(main_headers[i], main_headers[i]);
