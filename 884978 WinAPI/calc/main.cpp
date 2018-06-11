@@ -261,7 +261,7 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 // Точка входа приложения
-int WINAPI _tWinMain(HINSTANCE hInst, HINSTANCE h0, LPTSTR lpCmdLine, int nCmdShow)
+int WINAPI _tWinMain(HINSTANCE hInst, HINSTANCE h, LPTSTR lpCmdLine, int nCmdShow)
 {
 	MSG msg;
 	BOOL ret;
