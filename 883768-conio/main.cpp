@@ -102,17 +102,17 @@ int Run() {
 	//system("chcp");
 	*/
 	/*#if 1
-	if(-1 == dict_new("Hello", "Noun", "Привет"))
+	if(-1 == dict_add(dict_new("Hello", "Noun", "Привет")))
 		return -1;
-	if(-1 == dict_new("World", "Noun", "Мир"))
+	if(-1 == dict_add(dict_new("World", "Noun", "Мир")))
 		return -1;
-	if(-1 == dict_new("Go", "Verb", "Идти"))
+	if(-1 == dict_add(dict_new("Go", "Verb", "Идти")))
 		return -1;
-	if(-1 == dict_new("Run", "Noun", "Бежать"))
+	if(-1 == dict_add(dict_new("Run", "Noun", "Бежать")))
 		return -1;
-	if(-1 == dict_new("Star", "Noun", "Звезда"))
+	if(-1 == dict_add(dict_new("Star", "Noun", "Звезда")))
 		return -1;
-	if(-1 == dict_save(dict_file_name))
+	if(-1 == dict_add(dict_save(dict_file_name)))
 		return -1;
 	dict_clear();
 	getchar();

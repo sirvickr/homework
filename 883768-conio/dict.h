@@ -18,7 +18,7 @@ typedef struct DICT_ENTRY {
 //---------------------------------------------------------------------------
 struct MENU;
 //
-int dict_new(const char* word_eng, const char* word_part, const char* word_rus);
+DICT_ENTRY* dict_new(const char* word_eng, const char* word_part, const char* word_rus);
 //
 int dict_add(DICT_ENTRY* new_entry);
 //

@@ -53,7 +53,9 @@ int dict_load(const char* file_name) {
 				field_start = i + 1;
 				nfield++;
 				if(DICT_FLD_CNT == nfield) {
-					dict_new(temp_entry.field[0], temp_entry.field[1], temp_entry.field[2]);
+					dict_add(
+						dict_new(temp_entry.field[0], temp_entry.field[1], temp_entry.field[2])
+					);
 					for(int fld = 0; fld < DICT_FLD_CNT; fld++)
 						if(temp_entry.field[fld])
 							free(temp_entry.field[fld]);
@@ -106,9 +108,9 @@ int dict_save(const char* file_name) {
 	return 0;
 }
 //
-int dict_new(const char* word_eng, const char* word_part, const char* word_rus) {
+DICT_ENTRY* dict_new(const char* word_eng, const char* word_part, const char* word_rus) {
 	if(NULL == word_eng | NULL == word_part | NULL == word_rus)
-		return -1;
+		return NULL;
 	DICT_ENTRY* new_entry = (DICT_ENTRY*)malloc(sizeof(DICT_ENTRY));
 	memset(new_entry, 0x00, sizeof(DICT_ENTRY));
 
@@ -119,9 +121,7 @@ int dict_new(const char* word_eng, const char* word_part, const char* word_rus) 
 	new_entry->field[2] = (char*)malloc((strlen(word_rus) + 1) * sizeof(char));
 	strcpy(new_entry->field[2], word_rus);
 
-	dict_add(new_entry);
-
-	return 0;
+	return new_entry;
 }
 //
 int dict_add(DICT_ENTRY* new_entry) {
