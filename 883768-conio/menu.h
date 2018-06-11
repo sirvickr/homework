@@ -1,6 +1,10 @@
 #ifndef menuH
 #define menuH
 //---------------------------------------------------------------------------
+extern "C" {
+#include "list.h"
+}
+//---------------------------------------------------------------------------
 struct MENU;
 
 #define MENU_ORIENT_HORZ 0
@@ -16,13 +20,13 @@ struct MENU;
 // Указатели на функции void f(void) - они будут выполнять пункты меню
 typedef int(*FUN) (MENU*);
 
-// Структура для элемента меню
+// Структура определения элемента меню
 typedef struct {
 	char* str[MAX_CELLS]; // Наименование пункта меню (несколько ячеек)
 	FUN cb; // Функция, привязанная к пункту меню
 } ITEM_DEF;
 
-// Структура для элемента меню
+// Структура для хранения элемента меню
 typedef struct {
 	int x, y; // Столбец и строка консоли
 	char* str; // Наименование пункта меню (несколько ячеек)
@@ -35,6 +39,12 @@ typedef struct {
 	int M, N; // размер матрицы символов
 	char** m; // матрица символов
 } MENU_WND;
+
+// Горячая клавиша
+typedef struct {
+	int code;
+	FUN cb; // обработчик
+} HOT_KEY;
 
 // Структура для всего меню
 typedef struct MENU {
@@ -50,9 +60,8 @@ typedef struct MENU {
 
 	MENU_WND wnd;
 
-	int hk_list[20];
-	FUN hk_cb[20];
-	int hk_count;
+	int last_key;
+	LIST1 hk_list;
 
 	char* hdr;
 	ITEM* items;
@@ -66,24 +75,24 @@ typedef struct MENU {
 	int current; // текущий пункт меню
 } MENU;
 
-// Инициализация экземляра меню (0 - успех)
+// Инициализация полей экземпляра меню
 int menu_init(MENU* menu, MENU* parent, HANDLE hstdout, ITEM_DEF* item_defs, int item_count, int cell_count,
 		int orient, const SMALL_RECT* prect, int border, char* headers[]);
 // Добавить обработчик горячей клавиши
-int menu_add_hotkey(MENU* menu, int code, FUN cb) {
-	if(20 == menu->hk_count)
-		return -1;
-	menu->hk_list[menu->hk_count] = code;
-	menu->hk_cb[menu->hk_count] = cb;
-	return ++menu->hk_count;
-}
-// Очистка меню
+int menu_add_hotkey(MENU* menu, int code, FUN cb);
+
+// Очистка полей экземпляра меню
 void menu_clear(MENU* menu);
 // Прорисовка меню
 void menu_draw(MENU* menu, int loop);
-//
+// Установка цветовых атрибутов активного пункта
 void menu_active_color(MENU* menu, WORD attr);
+// Установка цветовых атрибутов неактивного пункта
 void menu_inactive_color(MENU* menu, WORD attr);
+// Выделить предыдущий пункт меню
+void menu_prev(MENU* menu);
+// Выделить следующий пункт меню
+void menu_next(MENU* menu);
 // Перевод курсора в точку x, y
 void gotoxy(MENU* menu, int x, int y);
 // Выделить пункт меню

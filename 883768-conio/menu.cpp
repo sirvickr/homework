@@ -14,6 +14,9 @@
 
 #define MENU_WHITESPACE ' '
 
+// ќбработка гор€чей клавиши (если была нажата)
+void menu_proc_hotkey(void* data, void* ptr);
+
 void menu_active_color(MENU* menu, WORD attr) {
 	menu->activeItemAttributes = attr;
 }
@@ -33,6 +36,8 @@ int menu_init(MENU* menu, MENU* parent, HANDLE hstdout, ITEM_DEF* item_defs, int
 		return -1;
 	memset(menu, 0x00, sizeof(MENU));
 	menu->parent = parent;
+	list1_init(&menu->hk_list);
+
 	// —охран€ем дескриптор консольного вывода
 	menu->hStdOut = hstdout;
 	//
@@ -241,6 +246,8 @@ void menu_clear(MENU* menu) {
 	free(menu->wnd.m);
 	menu->wnd.m = NULL;
 
+	list1_clear(&menu->hk_list);
+
 	menu->hStdOut = INVALID_HANDLE_VALUE;
 }
 
@@ -300,13 +307,12 @@ void menu_draw(MENU* menu, int loop) {
 
 	fflush(stdin); // очистить буфер клавиатуры
 
-	int iKey;
 	int run = 1;
 	while (run) {
 		if (kbhit()) {
 			int cb_retcode = 0;
-			iKey = _getch();
-			switch (iKey) {
+			menu->last_key = _getch();
+			switch (menu->last_key) {
 			case KEY_ARROW_UP:
 				if(MENU_ORIENT_VERT == menu->orient)
 					menu_prev(menu);
@@ -355,11 +361,7 @@ void menu_draw(MENU* menu, int loop) {
 				run = 0;///exit(0);
 			} // switch(iKey)
 			// обработка гор€чих клавиш
-			for (i = 0; i < menu->hk_count; i++) {
-				if(iKey == menu->hk_list[i]) {
-					menu->hk_cb[i](menu);
-				}
-			}
+			list1_for_each(&menu->hk_list, menu_proc_hotkey, menu);
 		} // if(kbhit())
 	} // while(1)
 	if(menu->parent) {
@@ -422,5 +424,22 @@ void menu_cls(MENU* menu)
 		break;
 	}
 	//gotoxy(menu, 0, 0);
+}
+
+int menu_add_hotkey(MENU* menu, int code, FUN cb) {
+	HOT_KEY* hk = (HOT_KEY*)malloc(sizeof(HOT_KEY));
+	memset(hk, 0x00, sizeof(HOT_KEY));
+	hk->code = code;
+	hk->cb = cb;
+	list1_push_front(&menu->hk_list, hk);
+	return menu->hk_list.count;
+}
+
+void menu_proc_hotkey(void* data, void* ptr) {
+	HOT_KEY* hk = (HOT_KEY*)data;
+	MENU* menu = (MENU*)ptr;
+	if(menu->last_key == hk->code) {
+		hk->cb(menu);
+	}
 }
 
