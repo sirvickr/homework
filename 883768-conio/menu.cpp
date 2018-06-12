@@ -14,8 +14,16 @@
 
 #define MENU_WHITESPACE ' '
 
+int menu_calc_item_pos(void* data, int index, void* ptr);
+// Отрисовка пункта меню (callback для элемента списка)
+int menu_draw_item(void* data, int index, void* ptr);
+// Проверить код, возвращённый обработчиком
+int check_cb_retcode(MENU* menu);
+// Очистка одного элемента меню
+void menu_item_release(void* ptr);
+
 // Обработка горячей клавиши (если была нажата)
-void menu_proc_hotkey(void* data, void* ptr);
+int menu_proc_hotkey(void* data, int index, void* ptr);
 
 void menu_active_color(MENU* menu, WORD attr) {
 	menu->activeItemAttributes = attr;
@@ -26,37 +34,80 @@ void menu_inactive_color(MENU* menu, WORD attr) {
 	menu->workWindowAttributes = attr;
 }
 
+void menu_fill_wnd(MENU* menu, int items_count) {
+	int i, border_bottom_index;
+	if(items_count == 0)
+		items_count = menu->items.count;
+	border_bottom_index = menu->border_bottom_index + items_count;
+	// проход по строкам окна
+	for(i = 0; i < menu->wnd.M; i++) {
+		//menu->wnd.m[i] = (char*)malloc((menu->wnd.N + 1) * sizeof(char));
+		memset(menu->wnd.m[i], MENU_WHITESPACE, menu->wnd.N * sizeof(char));
+		menu->wnd.m[i][menu->wnd.N] = '\0';
+		if(menu->has_border) {
+			// отрисовка вертикальной границы слева и справа
+			if(i < border_bottom_index) {
+				menu->wnd.m[i][0] = CHAR_BORDER_VERT;
+				menu->wnd.m[i][menu->wnd.N - 1] = CHAR_BORDER_VERT;
+			}
+			// отрисовка горизонтальной линии отделения заголовка и её стыковочных линий слева/справа
+			if(menu->hdr != NULL && 2 == i) {
+				memset(menu->wnd.m[i], CHAR_BORDER_HORZ, menu->wnd.N * sizeof(char));
+				menu->wnd.m[i][0] = CHAR_BORDER_LEFT_JOINT;
+				menu->wnd.m[i][menu->wnd.N - 1] = CHAR_BORDER_RIGHT_JOINT;
+			}
+			if(0 == i || border_bottom_index == i) {
+				// отрисовка верхней и нижней горизонтальных линий, а также 4 внешних углов
+				memset(menu->wnd.m[i], CHAR_BORDER_HORZ, menu->wnd.N * sizeof(char));
+				if(0 == i) { // первая строка
+					menu->wnd.m[i][0] = CHAR_BORDER_LEFT_TOP;
+					menu->wnd.m[i][menu->wnd.N - 1] = CHAR_BORDER_RIGHT_TOP;
+				}
+				if(border_bottom_index == i) { // последняя строка
+					menu->wnd.m[i][0] = CHAR_BORDER_LEFT_BOTTOM;
+					menu->wnd.m[i][menu->wnd.N - 1] = CHAR_BORDER_RIGHT_BOTTOM;
+				}
+			}
+		}
+	}
+	if(menu->has_border) {
+		for (i = 0; i < menu->cell_count; i++) {
+			if(menu->has_headers) {
+				if(i < menu->cell_count - 1) {
+					// отрисовка вертикальных линий в заголовке
+					menu->wnd.m[0][menu->cell_start[i] + menu->cell_width - 0] = CHAR_BORDER_TOP_JOINT;
+					menu->wnd.m[2][menu->cell_start[i] + menu->cell_width - 0] = CHAR_BORDER_BOTTOM_JOINT;
+				}
+			}
+			if(i < menu->cell_count - 1) {
+				int top_shift = menu->top_pad - 1;
+				if(menu->has_headers) {
+					menu->wnd.m[top_shift][menu->cell_start[i] + menu->cell_width - 0] = CHAR_BORDER_CROSS_JOINT;
+				} else {
+					menu->wnd.m[top_shift][menu->cell_start[i] + menu->cell_width - 0] = CHAR_BORDER_TOP_JOINT;
+				}
+				menu->wnd.m[border_bottom_index][menu->cell_start[i] + menu->cell_width - 0] = CHAR_BORDER_BOTTOM_JOINT;
+			}
+		} // if(menu->has_headers)
+	} // if(menu->has_border)
+}
+
 int menu_init(MENU* menu, MENU* parent, HANDLE hstdout, ITEM_DEF* item_defs, int item_count, int cell_count,
 	int orient, const SMALL_RECT* prect, int border, char* headers[])
 {
 	int left_indent = 1;
-	int i, j, len, next_cell;
-	int border_bottom_index = 0; // для окна
+	int i, j, len;
 	if(NULL == menu || NULL == item_defs || INVALID_HANDLE_VALUE == hstdout)
 		return -1;
 	memset(menu, 0x00, sizeof(MENU));
 	menu->parent = parent;
+	menu->orient = orient;
+
 	list1_init(&menu->hk_list);
 
 	// Сохраняем дескриптор консольного вывода
 	menu->hStdOut = hstdout;
-	//
-	menu->border = border;
-	menu->left_pad = 0;
-	menu->top_pad = 0;
-	if(MENU_ORIENT_VERT == orient) { //TODO MENU_ORIENT_HORZ
-		if(headers) {
-			menu->top_pad += 2;
-			border_bottom_index += 2;
-		}
-		if(border) {
-			menu->left_pad += 1;
-			menu->top_pad += 1;
-			border_bottom_index += 1;
-			border_bottom_index += item_count;
-		}
-	}
-	// Сохраняем полученные параметры
+	// Сохраняем полученные размеры окна
 	if(prect != NULL ) {
 		menu->wnd.rect.Left = prect->Left;
 		menu->wnd.rect.Top = prect->Top;
@@ -78,160 +129,176 @@ int menu_init(MENU* menu, MENU* parent, HANDLE hstdout, ITEM_DEF* item_defs, int
 		menu->wnd.m[i] = (char*)malloc((menu->wnd.N + 1) * sizeof(char));
 		memset(menu->wnd.m[i], MENU_WHITESPACE, menu->wnd.N * sizeof(char));
 		menu->wnd.m[i][menu->wnd.N] = '\0';
-		if(border) {
-			if(i <= border_bottom_index) {
-				menu->wnd.m[i][0] = CHAR_BORDER_VERT;
-				menu->wnd.m[i][menu->wnd.N - 1] = CHAR_BORDER_VERT;
-			}
-			if(headers != NULL && 2 == i) {
-				memset(menu->wnd.m[i], CHAR_BORDER_HORZ, menu->wnd.N * sizeof(char));
-				menu->wnd.m[i][0] = CHAR_BORDER_LEFT_JOINT;
-				menu->wnd.m[i][menu->wnd.N - 1] = CHAR_BORDER_RIGHT_JOINT;
-			}
-			if(0 == i || border_bottom_index == i) {
-				memset(menu->wnd.m[i], CHAR_BORDER_HORZ, menu->wnd.N * sizeof(char));
-				if(0 == i) { // первая строка
-					menu->wnd.m[i][0] = CHAR_BORDER_LEFT_TOP;
-					menu->wnd.m[i][menu->wnd.N - 1] = CHAR_BORDER_RIGHT_TOP;
-				}
-				if(border_bottom_index == i) { // последняя строка
-					menu->wnd.m[i][0] = CHAR_BORDER_LEFT_BOTTOM;
-					menu->wnd.m[i][menu->wnd.N - 1] = CHAR_BORDER_RIGHT_BOTTOM;
-				}
-			}
+	}
+	//
+	menu->has_border = border;
+	menu->has_headers = (int)headers;
+	menu->cell_count = cell_count;
+
+	menu->left_pad = 0;
+	menu->top_pad = 0;
+	if(MENU_ORIENT_VERT == orient) { //TODO MENU_ORIENT_HORZ
+		menu->item_width = (menu->wnd.rect.Right - menu->wnd.rect.Left + 1) - (menu->has_border ? 2 : 0);
+		menu->cell_width = menu->item_width / cell_count;
+		for (j = 0; j < cell_count; j++) {
+			menu->cell_start[j] = j * menu->cell_width;
+		}
+		if(menu->has_headers) {
+			menu->top_pad += 2;
+			menu->border_bottom_index += 2;
+		}
+		if(menu->has_border) {
+			menu->left_pad += 1;
+			menu->top_pad += 1;
+			menu->border_bottom_index += 1;
 		}
 	}
+
+	menu_fill_wnd(menu, item_count);
+
 	// координаты углов консоли
-	menu->curspos.X = menu->wnd.rect.Left;///0;
-	menu->curspos.Y = menu->wnd.rect.Top;///1;
+//	menu->curspos.X = menu->wnd.rect.Left;///0;
+//	menu->curspos.Y = menu->wnd.rect.Top;///1;
 
 	menu->workWindowAttributes = //0x9E;
 		BACKGROUND_RED | BACKGROUND_GREEN | FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
 	menu->inactiveItemAttributes = 0x1F;
 	menu->activeItemAttributes = 0xA0;
+
 	// Инициализация элементов меню
-	menu->items = (ITEM*)malloc(item_count * sizeof(ITEM));
-	menu->orient = orient;
-	menu->current = 0;
-	int next = 0, width;
+	list1_init(&menu->items);
+	menu->items.item_free = menu_item_release;
+
+	//int next = 0
 	switch(orient) {
 	case MENU_ORIENT_HORZ:
 		menu->item_width = (menu->wnd.rect.Right - menu->wnd.rect.Left + 1) / item_count;
 		menu->cell_count = 1; // cell_count;
-		next = menu->curspos.X;
+		//next = menu->wnd.rect.Left;
 		for(i = 0; i < item_count; ++i) {
-			memset(&menu->items[i], 0x00, sizeof(ITEM));
-			menu->items[i].cb = item_defs[i].cb;
-			menu->items[i].x = next + menu->left_pad;
-			menu->items[i].y = menu->curspos.Y + menu->top_pad;
-			//int next_cell = 0; // смещение очередной ячейки вниз
+			int width;
+			ITEM* item = (ITEM*)malloc(sizeof(ITEM));
+			memset(item, 0x00, sizeof(ITEM));
+			item->cb = item_defs[i].cb;
+			//item->x = next + menu->left_pad; // menu->wnd.rect.Left + index * menu->item_width + menu->left_pad;
+			//item->y = menu->wnd.rect.Top + menu->top_pad;
 			if(item_defs[i].str[0]) {
 				len = strlen(item_defs[i].str[0]);
 				width = MAX(len, menu->item_width);
-				menu->items[i].str = (char*)malloc((width + 1) * sizeof(char));
-
-				memset(menu->items[i].str, MENU_WHITESPACE, width);
+				item->str = (char*)malloc((width + 1) * sizeof(char));
+				memset(item->str, MENU_WHITESPACE, width);
 				CharToOemA(item_defs[i].str[0], item_defs[i].str[0]);
 				if(len < menu->item_width) {
-					int indent = (menu->item_width - len) / 2;
-					memcpy(menu->items[i].str + indent, item_defs[i].str[0], len);
+					int indent = (menu->item_width - len) / 2; // по центру
+					memcpy(item->str + indent, item_defs[i].str[0], len);
 				} else {
-					memcpy(menu->items[i].str, item_defs[i].str[0], menu->item_width - 1);
-					menu->items[i].str[menu->item_width - 1] = '_';
+					memcpy(item->str, item_defs[i].str[0], menu->item_width - 1);
+					item->str[menu->item_width - 1] = '_';
 				}
-				menu->items[i].str[width] = '\0';
+				item->str[width] = '\0';
 
-				next += menu->item_width;
+				//next += menu->item_width;
 			}
+			item->index = i;
+			list1_push_back(&menu->items, item);
 		} // for(item)
 		break;
 	case MENU_ORIENT_VERT:
-		menu->item_width = (menu->wnd.rect.Right - menu->wnd.rect.Left + 1)
-			- (border ? 2 : 0);
-		menu->cell_count = cell_count;
-		int cell_width = menu->item_width / cell_count;
-
-		if(headers) {
-			next_cell = 0; // смещение очередной ячейки вправо
+		if(menu->has_headers) {
+			if(menu->has_border) {
+				// отрисовка горизонтальной линии отделения заголовка и её стыковочных линий слева/справа
+				memset(menu->wnd.m[2], CHAR_BORDER_HORZ, menu->wnd.N * sizeof(char));
+				menu->wnd.m[2][0] = CHAR_BORDER_LEFT_JOINT;
+				menu->wnd.m[2][menu->wnd.N - 1] = CHAR_BORDER_RIGHT_JOINT;
+			}
 			menu->hdr = (char*)malloc((menu->item_width + 1) * sizeof(char));
 			memset(menu->hdr, MENU_WHITESPACE, menu->item_width);
 			menu->hdr[menu->item_width] = '\0';
 			for (j = 0; j < cell_count; j++) {
 				if(headers[j]) {
+
 					len = strlen(headers[j]);
-					width = MAX(len, cell_width);
+					//width = MAX(len, menu->cell_width);
 					//CharToOemA(headers[j], headers[j]);
-					if(len + left_indent < cell_width) {
-						memcpy(menu->hdr + next_cell + left_indent, headers[j], len);
+					if(len + left_indent < menu->cell_width) {
+						memcpy(menu->hdr + menu->cell_start[j] + left_indent, headers[j], len);
 					} else {
-						memcpy(menu->hdr + next_cell + left_indent, headers[j], cell_width - 1 - left_indent);
-						menu->hdr[next_cell + cell_width - 1 - left_indent] = '_';
+						memcpy(menu->hdr + menu->cell_start[j] + left_indent, headers[j], menu->cell_width - 1 - left_indent);
+						menu->hdr[menu->cell_start[j] + menu->cell_width - 1 - left_indent] = '_';
 					}
-					if(border && j < cell_count - 1) {
-						menu->wnd.m[0][next_cell + cell_width - 0] = CHAR_BORDER_TOP_JOINT;
-						menu->hdr[next_cell + cell_width - 1] = CHAR_BORDER_VERT;
-						menu->wnd.m[2][next_cell + cell_width - 0] = CHAR_BORDER_BOTTOM_JOINT;
+					if(menu->has_border && j < cell_count - 1) {
+						// отрисовка вертикальных линий в заголовке
+						menu->wnd.m[0][menu->cell_start[j] + menu->cell_width - 0] = CHAR_BORDER_TOP_JOINT;
+						menu->hdr[menu->cell_start[j] + menu->cell_width - 1] = CHAR_BORDER_VERT;
+						menu->wnd.m[2][menu->cell_start[j] + menu->cell_width - 0] = CHAR_BORDER_BOTTOM_JOINT;
 					}
-					next_cell += cell_width;
 				}
 			} // for(cell)
-		} // if(headers)
+		} // if(has_headers)
 
-		next = menu->curspos.Y;
+		//next = menu->wnd.rect.Top;
 		for(i = 0; i < item_count; ++i) {
-			memset(&menu->items[i], 0x00, sizeof(ITEM));
-			menu->items[i].cb = item_defs[i].cb;
-			menu->items[i].x = menu->curspos.X + menu->left_pad;
-			menu->items[i].y = next + menu->top_pad;
-			next_cell = 0; // смещение очередной ячейки вправо
-			menu->items[i].str = (char*)malloc((menu->item_width + 1) * sizeof(char));
-			memset(menu->items[i].str, MENU_WHITESPACE, menu->item_width);
-			menu->items[i].str[menu->item_width] = '\0';
+			ITEM* item = (ITEM*)malloc(sizeof(ITEM));
+			memset(item, 0x00, sizeof(ITEM));
+			item->cb = item_defs[i].cb;
+			//item->x = menu->wnd.rect.Left + menu->left_pad;
+			//item->y = next + menu->top_pad; // menu->wnd.rect.Top + menu->top_pad + index
+			item->str = (char*)malloc((menu->item_width + 1) * sizeof(char));
+			memset(item->str, MENU_WHITESPACE, menu->item_width);
+			item->str[menu->item_width] = '\0';
 			for (j = 0; j < cell_count; j++) {
 				if(item_defs[i].str[j]) {
 					len = strlen(item_defs[i].str[j]);
-					width = MAX(len, cell_width);
+					//width = MAX(len, menu->cell_width);
 					// нехорошо менять каждый раз оригиналы CharToOemA(item_defs[i].str[j], item_defs[i].str[j]);
-					if(len + left_indent < cell_width) {
-						memcpy(menu->items[i].str + next_cell + left_indent, item_defs[i].str[j], len);
+					if(len + left_indent < menu->cell_width) {
+						memcpy(item->str + menu->cell_start[j] + left_indent, item_defs[i].str[j], len);
 					} else {
-						memcpy(menu->items[i].str + next_cell + left_indent, item_defs[i].str[j], cell_width - 1 - left_indent);
-						menu->items[i].str[next_cell + cell_width - 1 - left_indent] = '_';
+						memcpy(item->str + menu->cell_start[j] + left_indent, item_defs[i].str[j], menu->cell_width - 1 - left_indent);
+						item->str[menu->cell_start[j] + menu->cell_width - 1 - left_indent] = '_';
 					}
-					if(border && j < cell_count - 1) {
+					if(menu->has_border && j < cell_count - 1) {
 						int top_shift;
-						if(headers) {
+						if(menu->has_headers) {
 							top_shift = 2;
-							menu->wnd.m[top_shift][next_cell + cell_width - 0] = CHAR_BORDER_CROSS_JOINT;
+							menu->wnd.m[top_shift][menu->cell_start[j] + menu->cell_width - 0] = CHAR_BORDER_CROSS_JOINT;
 						} else {
 							top_shift = 0;
-							menu->wnd.m[top_shift][next_cell + cell_width - 0] = CHAR_BORDER_TOP_JOINT;
+							menu->wnd.m[top_shift][menu->cell_start[j] + menu->cell_width - 0] = CHAR_BORDER_TOP_JOINT;
 						}
-						menu->items[i].str[next_cell + cell_width - 1] = CHAR_BORDER_VERT;
-						menu->wnd.m[i + top_shift + 2][next_cell + cell_width - 0] = CHAR_BORDER_BOTTOM_JOINT;
+						item->str[menu->cell_start[j] + menu->cell_width - 1] = CHAR_BORDER_VERT;
+						menu->wnd.m[i + top_shift + 2][menu->cell_start[j] + menu->cell_width - 0] = CHAR_BORDER_BOTTOM_JOINT;
 					}
-					next_cell += cell_width;
 				}
 			} // for(cell)
-			//портит псевдографику CharToOemA(menu->items[i].str, menu->items[i].str);
-			next++;
+			//портит псевдографику CharToOemA(item->str, item->str);
+			item->index = i;
+			list1_push_back(&menu->items, item);
+			//next++;
 		} // for(item)
 		break;
 	}
-	menu->item_count = item_count;
+
+	list1_for_each(&menu->items, menu_calc_item_pos, menu);
 
 	return 0;
 }
 
+void menu_item_release(void* ptr) {
+	ITEM* item = (ITEM*)ptr;
+	if(item->str)
+		free(item->str);
+	free(item);
+}
+
+void menu_del_curr(MENU* menu) {
+	list1_erase_current(&menu->items);
+}
+
 void menu_clear(MENU* menu) {
 	int i;
-	for (i = 0; i < menu->item_count; i++)
-		if(menu->items[i].str) {
-			free(menu->items[i].str);
-			menu->items[i].str = NULL;
-		}
-	free(menu->items);
-	menu->items = NULL;
+
+	list1_clear(&menu->items);
 
 	if(menu->hdr) {
 		free(menu->hdr);
@@ -252,121 +319,179 @@ void menu_clear(MENU* menu) {
 }
 
 void menu_prev(MENU* menu) {
+	int wrap = 1;
 	itemMenu(menu, false); // сделать неактивным пункт меню
-	if (menu->current > 0) {
-		--menu->current;
-	} else {
-		menu->current = menu->item_count - 1; // прокрутка вправо
-	}
+	list1_curr_rev(&menu->items, wrap);
 	itemMenu(menu, true); // выделить активный пункт меню
 	showCursor(menu, false);
+	if(menu->changed_cb) {
+		menu->changed_cb(menu, MENU_CURR_REV, wrap);
+	}
 }
 
 void menu_next(MENU* menu) {
+	int wrap = 1;
 	itemMenu(menu, false); // сделать неактивным пункт меню
-	if (menu->current < menu->item_count - 1) {
-		++menu->current;
-	} else {
-		menu->current = 0; // прокрутка влево
-	}
+	list1_curr_fwd(&menu->items, wrap);
 	itemMenu(menu, true); // выделить активный пункт меню
 	showCursor(menu, false);
+	if(menu->changed_cb) {
+		menu->changed_cb(menu, MENU_CURR_FWD, wrap);
+	}
 }
 
-void menu_draw(MENU* menu, int loop) {
+int menu_calc_item_pos(void* data, int index, void* ptr) {
+	ITEM* item = (ITEM*)data;
+	MENU* menu = (MENU*)ptr;
+	item->x = menu->wnd.rect.Left + menu->left_pad;
+	item->y = menu->wnd.rect.Top + menu->top_pad;
+	switch(menu->orient) {
+	case MENU_ORIENT_HORZ:
+		item->x += index * menu->item_width;
+		break;
+	case MENU_ORIENT_VERT:
+		item->y += index;
+		break;
+	}
+	return 1; // продолжить итерации по остальным элементам
+}
+
+int menu_draw_item(void* data, int index, void* ptr) {
+	ITEM* item = (ITEM*)data;
+	MENU* menu = (MENU*)ptr;
+	menu_calc_item_pos(data, index, ptr);
+	gotoxy(menu, item->x, item->y);
+	printf(item->str);
+	return 1; // продолжить итерации по остальным элементам
+}
+
+void menu_draw(MENU* menu, int flags) {
 	int i;
-	// Устанавливаем цветовые параметры текста
-	SetConsoleTextAttribute(menu->hStdOut, menu->workWindowAttributes);
-	//system("CLS"); // установка атрибутов цвета рабочей области
-	menu_cls(menu);
-	// Номер текущего пункта меню
-	SetConsoleTextAttribute(menu->hStdOut, menu->inactiveItemAttributes);
-///	printf(menu->line);
-///	fflush(stdout);
-
-	// рисуем заголовок
-	if(menu->hdr) {
-		int top_pad = menu->border ? 1 : 0;
-		gotoxy(menu, menu->wnd.rect.Left + menu->left_pad, menu->wnd.rect.Top + top_pad);
-		printf(menu->hdr);
+	if(flags & MENU_FLAG_WND) {
+		// Устанавливаем цветовые параметры текста
+		SetConsoleTextAttribute(menu->hStdOut, menu->workWindowAttributes);
+		//system("CLS"); // установка атрибутов цвета рабочей области
+		menu_cls(menu);
 	}
-	// рисуем меню
-	for (i = 0; i < menu->item_count; i++) { // Напечатать заголовки пунктов меню
-		gotoxy(menu, menu->items[i].x, menu->items[i].y);
-		printf(menu->items[i].str);
+	if(flags & MENU_FLAG_ITEMS) {
+		// Номер текущего пункта меню
+		SetConsoleTextAttribute(menu->hStdOut, menu->inactiveItemAttributes);
+		// рисуем заголовок
+		if(menu->hdr) {
+			int top_pad = menu->has_border ? 1 : 0;
+			gotoxy(menu, menu->wnd.rect.Left + menu->left_pad, menu->wnd.rect.Top + top_pad);
+			printf(menu->hdr);
+		}
+		// рисуем меню
+		list1_for_each(&menu->items, menu_draw_item, menu);
+		fflush(stdout);
 	}
-	fflush(stdout);
-
-	if(MENU_DRAW_WND == loop)
-		return;
-
-	itemMenu(menu, true); // выделить пункт меню
-
-	if(MENU_DRAW_SEL == loop)
-		return;
-
-	fflush(stdin); // очистить буфер клавиатуры
-
+	if(flags & MENU_DRAW_SEL) {
+		itemMenu(menu, true); // выделить пункт меню
+	}
+	//fflush(stdin); // очистить буфер клавиатуры
+	if(!(flags & (MENU_NAVIGATOR | MENU_HOTKEYS)))
+		return; // не запускаем обработку сообщений
 	int run = 1;
 	while (run) {
 		if (kbhit()) {
-			int cb_retcode = 0;
+			menu->cb_retcode = 0;
 			menu->last_key = _getch();
-			switch (menu->last_key) {
-			case KEY_ARROW_UP:
-				if(MENU_ORIENT_VERT == menu->orient)
-					menu_prev(menu);
-			case KEY_ARROW_LEFT:
-				if(MENU_ORIENT_HORZ == menu->orient)
-					menu_prev(menu);
-				break;
-			case KEY_ARROW_RIGHT:
-				if(MENU_ORIENT_HORZ == menu->orient)
-					menu_next(menu);
-				break;
-			case KEY_ARROW_DOWN:
-				if(MENU_ORIENT_VERT == menu->orient)
-					menu_next(menu);
-				break;
-			case KEY_ENTER:
-				// Возвращаем курсор из строки меню в прежнюю позицию
-				///gotoxy(menu, menu->curspos.X, menu->curspos.Y);
-				// Установить цвет рабочих сообщений
-				///SetConsoleTextAttribute(menu->hStdOut, menu->workWindowAttributes);
-				///showCursor(menu, true);
-				// Вызываем обработчик пункта меню
-				cb_retcode = menu->items[menu->current].cb(menu);
-				if(-1 == cb_retcode) {
-					///gotoxy(menu, 0, 0);
-					///menu_cls(menu, WholeWindow);
+			if(flags & MENU_NAVIGATOR) {
+				switch (menu->last_key) {
+				case KEY_ARROW_UP:
+					if(MENU_ORIENT_VERT == menu->orient)
+						menu_prev(menu);
+				case KEY_ARROW_LEFT:
+					if(MENU_ORIENT_HORZ == menu->orient)
+						menu_prev(menu);
+					break;
+				case KEY_ARROW_RIGHT:
+					if(MENU_ORIENT_HORZ == menu->orient)
+						menu_next(menu);
+					break;
+				case KEY_ARROW_DOWN:
+					if(MENU_ORIENT_VERT == menu->orient)
+						menu_next(menu);
+					break;
+				case KEY_ENTER:
+					// Возвращаем курсор из строки меню в прежнюю позицию
+					///gotoxy(menu, menu->curspos.X, menu->curspos.Y);
+					// Установить цвет рабочих сообщений
+					///SetConsoleTextAttribute(menu->hStdOut, menu->workWindowAttributes);
+					///showCursor(menu, true);
+					// Вызываем обработчик пункта меню
+					{
+						ITEM* item = (ITEM*)list1_curr(&menu->items);
+						menu->cb_retcode = item->cb(menu, item);
+					}
+					run = check_cb_retcode(menu);
+					break;
+				#if 0
+				case 120: // выход по клавише x
+				case 88: // выход по клавише X
+				case 27: // выход по клавише ESC
 					itemMenu(menu, false); // сделать неактивным пункт меню
-					run = 0;
-					break;///exit(0);
-				} else if(0 == cb_retcode) {
-					saveCursorPosition(menu);
-				}
-				// очистить буфер клавиатуры
-				fflush(stdin);
-				// курсор в текущий пункт меню
-				///gotoxy(menu, menu->items[menu->current].x, menu->items[menu->current].y);
-				// спрятать курсор
-				showCursor(menu, false);
-				break;
-			case 120: // выход по клавише x
-			case 88: // выход по клавише X
-			case 27: // выход по клавише ESC
-				itemMenu(menu, false); // сделать неактивным пункт меню
-				gotoxy(menu, 0, 0);
-				///menu_cls(menu, WholeWindow);
-				run = 0;///exit(0);
-			} // switch(iKey)
-			// обработка горячих клавиш
-			list1_for_each(&menu->hk_list, menu_proc_hotkey, menu);
+					gotoxy(menu, 0, 0);
+					///menu_cls(menu, WholeWindow);
+					run = 0;///exit(0);
+				#endif
+				} // switch(iKey)
+			}
+			if(flags & MENU_HOTKEYS) {
+				// обработка горячих клавиш
+				list1_for_each(&menu->hk_list, menu_proc_hotkey, menu);
+				run = check_cb_retcode(menu);
+			}
 		} // if(kbhit())
 	} // while(1)
 	if(menu->parent) {
-		menu_draw(menu->parent, MENU_DRAW_SEL);
+		menu_draw(menu->parent, MENU_FLAG_WND | MENU_FLAG_ITEMS | MENU_DRAW_SEL);
 	}
+}
+
+void itemMenu(MENU* menu, bool activate)
+{
+	ITEM* item = (ITEM*)list1_curr(&menu->items);
+	WORD itemAttributes;
+	if(!item)
+		return;
+	if (activate)
+		itemAttributes = menu->activeItemAttributes;
+	else
+		itemAttributes = menu->inactiveItemAttributes;
+	gotoxy(menu, item->x, item->y);
+	SetConsoleTextAttribute(menu->hStdOut, itemAttributes);
+	printf(item->str);
+}
+
+void menu_cls(MENU* menu)
+{
+	int i, y;
+	SetConsoleTextAttribute(menu->hStdOut, menu->workWindowAttributes);
+	for (i = 0, y = menu->wnd.rect.Top; i < menu->wnd.M; i++, y++) {
+		gotoxy(menu, menu->wnd.rect.Left, y);
+		printf(menu->wnd.m[i]);
+	}
+}
+
+int menu_add_hotkey(MENU* menu, int code, ExecuteHotketCB cb) {
+	HOT_KEY* hk = (HOT_KEY*)malloc(sizeof(HOT_KEY));
+	memset(hk, 0x00, sizeof(HOT_KEY));
+	hk->code = code;
+	hk->cb = cb;
+	list1_push_front(&menu->hk_list, hk);
+	return menu->hk_list.count;
+}
+
+int menu_proc_hotkey(void* data, int index, void* ptr) {
+	HOT_KEY* hk = (HOT_KEY*)data;
+	MENU* menu = (MENU*)ptr;
+	if(menu->last_key == hk->code) {
+		menu->cb_retcode = hk->cb(menu);
+		return 0; // не проверять остальные обработчики
+	}
+	return 1; // продолжить итерации по остальным элементам
 }
 
 void gotoxy(MENU* menu, int x, int y)
@@ -380,19 +505,7 @@ void saveCursorPosition(MENU* menu)
 {
 	CONSOLE_SCREEN_BUFFER_INFO csbInfo;// информация о консольном окне в структуре csbInfo
 	GetConsoleScreenBufferInfo(menu->hStdOut, &csbInfo);
-	menu->curspos = csbInfo.dwCursorPosition;
-}
-
-void itemMenu(MENU* menu, bool activate)
-{
-	WORD itemAttributes;
-	if (activate)
-		itemAttributes = menu->activeItemAttributes;
-	else
-		itemAttributes = menu->inactiveItemAttributes;
-	gotoxy(menu, menu->items[menu->current].x, menu->items[menu->current].y);
-	SetConsoleTextAttribute(menu->hStdOut, itemAttributes);
-	printf(menu->items[menu->current].str);
+///	menu->curspos = csbInfo.dwCursorPosition;
 }
 
 void showCursor(MENU* menu, bool visible)
@@ -403,43 +516,21 @@ void showCursor(MENU* menu, bool visible)
 	SetConsoleCursorInfo(menu->hStdOut, &ccInfo);
 }
 
-void menu_cls(MENU* menu)
-{
-	int i, y;
-	SetConsoleTextAttribute(menu->hStdOut, menu->workWindowAttributes);
-	//gotoxy(menu, rect.Left, rect.Top);
-	// очистка окна
-	switch(menu->orient) {
-	case MENU_ORIENT_HORZ:
-		for (i = 0, y = menu->wnd.rect.Top; i < menu->wnd.M; i++, y++) {
-			gotoxy(menu, menu->wnd.rect.Left, y);
-			printf(menu->wnd.m[i]); // залить фон строки меню
-		}
-		break;
-	case MENU_ORIENT_VERT:
-		for (i = 0, y = menu->wnd.rect.Top; i < menu->wnd.M; i++, y++) {
-			gotoxy(menu, menu->wnd.rect.Left, y);
-			printf(menu->wnd.m[i]); // залить фон строки меню
-		}
-		break;
+int check_cb_retcode(MENU* menu) {
+	if(-1 == menu->cb_retcode) {
+		///gotoxy(menu, 0, 0);
+		///menu_cls(menu, WholeWindow);
+		itemMenu(menu, false); // сделать неактивным пункт меню
+		return 0;
+	} else if(0 == menu->cb_retcode) {
+		saveCursorPosition(menu);
 	}
-	//gotoxy(menu, 0, 0);
-}
-
-int menu_add_hotkey(MENU* menu, int code, FUN cb) {
-	HOT_KEY* hk = (HOT_KEY*)malloc(sizeof(HOT_KEY));
-	memset(hk, 0x00, sizeof(HOT_KEY));
-	hk->code = code;
-	hk->cb = cb;
-	list1_push_front(&menu->hk_list, hk);
-	return menu->hk_list.count;
-}
-
-void menu_proc_hotkey(void* data, void* ptr) {
-	HOT_KEY* hk = (HOT_KEY*)data;
-	MENU* menu = (MENU*)ptr;
-	if(menu->last_key == hk->code) {
-		hk->cb(menu);
-	}
+	// очистить буфер клавиатуры
+	fflush(stdin);
+	// курсор в текущий пункт меню
+	///gotoxy(menu, menu->items[menu->current].x, menu->items[menu->current].y);
+	// спрятать курсор
+	showCursor(menu, false);
+	return 1;
 }
 
