@@ -4,6 +4,9 @@
 
 static LIST1_ITEM* create_item(void* data);
 static void delete_item(LIST1* list, LIST1_ITEM* item);
+static void merge(LIST1_ITEM *a, LIST1_ITEM *b, LIST1_ITEM **c, LIST_ITEM_COMP compare, void* param);
+static void split(LIST1_ITEM *src, LIST1_ITEM **low, LIST1_ITEM **high);
+static void mergeSort(LIST1_ITEM **head, LIST_ITEM_COMP compare, void* param);
 
 LIST1* list1_new() {
 	LIST1* list = (LIST1*)malloc(sizeof(LIST1));
@@ -174,15 +177,15 @@ void* list1_erase_current(LIST1* list) {
 			prev->next = next;
 			list->curr = next;
 			if(curr == list->head) {
-				list->head = next;
+				list->head = next; // если это последний элемент, next равен 0
 			}
 			if(curr == list->tail) {
-				if(list->head == list->tail)
-					list->tail = NULL;
+				if(list->head == NULL)
+					list->tail = NULL; // если это последний элемент, list->head тут уже равен 0
 				else
 					list->tail = prev;
 			}
-			if(!list->curr) {
+			if(!list->curr && list->head) {
 				list->curr = prev;
 			}
 			// удалить старый текущий элемент вместе с данными
@@ -197,6 +200,22 @@ void* list1_erase_current(LIST1* list) {
 	if(!list->curr)
 		return NULL;
 	return list->curr->data;
+}
+
+void mergeSort(LIST1_ITEM **head, LIST_ITEM_COMP compare, void* param) {
+	LIST1_ITEM *low  = NULL;
+	LIST1_ITEM *high = NULL;
+	if ((*head == NULL) || ((*head)->next == NULL)) {
+		return;
+	}
+	split(*head, &low, &high);
+	mergeSort(&low, compare, param);
+	mergeSort(&high, compare, param);
+	merge(low, high, head, compare, param);
+}
+
+void list1_sort(LIST1* list, LIST_ITEM_COMP compare, void* param) {
+	mergeSort(&list->head, compare, param);
 }
 
 // вспомогательные функции
@@ -220,5 +239,74 @@ void delete_item(LIST1* list, LIST1_ITEM* item) {
 		list->item_free(item->data);
 	free(item);
 	list->count--;
+}
+
+void split(LIST1_ITEM *src, LIST1_ITEM **low, LIST1_ITEM **high) {
+	LIST1_ITEM* fast = NULL;
+	LIST1_ITEM* slow = NULL;
+
+	if (src == NULL || src->next == NULL) {
+		(*low) = src;
+		(*high) = NULL;
+		return;
+	}
+	slow = src;
+	fast = src->next;
+	while (fast != NULL) {
+		fast = fast->next;
+		if (fast != NULL) {
+			fast = fast->next;
+			slow = slow->next;
+		}
+	}
+	(*low) = src;
+	(*high) = slow->next;
+	slow->next = NULL;
+}
+
+void merge(LIST1_ITEM *a, LIST1_ITEM *b, LIST1_ITEM **c, LIST_ITEM_COMP compare, void* param) {
+	LIST1_ITEM tmp;
+    *c = NULL;
+    if (a == NULL) {
+        *c = b;
+        return;
+    }
+    if (b == NULL) {
+        *c = a;
+        return;
+    }
+	if (compare(a->data, b->data, param)) { // a->value < b->value
+		*c = a;
+        a = a->next;
+    } else {
+        *c = b;
+        b = b->next;
+    }
+    tmp.next = *c;
+	while (a && b) {
+		if (compare(a->data, b->data, param)) { // a->value < b->value
+            (*c)->next = a;
+            a = a->next;
+        } else {
+            (*c)->next = b;
+            b = b->next;
+        }
+        (*c) = (*c)->next;
+    }
+    if (a) {
+        while (a) {
+            (*c)->next = a;
+            (*c) = (*c)->next;
+            a = a->next;
+        }
+    }
+    if (b) {
+        while (b) {
+            (*c)->next = b;
+            (*c) = (*c)->next;
+            b = b->next;
+        }
+    }
+    *c = tmp.next;
 }
 

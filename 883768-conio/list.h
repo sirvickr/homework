@@ -12,8 +12,10 @@ typedef struct LIST1_ITEM {
 // односвязный список
 
 typedef void (*LIST_ITEM_FREE)(void* item);
-typedef void (*LIST_ITEM_PROC)(void* item, int index, void* param);
+// если вернёт 0, обработка прекратится на этой итерации
+typedef int (*LIST_ITEM_PROC)(void* item, int index, void* param);
 typedef int (*LIST_ITEM_FIND)(void* item, void* param);
+typedef int (*LIST_ITEM_COMP)(void* item1, void* item2, void* param);
 // структура односвязного списка
 typedef struct LIST1 {
 	struct LIST1_ITEM *head, *tail, *curr;
@@ -51,5 +53,7 @@ void* list1_erase(LIST1* list, LIST_ITEM_FIND cb, void* param);
 // Удалить текущий элемент списка
 // возвращает новый текущий элемент
 void* list1_erase_current(LIST1* list);
+//
+void list1_sort(LIST1* list, LIST_ITEM_COMP compare, void* param);
 
 #endif
