@@ -12,6 +12,8 @@
 #define KEY_BACKSPACE 8
 #define KEY_SPACE 32
 #define KEY_DEL 83
+#define KEY_HOME 71
+#define KEY_END 79
 
 #define KEY_F1  59
 #define KEY_F2  60
