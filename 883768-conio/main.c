@@ -22,8 +22,6 @@ int Run();
 int ExitYes(MENU* menu, ITEM* item);
 // Выход - сохранить данные
 int ExitNo(MENU* menu, ITEM* item);
-// Выход - не сохранять данные
-int ExitNo(MENU* menu, ITEM* item);
 // Выход - отмена
 int ExitCancel(MENU* menu, ITEM* item);
 // Обработчик клавиши ESC по умолчанию выходит из цикла сообщений текущего меню
@@ -42,7 +40,7 @@ int F9(MENU* menu);
 void curr_menu_changed(MENU* menu, int direction, int wrap);
 // Перенос очередного элемента словаря в элемент описания пункта меню
 int dict_entry_display(void* data, int index, void* param);
-// Проверка - подходит ли элемент словаря критерию поиска
+// Проверка элемента словаря на соответствие критерию поиска
 int dict_entry_find(void* data, void* param);
 // Сравнение двух элементов словаря
 int dict_entry_compare(void* data1, void* data2, void* arg);
@@ -65,18 +63,17 @@ void LoadInitialData();
 #define MENU_TAG_TOP         1
 #define MENU_TAG_MAIN        2
 #define MENU_TAG_EXIT        3
-#define MENU_TAG_CONFIRM     4
-#define MENU_TAG_HELP_GLOBAL 5
-#define MENU_TAG_SEARCH      6
-#define MENU_TAG_SORT        7
-// верхнее меню
-#define top_item_count 7 // количество пунктов меню
+#define MENU_TAG_HELP_GLOBAL 4
+#define MENU_TAG_SORT        5
+// количество пунктов верхнего меню
+#define top_item_count 7
 // количество ячеек (столбцов) основного табличного меню
 #define main_column_count 4
 // количество ячеек (столбцов) меню подтверждения выхода
 #define exit_column_count 1
 // количество пунктов меню подтверждения выхода
 #define exit_item_count 3
+
 // массив с описаниями элементов верхнего меню
 ITEM_DEF top_menu_items[top_item_count] = {
 	{ { "Добавить", 0 }, Add },

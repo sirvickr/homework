@@ -15,10 +15,6 @@ struct MENU;
 //
 DICT_ENTRY* dict_entry_new(const char* word_eng, const char* word_part, const char* word_rus);
 //
-int dict_add(DICT_ENTRY* new_entry);
-//
-int dict_del(DICT_ENTRY* new_entry);
-//
 int dict_load(const char* file_name);
 //
 int dict_save(const char* file_name);

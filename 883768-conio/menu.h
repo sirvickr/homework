@@ -11,9 +11,6 @@ struct MENU;
 #define MAX_MENU_HDR 256 // максимальная длина заголовка
 
 // Этапы частичной отрисовки меню
-//#define MENU_DRAW_WND 0 // только отрисовка элементов меню
-//#define MENU_DRAW_SEL 1 // отрисовка элементов меню и выделение текущего
-//#define MENU_MSG_LOOP 2 // полноценный запуск окна меню с циклом сообщений
 #define MENU_FLAG_WND 0x1   // отрисовка фонового окна меню
 #define MENU_FLAG_ITEMS 0x2 // отрисовка элементов меню
 #define MENU_DRAW_SEL 0x4   // выделение текущего элемента
