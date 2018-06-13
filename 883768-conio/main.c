@@ -34,6 +34,8 @@ int F1(MENU* menu);
 int F2(MENU* menu);
 // Обработчик клавиши F3 (Поиск)
 int F3(MENU* menu);
+// Обработчик клавиши F4 (Редактирование)
+int F4(MENU* menu);
 // Обработчик клавиши F9 (Переход на верхнее меню)
 int F9(MENU* menu);
 // Обработчик прокрутки меню на один элемент вперёд или назад
@@ -157,6 +159,13 @@ int F2(MENU* menu) {
 // Обработчик клавиши F3 (Поиск)
 int F3(MENU* menu) {
 	Search(menu, NULL);
+	if(exit_code)
+		return exit_code;
+	return 0;
+}
+// Обработчик клавиши F4 (Редактирование)
+int F4(MENU* menu) {
+	Edit(menu, NULL);
 	if(exit_code)
 		return exit_code;
 	return 0;
@@ -306,7 +315,9 @@ int Run() {
 		// продолжаем настройку меню
 		ptable->user_tag = MENU_TAG_MAIN;
 		menu_add_hotkey(ptable, KEY_F1, F1);
+		menu_add_hotkey(ptable, KEY_F2, F2);
 		menu_add_hotkey(ptable, KEY_F3, F3);
+		menu_add_hotkey(ptable, KEY_F4, F4);
 		menu_add_hotkey(ptable, KEY_F9, F9);
 		menu_add_hotkey(ptable, KEY_DEL, Delete);
 		menu_add_hotkey(ptable, KEY_ESC, ESC);
