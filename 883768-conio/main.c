@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #pragma hdrstop
-#include "main.h"
+#include "menu.h"
 #include "dict.h"
 #include "codes.h"
 #include "list.h"
@@ -18,6 +18,17 @@ int Run();
 
 // функции обратного вызова
 
+// Функции, которые подключаются к пунктам меню
+int Add(MENU* pm, ITEM*);
+int Edit(MENU* menu, ITEM*);
+int Delete(MENU* menu);
+int Search(MENU* menu, ITEM*);
+int Sort(MENU* menu, ITEM*);
+int Save(MENU* menu, ITEM*);
+int Help(MENU* menu, ITEM*);
+int Exit(MENU* menu, ITEM*);
+
+// Функции, которые подключаются к горячим клавишам
 // Выход - сохранить данные
 int ExitYes(MENU* menu, ITEM* item);
 // Выход - сохранить данные
