@@ -152,6 +152,10 @@ int menu_init(MENU* menu, MENU* parent, HANDLE hstdout, ITEM_DEF* item_defs, int
 			menu->top_pad += 1;
 			menu->border_bottom_index += 1;
 		}
+		// не можем отобразить не помещающиеся в окно элементы
+		if(item_count > menu->wnd.M - menu->border_bottom_index - 1) {
+			item_count = menu->wnd.M - menu->border_bottom_index - 1;
+		}
 	}
 
 	menu_fill_wnd(menu, item_count);
