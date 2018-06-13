@@ -202,16 +202,44 @@ void* list1_erase_current(LIST1* list) {
 	return list->curr->data;
 }
 
-void mergeSort(LIST1_ITEM **head, LIST_ITEM_COMP compare, void* param) {
-	LIST1_ITEM *low  = NULL;
-	LIST1_ITEM *high = NULL;
-	if ((*head == NULL) || ((*head)->next == NULL)) {
-		return;
+int list1_get_current_index(LIST1* list) {
+	int i = 0;
+	LIST1_ITEM* curr = list->head;
+	while(curr) {
+		if(curr == list->curr)
+			return i;
+		i++;
+		curr = curr->next;
 	}
-	split(*head, &low, &high);
-	mergeSort(&low, compare, param);
-	mergeSort(&high, compare, param);
-	merge(low, high, head, compare, param);
+	return 0;
+}
+
+int list1_set_current_index(LIST1* list, int index) {
+	int i = 0;
+	LIST1_ITEM* curr = list->head;
+	while(curr) {
+		if(i == index) {
+			list->curr = curr;
+			break;
+		}
+		i++;
+		curr = curr->next;
+	}
+	return 0;
+}
+
+int list1_search(LIST1* list, LIST_ITEM_FIND check, void* param) {
+	int i = 0;
+	LIST1_ITEM* curr = list->head;
+	while(curr) {
+		if(check(curr->data, param)) {
+			list->curr = curr;
+			break;
+		}
+		i++;
+		curr = curr->next;
+	}
+	return i;
 }
 
 void list1_sort(LIST1* list, LIST_ITEM_COMP compare, void* param) {
@@ -239,6 +267,18 @@ void delete_item(LIST1* list, LIST1_ITEM* item) {
 		list->item_free(item->data);
 	free(item);
 	list->count--;
+}
+
+void mergeSort(LIST1_ITEM **head, LIST_ITEM_COMP compare, void* param) {
+	LIST1_ITEM *low  = NULL;
+	LIST1_ITEM *high = NULL;
+	if ((*head == NULL) || ((*head)->next == NULL)) {
+		return;
+	}
+	split(*head, &low, &high);
+	mergeSort(&low, compare, param);
+	mergeSort(&high, compare, param);
+	merge(low, high, head, compare, param);
 }
 
 void split(LIST1_ITEM *src, LIST1_ITEM **low, LIST1_ITEM **high) {
