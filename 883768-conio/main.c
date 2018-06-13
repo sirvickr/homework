@@ -7,10 +7,8 @@
 #include "main.h"
 #include "dict.h"
 #include "codes.h"
-extern "C" {
 #include "list.h"
 #include "input.h"
-}
 //#define TEST_LIST1
 
 #define MAX_STRING 256
@@ -25,7 +23,7 @@ extern "C" {
 #define MENU_TAG_SEARCH      6
 #define MENU_TAG_SORT        7
 // верхнее меню
-static const int top_item_count = 7; // количество пунктов меню
+#define top_item_count 7 // количество пунктов меню
 // положение (x,y), заголовок, указатель на функцию
 ITEM_DEF top_menu_items[top_item_count] = {
 	{ { "Добавить", 0 }, Add },
@@ -38,8 +36,8 @@ ITEM_DEF top_menu_items[top_item_count] = {
 };
 
 // количество ячеек меню (столбцов)
-static const int main_column_count = 4;
-const int exit_column_count = 1;
+#define main_column_count 4
+#define exit_column_count 1
 #if 1
 static char* main_headers[main_column_count];
 static char* exit_headers[exit_column_count];
@@ -75,22 +73,22 @@ int main(int argc, char* argv[])
 	return Run();
 }
 
-int ExitYes(MENU* menu, ITEM*) {
+int ExitYes(MENU* menu, ITEM* item) {
 	save_data = 1;
 	return -1;
 }
 
-int ExitNo(MENU* menu, ITEM*) {
+int ExitNo(MENU* menu, ITEM* item) {
 	save_data = 0;
 	return -1;
 }
 
-int ExitCancel(MENU* menu, ITEM*) {
+int ExitCancel(MENU* menu, ITEM* item) {
 	exit_canceled = 1;
 	return -1;
 }
 // количество пунктов меню
-static const int exit_item_count = 3;
+#define exit_item_count 3
 static ITEM_DEF exit_menu_items[exit_item_count] = {
 	{ { "Да", 0 }, ExitYes },
 	{ { "Нет", 0 }, ExitNo },
@@ -137,9 +135,10 @@ void curr_menu_changed(MENU* menu, int direction, int wrap) {
 }
 
 int dict_entry_display(void* data, int index, void* param) {
+	int fld;
 	DICT_ENTRY* entry = (DICT_ENTRY*)data;
 	ITEM_DEF* main_menu_items = (ITEM_DEF*)param;
-	for(int fld = 0; fld < DICT_FLD_CNT; fld++)
+	for(fld = 0; fld < DICT_FLD_CNT; fld++)
 		CharToOemA(entry->field[fld], main_menu_items[index].str[fld]);
 	itoa(strlen(entry->field[0]), main_menu_items[index].str[DICT_FLD_CNT], 10);
 	main_menu_items[index].cb = Edit;
@@ -207,7 +206,10 @@ int Run() {
 	getchar();
 	return 0;
 #endif
-	int i;
+	char* title = "Англо-русский словарь";
+	int i, fld;
+	HANDLE hstdout;
+	SMALL_RECT rect;
 	ITEM_DEF* main_menu_items = NULL;
 	int main_menu_items_count = 0;
 	// Инициализация заголовков глобальных меню
@@ -272,12 +274,10 @@ int Run() {
 	#endif
 	return 0;*/
 
-	SMALL_RECT rect;
-	char* title = "Англо-русский словарь";
 	CharToOemA(title, title);
 	SetConsoleTitle(title);
 
-	HANDLE hstdout = GetStdHandle(STD_OUTPUT_HANDLE); // дескриптор консольного окна
+	hstdout = GetStdHandle(STD_OUTPUT_HANDLE); // дескриптор консольного окна
 	if(INVALID_HANDLE_VALUE == hstdout) {
 		return -1;
 	}
@@ -313,7 +313,7 @@ int Run() {
 		//
 		if(main_menu_items) {
 			for(i = 0; i < main_menu_items_count; i++)
-				for(int fld = 0; fld < DICT_FLD_CNT + 1; fld++)
+				for(fld = 0; fld < DICT_FLD_CNT + 1; fld++)
 					if(main_menu_items[i].str[fld])
 						free(main_menu_items[i].str[fld]);
 			free(main_menu_items);
@@ -323,7 +323,7 @@ int Run() {
 		main_menu_items = (ITEM_DEF*)malloc(main_menu_items_count * sizeof(ITEM_DEF));
 		memset(main_menu_items, 0x00, main_menu_items_count * sizeof(ITEM_DEF));
 		for(i = 0; i < main_menu_items_count; i++) {
-			for(int fld = 0; fld < DICT_FLD_CNT; fld++)
+			for(fld = 0; fld < DICT_FLD_CNT; fld++)
 				main_menu_items[i].str[fld] = (char*)malloc(MAX_STRING * sizeof(char));
 			main_menu_items[i].str[DICT_FLD_CNT] = (char*)malloc(32 * sizeof(char));
 		}
@@ -367,7 +367,7 @@ int Run() {
 	free(ptable);
 
 	for(i = 0; i < main_menu_items_count; i++)
-		for(int fld = 0; fld < DICT_FLD_CNT + 1; fld++)
+		for(fld = 0; fld < DICT_FLD_CNT + 1; fld++)
 			if(main_menu_items[i].str[fld])
 				free(main_menu_items[i].str[fld]);
 	free(main_menu_items);
@@ -417,6 +417,7 @@ int Run() {
 }
 // Функция меню <Выход>. Заполняется кодом пользователя
 int Exit(MENU* menu, ITEM* item) {
+	int result;
 	if(data_modified) {
 		int i;
 		MENU exit_menu;
@@ -439,7 +440,6 @@ int Exit(MENU* menu, ITEM* item) {
 			Save(menu, item);
 		}
 	}
-	int result;
 	if(exit_canceled) {
 		exit_canceled = 0;
 		result = 0;
@@ -453,11 +453,12 @@ int Exit(MENU* menu, ITEM* item) {
 // Функции меню
 //---------------------------------------------------------------------------
 // Функция меню <Добавить>
-int Add(MENU* pm, ITEM*) {
+int Add(MENU* pm, ITEM* item) {
 	int i;
 	SMALL_RECT wndRect = { 10, 11, 49, 15 };
 	int max_width = (wndRect.Right - wndRect.Left - 1) / 2;
 	DICT_ENTRY* entry;
+	InputBox box;
 
 	char*** contents;
 	int row_count = DICT_FLD_CNT;
@@ -478,7 +479,6 @@ int Add(MENU* pm, ITEM*) {
 		contents[i][BUFFER][max_width] = '\0';
 	}
 
-	InputBox box;
 	if(-1 == box_init(&box, pm->hStdOut, wndRect, contents, row_count)) {
 		return -1;
 	}
@@ -520,11 +520,12 @@ int Add(MENU* pm, ITEM*) {
 }
 
 // Функция меню <Изменить>
-int Edit(MENU* pm, ITEM*) {
+int Edit(MENU* pm, ITEM* item) {
 	int i;
 	SMALL_RECT wndRect = { 10, 11, 49, 15 };
 	int max_width = (wndRect.Right - wndRect.Left - 1) / 2;
 	DICT_ENTRY* entry = (DICT_ENTRY*)list1_curr(&dict);
+	InputBox box;
 
 	char*** contents;
 	int row_count = DICT_FLD_CNT;
@@ -544,7 +545,6 @@ int Edit(MENU* pm, ITEM*) {
 		contents[i][BUFFER][max_width] = '\0';
 	}
 
-	InputBox box;
 	if(-1 == box_init(&box, pm->hStdOut, wndRect, contents, row_count)) {
 		return -1;
 	}
@@ -603,10 +603,13 @@ int accept_input(char ch) {
 	return 0;
 }
 // Функция меню <Поиск>
-int Search(MENU* pm, ITEM*) {
+int Search(MENU* pm, ITEM* item) {
 	int i;
+	int index;
+	int row = 0;
 	SMALL_RECT wndRect = { 3, 11,  29, 13 };
 	int max_width = (wndRect.Right - wndRect.Left - 1) / 2;
+	InputBox box;
 
 	char*** contents;
 	int row_count = 1;
@@ -625,7 +628,6 @@ int Search(MENU* pm, ITEM*) {
 		contents[i][BUFFER][max_width] = '\0';
 	}
 
-	InputBox box;
 	if(-1 == box_init(&box, pm->hStdOut, wndRect, contents, row_count)) {
 		return -1;
 	}
@@ -638,9 +640,7 @@ int Search(MENU* pm, ITEM*) {
 		return -1;
 	}
 
-	int row = 0;
-
-	int index = list1_search(&dict, dict_entry_find, contents[row][BUFFER]);
+	index = list1_search(&dict, dict_entry_find, contents[row][BUFFER]);
 	list1_set_current_index(&ptable->items, index);
 	menu_fill_wnd(ptable, 0);
 	menu_cls(ptable);
@@ -673,17 +673,20 @@ int SortItem(MENU* pm, ITEM* item) {
 // Функция меню <Сортировка>
 int Sort(MENU* pm, ITEM* item) {
 	int i;
-	SMALL_RECT rect;
+	int max_len;
 	int item_count = main_column_count;
 	int slen;
 	int menu_width = 20;
 	int menu_height = item_count + 2;
+	SMALL_RECT rect;
+	ITEM_DEF* menu_items;
+	
 	rect.Left = item->x;
 	rect.Right = item->x + menu_width - 1;
 	rect.Top = csbInfo.srWindow.Top + 2;
 	rect.Bottom = rect.Top + menu_height - 1;
-	int max_len = menu_width - 2; // 2 верт. линии по краям
-	ITEM_DEF* menu_items = (ITEM_DEF*)malloc(item_count * sizeof(ITEM_DEF));
+	max_len = menu_width - 2; // 2 верт. линии по краям
+	menu_items = (ITEM_DEF*)malloc(item_count * sizeof(ITEM_DEF));
 	memset(menu_items, 0x00, item_count * sizeof(ITEM_DEF));
 	for(i = 0; i < item_count; i++) {
 		menu_items[i].str[0] = (char*)malloc(max_len * sizeof(char));
@@ -695,14 +698,14 @@ int Sort(MENU* pm, ITEM* item) {
 	return -1;
 }
 // Функция меню <Сохранить>
-int Save(MENU* menu, ITEM*) {
+int Save(MENU* menu, ITEM* item) {
 	save_data = 0;
 	data_modified = 0;
 	dict_save(dict_file_name);
 	return -1;
 }
 // Функция меню <Помощь>. Заполняется кодом пользователя
-int Help(MENU* pm, ITEM*) {
+int Help(MENU* pm, ITEM* item) {
 	int result = 0;
 	SMALL_RECT rect;
 	int width = 0, height = 0;

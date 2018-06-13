@@ -125,7 +125,7 @@ int menu_init(MENU* menu, MENU* parent, HANDLE hstdout, ITEM_DEF* item_defs, int
 	menu->wnd.M = menu->wnd.rect.Bottom - menu->wnd.rect.Top + 1;
 	menu->wnd.N = menu->wnd.rect.Right - menu->wnd.rect.Left + 1;
 	menu->wnd.m = (char**)malloc((menu->wnd.M) * sizeof(char*));
-	for(int i = 0; i < menu->wnd.M; i++) {
+	for(i = 0; i < menu->wnd.M; i++) {
 		menu->wnd.m[i] = (char*)malloc((menu->wnd.N + 1) * sizeof(char));
 		memset(menu->wnd.m[i], MENU_WHITESPACE, menu->wnd.N * sizeof(char));
 		menu->wnd.m[i][menu->wnd.N] = '\0';
@@ -320,10 +320,10 @@ void menu_clear(MENU* menu) {
 
 void menu_prev(MENU* menu) {
 	int wrap = 1;
-	itemMenu(menu, false); // сделать неактивным пункт меню
+	itemMenu(menu, 0); // сделать неактивным пункт меню
 	list1_curr_rev(&menu->items, wrap);
-	itemMenu(menu, true); // выделить активный пункт меню
-	showCursor(menu, false);
+	itemMenu(menu, 1); // выделить активный пункт меню
+	showCursor(menu, 0);
 	if(menu->changed_cb) {
 		menu->changed_cb(menu, MENU_CURR_REV, wrap);
 	}
@@ -331,10 +331,10 @@ void menu_prev(MENU* menu) {
 
 void menu_next(MENU* menu) {
 	int wrap = 1;
-	itemMenu(menu, false); // сделать неактивным пункт меню
+	itemMenu(menu, 0); // сделать неактивным пункт меню
 	list1_curr_fwd(&menu->items, wrap);
-	itemMenu(menu, true); // выделить активный пункт меню
-	showCursor(menu, false);
+	itemMenu(menu, 1); // выделить активный пункт меню
+	showCursor(menu, 0);
 	if(menu->changed_cb) {
 		menu->changed_cb(menu, MENU_CURR_FWD, wrap);
 	}
@@ -360,13 +360,13 @@ int menu_draw_item(void* data, int index, void* ptr) {
 	ITEM* item = (ITEM*)data;
 	MENU* menu = (MENU*)ptr;
 	menu_calc_item_pos(data, index, ptr);
-	gotoxy(menu, item->x, item->y);
+	menu_gotoxy(menu, item->x, item->y);
 	printf(item->str);
 	return 1; // продолжить итерации по остальным элементам
 }
 
 int menu_draw(MENU* menu, int flags) {
-	int result = 0, i;
+	int result = 0, i, run = 1;
 	if(flags & MENU_FLAG_WND) {
 		// Устанавливаем цветовые параметры текста
 		SetConsoleTextAttribute(menu->hStdOut, menu->workWindowAttributes);
@@ -379,7 +379,7 @@ int menu_draw(MENU* menu, int flags) {
 		// рисуем заголовок
 		if(menu->hdr) {
 			int top_pad = menu->has_border ? 1 : 0;
-			gotoxy(menu, menu->wnd.rect.Left + menu->left_pad, menu->wnd.rect.Top + top_pad);
+			menu_gotoxy(menu, menu->wnd.rect.Left + menu->left_pad, menu->wnd.rect.Top + top_pad);
 			printf(menu->hdr);
 		}
 		// рисуем меню
@@ -387,12 +387,11 @@ int menu_draw(MENU* menu, int flags) {
 		fflush(stdout);
 	}
 	if(flags & MENU_DRAW_SEL) {
-		itemMenu(menu, true); // выделить пункт меню
+		itemMenu(menu, 1); // выделить пункт меню
 	}
 	//fflush(stdin); // очистить буфер клавиатуры
 	if(!(flags & (MENU_NAVIGATOR | MENU_HOTKEYS)))
 		return 0; // не запускаем обработку сообщений
-	int run = 1;
 	while (run) {
 		if (kbhit()) {
 			menu->cb_retcode = 0;
@@ -416,10 +415,10 @@ int menu_draw(MENU* menu, int flags) {
 					break;
 				case KEY_ENTER:
 					// Возвращаем курсор из строки меню в прежнюю позицию
-					///gotoxy(menu, menu->curspos.X, menu->curspos.Y);
+					///menu_gotoxy(menu, menu->curspos.X, menu->curspos.Y);
 					// Установить цвет рабочих сообщений
 					///SetConsoleTextAttribute(menu->hStdOut, menu->workWindowAttributes);
-					///showCursor(menu, true);
+					///showCursor(menu, 1);
 					// Вызываем обработчик пункта меню
 					{
 						ITEM* item = (ITEM*)list1_curr(&menu->items);
@@ -442,7 +441,7 @@ int menu_draw(MENU* menu, int flags) {
 	return result;
 }
 
-void itemMenu(MENU* menu, bool activate)
+void itemMenu(MENU* menu, int activate)
 {
 	ITEM* item = (ITEM*)list1_curr(&menu->items);
 	WORD itemAttributes;
@@ -452,7 +451,7 @@ void itemMenu(MENU* menu, bool activate)
 		itemAttributes = menu->activeItemAttributes;
 	else
 		itemAttributes = menu->inactiveItemAttributes;
-	gotoxy(menu, item->x, item->y);
+	menu_gotoxy(menu, item->x, item->y);
 	SetConsoleTextAttribute(menu->hStdOut, itemAttributes);
 	printf(item->str);
 }
@@ -462,7 +461,7 @@ void menu_cls(MENU* menu)
 	int i, y;
 	SetConsoleTextAttribute(menu->hStdOut, menu->workWindowAttributes);
 	for (i = 0, y = menu->wnd.rect.Top; i < menu->wnd.M; i++, y++) {
-		gotoxy(menu, menu->wnd.rect.Left, y);
+		menu_gotoxy(menu, menu->wnd.rect.Left, y);
 		printf(menu->wnd.m[i]);
 	}
 }
@@ -486,9 +485,11 @@ int menu_proc_hotkey(void* data, int index, void* ptr) {
 	return 1; // продолжить итерации по остальным элементам
 }
 
-void gotoxy(MENU* menu, int x, int y)
+void menu_gotoxy(MENU* menu, int x, int y)
 {
-	COORD cursorPos = { x, y };
+	COORD cursorPos;
+	cursorPos.X = x;
+	cursorPos.Y = y;
 	SetConsoleCursorPosition(menu->hStdOut, cursorPos);
 	///SetConsoleCursorPosition(hStdOut, {x,y});
 }
@@ -500,7 +501,7 @@ void saveCursorPosition(MENU* menu)
 ///	menu->curspos = csbInfo.dwCursorPosition;
 }
 
-void showCursor(MENU* menu, bool visible)
+void showCursor(MENU* menu, int visible)
 {
 	CONSOLE_CURSOR_INFO ccInfo;
 	ccInfo.bVisible = visible;
@@ -510,9 +511,9 @@ void showCursor(MENU* menu, bool visible)
 
 int check_cb_retcode(MENU* menu) {
 	if(-1 == menu->cb_retcode) {
-		///gotoxy(menu, 0, 0);
+		///menu_gotoxy(menu, 0, 0);
 		///menu_cls(menu, WholeWindow);
-		itemMenu(menu, false); // сделать неактивным пункт меню
+		itemMenu(menu, 0); // сделать неактивным пункт меню
 		return 0;
 	} else if(0 == menu->cb_retcode) {
 		saveCursorPosition(menu);
@@ -520,9 +521,9 @@ int check_cb_retcode(MENU* menu) {
 	// очистить буфер клавиатуры
 	fflush(stdin);
 	// курсор в текущий пункт меню
-	///gotoxy(menu, menu->items[menu->current].x, menu->items[menu->current].y);
+	///menu_gotoxy(menu, menu->items[menu->current].x, menu->items[menu->current].y);
 	// спрятать курсор
-	showCursor(menu, false);
+	showCursor(menu, 0);
 	return 1;
 }
 

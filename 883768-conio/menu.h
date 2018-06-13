@@ -1,9 +1,7 @@
 #ifndef menuH
 #define menuH
 //---------------------------------------------------------------------------
-extern "C" {
 #include "list.h"
-}
 //---------------------------------------------------------------------------
 struct MENU;
 
@@ -32,9 +30,9 @@ struct MENU;
 struct ITEM;
 
 // Указатели на функции void f(void) - они будут выполнять пункты меню
-typedef int(*ExecuteHotketCB)(MENU*);
-typedef int(*ExecuteCurrentCB)(MENU*, ITEM*);
-typedef void(*CurrentChangedCB)(MENU*, int direction, int wrap);
+typedef int(*ExecuteHotketCB)(struct MENU*);
+typedef int(*ExecuteCurrentCB)(struct MENU*, struct ITEM*);
+typedef void(*CurrentChangedCB)(struct MENU*, int direction, int wrap);
 
 // Структура определения элемента меню
 typedef struct {
@@ -123,15 +121,15 @@ void menu_prev(MENU* menu);
 // Выделить следующий пункт меню
 void menu_next(MENU* menu);
 // Перевод курсора в точку x, y
-void gotoxy(MENU* menu, int x, int y);
+void menu_gotoxy(MENU* menu, int x, int y);
 // Выделить пункт меню
-void itemMenu(MENU* menu, bool activate);
+void itemMenu(MENU* menu, int activate);
  // Запомнить положение курсора
 void saveCursorPosition(MENU* menu);
 // Очистка окна
 void menu_cls(MENU* menu);
 // Сохранить координаты курсора в переменную curspos
-void showCursor(MENU* menu, bool visible); // скрыть/показать курсор
+void showCursor(MENU* menu, int visible); // скрыть/показать курсор
 // Удалить текущий элемент
 void menu_del_curr(MENU* menu);
 

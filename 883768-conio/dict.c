@@ -21,7 +21,7 @@ char* file_load(const char* file_name, off_t* psize);
 //---------------------------------------------------------------------------
 // 
 int dict_load(const char* file_name) {
-	off_t i, size = 0;
+	off_t i, fld, size = 0;
 	char* buf = file_load(file_name, &size);
 	if(buf) {
 		int field_start = 0, nfield = 0;
@@ -40,7 +40,7 @@ int dict_load(const char* file_name) {
 					list1_push_back(&dict,
 						dict_entry_new(temp_entry.field[0], temp_entry.field[1], temp_entry.field[2])
 					);
-					for(int fld = 0; fld < DICT_FLD_CNT; fld++)
+					for(fld = 0; fld < DICT_FLD_CNT; fld++)
 						if(temp_entry.field[fld])
 							free(temp_entry.field[fld]);
 					nfield = 0;
@@ -97,9 +97,10 @@ int dict_save(const char* file_name) {
 }
 //
 DICT_ENTRY* dict_entry_new(const char* word_eng, const char* word_part, const char* word_rus) {
+	DICT_ENTRY* new_entry;
 	if(NULL == word_eng | NULL == word_part | NULL == word_rus)
 		return NULL;
-	DICT_ENTRY* new_entry = (DICT_ENTRY*)malloc(sizeof(DICT_ENTRY));
+	new_entry = (DICT_ENTRY*)malloc(sizeof(DICT_ENTRY));
 	memset(new_entry, 0x00, sizeof(DICT_ENTRY));
 
 	new_entry->field[0] = (char*)malloc((strlen(word_eng) + 1) * sizeof(char));

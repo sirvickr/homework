@@ -2,6 +2,7 @@
 #include "codes.h"
 #include <stdlib.h>
 #include <string.h>
+#include <conio.h>
 
 int box_init(InputBox* box, HANDLE handle, SMALL_RECT rect, char*** contents, int row_count) {
 	int i, size;
@@ -162,7 +163,7 @@ int draw_background(InputBox* box) {
 	return ok ? 0 : -1;
 }
 
-void gotoxy(InputBox* box, int x, int y)
+void box_gotoxy(InputBox* box, int x, int y)
 {
 	COORD cursorPos;
 	cursorPos.X = x;
@@ -217,18 +218,18 @@ int box_draw(InputBox* box) {
 	top = box->rect.Top + 1;
 	// Draw wnd
 	/*SetConsoleTextAttribute(box->handle, pm->activeItemAttributes);
-	gotoxy(box, left + 0, top + 0);
+	box_gotoxy(box, left + 0, top + 0);
 	printf("                         ");
-	gotoxy(box, left + 0, top);
+	box_gotoxy(box, left + 0, top);
 	printf("                         ");
-	gotoxy(box, left + 0, top + 2);
+	box_gotoxy(box, left + 0, top + 2);
 	printf("                         ");
-	gotoxy(box, left, top);
+	box_gotoxy(box, left, top);
 	SetConsoleTextAttribute(box->handle, box->inactiveItemAttributes);
 	printf("                       ");   */
 	SetConsoleTextAttribute(box->handle, box->edit_attr);
 	// Input
-	gotoxy(box, left, top);
+	box_gotoxy(box, left, top);
 	showCursor(box->handle, 1);
 	// буфер ввода
 	//memset(box->contents[box->row][BUFFER], ' ', (box->max_width + 1) * sizeof(char));
@@ -237,10 +238,10 @@ int box_draw(InputBox* box) {
 	//tmp[1] = '\0';
 	for(i = 0; i < box->row_count; ++i) {
 		len[i] = strlen(box->contents[i][BUFFER]);
-		gotoxy(box, left, top + i);
+		box_gotoxy(box, left, top + i);
 		printf("%s", box->contents[i][BUFFER]);
 	}
-	gotoxy(box, left, top + box->row);
+	box_gotoxy(box, left, top + box->row);
 	while (run) {
 		if (kbhit()) {
 			int ch = _getch();
@@ -251,23 +252,23 @@ int box_draw(InputBox* box) {
 			switch (ch) {
 			case KEY_HOME:
 				pos[box->row] = 0;
-				gotoxy(box, left + pos[box->row], top);
+				box_gotoxy(box, left + pos[box->row], top);
 				break;
 			case KEY_ARROW_LEFT:
 				if(pos[box->row] > 0) {
 					pos[box->row]--;
-					gotoxy(box, left + pos[box->row], top);
+					box_gotoxy(box, left + pos[box->row], top);
 				}
 				break;
 			case KEY_ARROW_RIGHT:
 				if(pos[box->row] < len[box->row]) {
 					pos[box->row]++;
-					gotoxy(box, left + pos[box->row], top);
+					box_gotoxy(box, left + pos[box->row], top);
 				}
 				break;
 			case KEY_END:
 				pos[box->row] = len[box->row];
-				gotoxy(box, left + pos[box->row], top);
+				box_gotoxy(box, left + pos[box->row], top);
 				break;
 			//case KEY_ARROW_UP: case KEY_ARROW_DOWN:
 			//	break;
@@ -320,12 +321,12 @@ int box_draw(InputBox* box) {
 				break;
 			} // switch(iKey)
 			#if 0 // отладка
-			gotoxy(box, left, top + 10);
+			box_gotoxy(box, left, top + 10);
 			printf("%c\t%d\tpos %d\tlen %d", ch, ch, pos[box->row], len[box->row]);
 			#endif
-			gotoxy(box, left, top + box->row);
+			box_gotoxy(box, left, top + box->row);
 			printf("%s", box->contents[box->row][BUFFER]);
-			gotoxy(box, left + pos[box->row], top + box->row);
+			box_gotoxy(box, left + pos[box->row], top + box->row);
 		} // if(kbhit())
 	} // while(run)
 
