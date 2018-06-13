@@ -9,10 +9,57 @@
 #include "codes.h"
 #include "list.h"
 #include "input.h"
-//#define TEST_LIST1
+#pragma argsused
 
+// Предварительное объявление функций
+
+// Основная рабочая функция программы
+int Run();
+
+// функции обратного вызова
+
+// Выход - сохранить данные
+int ExitYes(MENU* menu, ITEM* item);
+// Выход - сохранить данные
+int ExitNo(MENU* menu, ITEM* item);
+// Выход - не сохранять данные
+int ExitNo(MENU* menu, ITEM* item);
+// Выход - отмена
+int ExitCancel(MENU* menu, ITEM* item);
+// Обработчик клавиши ESC по умолчанию выходит из цикла сообщений текущего меню
+int DefaultESC(MENU* menu);
+// Обработчик клавиши ESC
+int ESC(MENU* menu);
+// Обработчик клавиши F1 (Справка)
+int F1(MENU* menu);
+// Обработчик клавиши F2 (Сохранить)
+int F2(MENU* menu);
+// Обработчик клавиши F3 (Поиск)
+int F3(MENU* menu);
+// Обработчик клавиши F9 (Переход на верхнее меню)
+int F9(MENU* menu);
+// Обработчик прокрутки меню на один элемент вперёд или назад
+void curr_menu_changed(MENU* menu, int direction, int wrap);
+// Перенос очередного элемента словаря в элемент описания пункта меню
+int dict_entry_display(void* data, int index, void* param);
+// Проверка - подходит ли элемент словаря критерию поиска
+int dict_entry_find(void* data, void* param);
+// Сравнение двух элементов словаря
+int dict_entry_compare(void* data1, void* data2, void* arg);
+
+// вспомогательные функции
+
+// Отображение текста справки из файла на всплывающем окне
+int HelpFromFile(HANDLE hStdOut, const char* file_name, const char* title, SMALL_RECT rect);
+// Отображение упрощённого вертикального меню в один столбец
+int ShowMenu(HANDLE hStdOut, ITEM_DEF* menu_items, int item_count, const char* title, SMALL_RECT rect, int flags, int user_tag, ExecuteHotketCB f1CB);
+// Загрузка пунктов меню из файла
+ITEM_DEF* MenuItemsFromFile(const char* file_name, int max_count, int max_len, int* pcount);
+// Загрузка тестовых данных в словарь
+void LoadInitialData();
+
+// максимально допустимая длина строки
 #define MAX_STRING 256
-
 // пользовательские метки, чтобы различать меню в функциях обратного вызова
 #define MENU_TAG_DEFAULT     0
 #define MENU_TAG_TOP         1
@@ -24,7 +71,13 @@
 #define MENU_TAG_SORT        7
 // верхнее меню
 #define top_item_count 7 // количество пунктов меню
-// положение (x,y), заголовок, указатель на функцию
+// количество ячеек (столбцов) основного табличного меню
+#define main_column_count 4
+// количество ячеек (столбцов) меню подтверждения выхода
+#define exit_column_count 1
+// количество пунктов меню подтверждения выхода
+#define exit_item_count 3
+// массив с описаниями элементов верхнего меню
 ITEM_DEF top_menu_items[top_item_count] = {
 	{ { "Добавить", 0 }, Add },
 	{ { "Изменить", 0 }, Edit },
@@ -34,95 +87,91 @@ ITEM_DEF top_menu_items[top_item_count] = {
 	{ { "Помощь", 0 }, Help },
 	{ { "Выйти", 0 }, Exit },
 };
-
-// количество ячеек меню (столбцов)
-#define main_column_count 4
-#define exit_column_count 1
-#if 1
-static char* main_headers[main_column_count];
-static char* exit_headers[exit_column_count];
-#else
-static char* main_headers[main_column_count] = { "Слово", "Часть речи", "Перевод", "Количество букв" };
-static char* exit_headers[exit_column_count] = { "Сохранить данные?" };
-#endif
-
-// глобальный код завершения для функций обратного вызова
-int exit_code = 0; // не нулевое значение считается обязательным
-int redraw_main = 1;
-int data_modified = 0;
-int save_data = 0;
-int exit_canceled = 0;
-int initial_table_index = 0; // индекс для инициализации обновлённого меню
-
-static CONSOLE_SCREEN_BUFFER_INFO csbInfo;
-
-static MENU top_menu;
-static MENU *ptable = NULL;
-
-int Run();
-// Отображение текста из файла на всплывающем окне
-int HelpFromFile(HANDLE hStdOut, const char* file_name, const char* title, SMALL_RECT rect);
-//
-int ShowMenu(HANDLE hStdOut, ITEM_DEF* menu_items, int item_count, const char* title, SMALL_RECT rect, int flags, int user_tag, ExecuteHotketCB f1CB);
-//
-ITEM_DEF* MenuItemsFromFile(const char* file_name, int max_count, int max_len, int* pcount);
-
-#pragma argsused
-int main(int argc, char* argv[])
-{
-	return Run();
-}
-
-int ExitYes(MENU* menu, ITEM* item) {
-	save_data = 1;
-	return -1;
-}
-
-int ExitNo(MENU* menu, ITEM* item) {
-	save_data = 0;
-	return -1;
-}
-
-int ExitCancel(MENU* menu, ITEM* item) {
-	exit_canceled = 1;
-	return -1;
-}
-// количество пунктов меню
-#define exit_item_count 3
+// массив с описаниями элементов меню подтверждения выхода
 static ITEM_DEF exit_menu_items[exit_item_count] = {
 	{ { "Да", 0 }, ExitYes },
 	{ { "Нет", 0 }, ExitNo },
 	{ { "Отмена", 0 }, ExitCancel },
 };
+// массив заголовков основной таблицы
+char* main_headers[main_column_count];
+// массив заголовков (1 заголовок) меню подтверждения выхода
+char* exit_headers[exit_column_count];
+// глобальный код завершения для функций обратного вызова
+int exit_code = 0; // не нулевое значение считается обязательным
+// глобальный признак перезапуска основной таблицы
+int redraw_main = 1;
+// глобальный признак изменившихся данных
+int data_modified = 0;
+// глобальный признак необходимости сохранить данные
+int save_data = 0;
+// глобальный признак отмены выхода
+int exit_canceled = 0;
+// глобальный индекс для инициализации обновлённого меню
+int initial_table_index = 0;
+// глобальный буфер для хранения настроек консоли
+CONSOLE_SCREEN_BUFFER_INFO csbInfo;
+// глобальный экземпляр верхнего меню
+MENU top_menu;
+// глобальный указатель на экземпляр основной таблицы
+MENU *ptable = NULL;
 
+// Точка входа программы
+int main(int argc, char* argv[])
+{
+	return Run();
+}
+
+// Выход - сохранить данные
+int ExitYes(MENU* menu, ITEM* item) {
+	save_data = 1;
+	return -1;
+}
+// Выход - не сохранять данные
+int ExitNo(MENU* menu, ITEM* item) {
+	save_data = 0;
+	return -1;
+}
+// Выход - отмена
+int ExitCancel(MENU* menu, ITEM* item) {
+	exit_canceled = 1;
+	return -1;
+}
 // Обработчик клавиши ESC по умолчанию выходит из цикла сообщений текущего меню
 int DefaultESC(MENU* menu) {
 	return -1;
 }
-
+// Обработчик клавиши ESC
 int ESC(MENU* menu) {
 	return Exit(menu, NULL);
 }
-
+// Обработчик клавиши F1 (Справка)
 int F1(MENU* menu) {
 	Help(menu, NULL);
 	return 0;
 }
-
+// Обработчик клавиши F2 (Сохранить)
+int F2(MENU* menu) {
+	Save(menu, NULL);
+	if(exit_code)
+		return exit_code;
+	return 0;
+}
+// Обработчик клавиши F3 (Поиск)
 int F3(MENU* menu) {
 	Search(menu, NULL);
 	if(exit_code)
 		return exit_code;
 	return 0;
 }
-
+// Обработчик клавиши F9 (Переход на верхнее меню)
 int F9(MENU* menu) {
 	menu_draw(&top_menu, MENU_FULL_FLAGS);
 	if(exit_code)
 		return exit_code;
 	return 0;
 }
-
+// Обработчик прокрутки меню на один элемент вперёд или назад
 void curr_menu_changed(MENU* menu, int direction, int wrap) {
 	switch(direction) {
 	case MENU_CURR_REV:
@@ -133,7 +182,7 @@ void curr_menu_changed(MENU* menu, int direction, int wrap) {
 		break;
 	}
 }
-
+// Перенос очередного элемента словаря в элемент описания пункта меню
 int dict_entry_display(void* data, int index, void* param) {
 	int fld;
 	DICT_ENTRY* entry = (DICT_ENTRY*)data;
@@ -144,31 +193,14 @@ int dict_entry_display(void* data, int index, void* param) {
 	main_menu_items[index].cb = Edit;
 	return 1; // продолжить итерации по остальным элементам
 }
-//
+// Проверка - подходит ли элемент словаря критерию поиска
 int dict_entry_find(void* data, void* param) {
 	DICT_ENTRY* entry = (DICT_ENTRY*)data;
 	const char* str = (const char*)param;
 	return strcmp(str, entry->field[0]) ? 0 : 1;
 }
 
-#ifdef TEST_LIST1
-void dict_entry_release(void* data) {
-	int i;
-	if(data) {
-		DICT_ENTRY* entry = (DICT_ENTRY*)data;
-		for(i = 0; i < DICT_FLD_CNT; i++)
-			if(entry->field[i])
-				free(entry->field[i]);
-		free(entry);
-	}
-}
-
-void dict_entry_print(void* data, int index, void*) {
-	DICT_ENTRY* entry = (DICT_ENTRY*)data;
-	printf("%d\t%s %s %s\n", index, entry->field[0], entry->field[1], entry->field[2]);
-}
-#endif
-
+// Сравнение двух элементов словаря
 int dict_entry_compare(void* data1, void* data2, void* arg) {
 	DICT_ENTRY *a, *b;
 	int index;
@@ -182,36 +214,18 @@ int dict_entry_compare(void* data1, void* data2, void* arg) {
 	return strlen(a->field[0]) < strlen(b->field[0]) < 0 ? 1 : 0;
 }
 
+// Основная рабочая функция программы
 int Run() {
-#ifdef TEST_LIST1
-	DICT_ENTRY* entry;
-	LIST1 list;
-	list1_init(&list);
-	list.item_free = dict_entry_release;
-
-	if(entry = dict_new("Hello", "Noun", "1"))
-		list1_push_front(&list, entry);
-	if(entry = dict_new("World", "Noun", "2"))
-		list1_push_front(&list, entry);
-	if(entry = dict_new("Go", "Verb", "3"))
-		list1_push_front(&list, entry);
-	if(entry = dict_new("Run", "Noun", "4"))
-		list1_push_back(&list, entry);
-	if(entry = dict_new("Star", "Noun", "5"))
-		list1_push_back(&list, entry);
-
-	list1_for_each(&list, dict_entry_print, NULL);
-
-	list1_clear(&list);
-	getchar();
-	return 0;
-#endif
 	char* title = "Англо-русский словарь";
 	int i, fld;
 	HANDLE hstdout;
 	SMALL_RECT rect;
 	ITEM_DEF* main_menu_items = NULL;
 	int main_menu_items_count = 0;
+	#if 0
+	LoadInitialData();
+	return 0;
+	#endif
 	// Инициализация заголовков глобальных меню
 	for(i = 0; i < main_column_count; i++)
 		main_headers[i] = (char*)malloc(MAX_MENU_HDR * sizeof(char));
@@ -226,53 +240,6 @@ int Run() {
 
 	for(i = 0; i < exit_item_count; i++)
 		CharToOemA(exit_menu_items[i].str[0], exit_menu_items[i].str[0]);
-	/*
-	//CharToOemA(text, text);
-	system("chcp");
-	//SetConsoleOutputCP(1251);
-	//SetConsoleCP(1251);
-	//setlocale(LC_CTYPE, "rus");
-	//setlocale(LC_ALL,"russian");
-	//setlocale(LC_ALL, "");
-	//system("chcp 1251");
-	system("chcp");
-	//system("chcp 65001"); // utf8
-	//system("chcp");
-	*/
-	/*#if 1
-	if(-1 == dict_add(dict_new("Hello", "Noun", "Привет")))
-		return -1;
-	if(-1 == dict_add(dict_new("World", "Noun", "Мир")))
-		return -1;
-	if(-1 == dict_add(dict_new("Go", "Verb", "Идти")))
-		return -1;
-	if(-1 == dict_add(dict_new("Run", "Noun", "Бежать")))
-		return -1;
-	if(-1 == dict_add(dict_new("Star", "Noun", "Звезда")))
-		return -1;
-	if(-1 == dict_save(dict_file_name))
-		return -1;
-	list1_clear(&dict);
-	getchar();
-	#else
-	if(-1 == dict_load(dict_file_name))
-		return -1;
-	{
-		DICT_ENTRY* curr = dict_head;
-		while(curr) {
-			printf("%s:", curr->field[2]);
-			char* pc = curr->field[2];
-			while(*pc != 0) {
-				printf(" %d", (int)*pc);
-				pc++;
-			}
-			printf(" \n");
-			curr = curr->next;
-		}
-		getchar();
-	}
-	#endif
-	return 0;*/
 
 	CharToOemA(title, title);
 	SetConsoleTitle(title);
@@ -295,8 +262,6 @@ int Run() {
 	menu_inactive_color(&top_menu, BACKGROUND_BLUE | BACKGROUND_GREEN);
 	menu_add_hotkey(&top_menu, KEY_ESC, DefaultESC);
 	menu_draw(&top_menu, MENU_FLAG_WND | MENU_FLAG_ITEMS);
-
-#if 1
 
 	// Загрузка словаря из файла
 	if(-1 == dict_load(dict_file_name)) {
@@ -372,50 +337,17 @@ int Run() {
 				free(main_menu_items[i].str[fld]);
 	free(main_menu_items);
 
-#endif
-
 	menu_clear(&top_menu);
-/*#if 1
-	//получение дескриптора стандартного устройства вывода
-	HANDLE wHnd = GetStdHandle(STD_OUTPUT_HANDLE);
-	SetConsoleTitle("Demo Console Cls"); // Заголовок консоли
-	printf("Hello\n");
-	system("pause"); // Наблюдаем текст в окне
-	SetConsoleTextAttribute(wHnd,
-		BACKGROUND_RED |
-		BACKGROUND_GREEN |
-		BACKGROUND_BLUE |
-		FOREGROUND_RED);
-	mycls(wHnd); // очищаем окно
-	int iKey = 67;
-	// Цикл до тех пор пока не нажата клавиша ESC
-	while (iKey != 27) {
-		if (kbhit())
-			iKey = _getch();
-	}
 
-#else
-	clrscr();
-	//printf("Hit any character key when ready\n");
-	//while (!kbhit()) {
-	//	//sleep(1);
-	//}
-	//printf("\nThe key pressed was (%c)\n", _getch());
-	//window(20,10,42,42);
-	window(8, 5, 25, 15);
-	textcolor(3);
-	textbackground(6);
-	cprintf("window at (20,10,42,42)\n");
-	//printf("Hit any character key when ready\n");
-#endif*/
-	//getc(stdin);
-	//getchar();
 	for(i = 0; i < main_column_count; i++)
 		if(main_headers[i])
 			free(main_headers[i]);
 	return 0;
 }
-// Функция меню <Выход>. Заполняется кодом пользователя
+//---------------------------------------------------------------------------
+// Функции меню
+//---------------------------------------------------------------------------
+// Функция меню <Выход>
 int Exit(MENU* menu, ITEM* item) {
 	int result;
 	if(data_modified) {
@@ -449,9 +381,6 @@ int Exit(MENU* menu, ITEM* item) {
 	}
 	return result;
 }
-//---------------------------------------------------------------------------
-// Функции меню
-//---------------------------------------------------------------------------
 // Функция меню <Добавить>
 int Add(MENU* pm, ITEM* item) {
 	int i;
@@ -499,7 +428,7 @@ int Add(MENU* pm, ITEM* item) {
 		dict_entry_new(contents[0][BUFFER], contents[1][BUFFER], contents[2][BUFFER])
 	);
 
-	/*box_clear(&box);
+	box_clear(&box);
 
 	for(i = 0; i < row_count; ++i) {
 		if(contents[i]) {
@@ -511,14 +440,13 @@ int Add(MENU* pm, ITEM* item) {
 		}
 	}
 	free(contents);
-	contents = NULL; */
+	contents = NULL; 
 
 	data_modified = 1;
 	redraw_main = 1;
 	exit_code = -1;
 	return exit_code;
 }
-
 // Функция меню <Изменить>
 int Edit(MENU* pm, ITEM* item) {
 	int i;
@@ -581,7 +509,6 @@ int Edit(MENU* pm, ITEM* item) {
 	exit_code = -1;
 	return exit_code;
 }
-
 // Функция меню <Удалить>
 int Delete(MENU* menu) {
 	list1_erase_current(&dict);
@@ -590,16 +517,6 @@ int Delete(MENU* menu) {
 	menu_cls(menu);
 	menu_draw(menu, MENU_FLAG_WND | MENU_FLAG_ITEMS | MENU_DRAW_SEL);
 	data_modified = 1;
-	return 0;
-}
-
-int accept_input(char ch) {
-	if(isalnum(ch))
-		return 1;
-	if(ispunct(ch) || ' ' == ch)
-		return 1;
-	if((-96 <= ch && ch <= -81) || (-32 <= ch && ch <= -17) || -15 == ch)
-		return 1;
 	return 0;
 }
 // Функция меню <Поиск>
@@ -730,8 +647,10 @@ int Help(MENU* pm, ITEM* item) {
 	}
 	return result;
 }
+
 // Вспомогательные функции
 
+// Загрузка пунктов меню из файла
 ITEM_DEF* MenuItemsFromFile(const char* file_name, int max_count, int max_len, int* pcount) {
 	FILE* file;
 	int i;
@@ -771,7 +690,7 @@ ITEM_DEF* MenuItemsFromFile(const char* file_name, int max_count, int max_len, i
 		*pcount = item_count;
 	return menu_items;
 }
-
+// Отображение упрощённого вертикального меню в один столбец
 int ShowMenu(HANDLE hStdOut, ITEM_DEF* menu_items, int item_count, const char* title, SMALL_RECT rect, int flags, int user_tag, ExecuteHotketCB f1CB) {
 	int i;
 	MENU menu;
@@ -816,7 +735,7 @@ int ShowMenu(HANDLE hStdOut, ITEM_DEF* menu_items, int item_count, const char* t
 
 	return 0;
 }
-
+// Отображение текста справки из файла на всплывающем окне
 int HelpFromFile(HANDLE hStdOut, const char* file_name, const char* title, SMALL_RECT rect) {
 	int i;
 	//int menu_width = rect.Right - rect.Left + 1;
@@ -829,8 +748,61 @@ int HelpFromFile(HANDLE hStdOut, const char* file_name, const char* title, SMALL
 	}
 	return ShowMenu(hStdOut, menu_items, item_count, title, rect, MENU_FLAG_WND | MENU_FLAG_ITEMS | MENU_HOTKEYS, MENU_TAG_HELP_GLOBAL, DefaultESC);
 }
-
-
-
-
+// Загрузка тестовых данных в словарь
+void LoadInitialData() {
+	if(-1 == list1_push_back(&dict, dict_entry_new("hello", "noun", "привет")))
+		return -1;
+	if(-1 == list1_push_back(&dict, dict_entry_new("world", "noun", "мир")))
+		return -1;
+	if(-1 == list1_push_back(&dict, dict_entry_new("go", "verb", "идти")))
+		return -1;
+	if(-1 == list1_push_back(&dict, dict_entry_new("here", "adverb", "здесь")))
+		return -1;
+	if(-1 == list1_push_back(&dict, dict_entry_new("run", "noun", "бежать")))
+		return -1;
+	if(-1 == list1_push_back(&dict, dict_entry_new("smart", "adjective", "умный")))
+		return -1;
+	if(-1 == list1_push_back(&dict, dict_entry_new("those", "pronoun", "те")))
+		return -1;
+	if(-1 == list1_push_back(&dict, dict_entry_new("between", "preposition", "между")))
+		return -1;
+	if(-1 == list1_push_back(&dict, dict_entry_new("under", "preposition", "под")))
+		return -1;
+	if(-1 == list1_push_back(&dict, dict_entry_new("star", "noun", "звезда")))
+		return -1;
+	if(-1 == list1_push_back(&dict, dict_entry_new("label", "noun", "метка")))
+		return -1;
+	if(-1 == list1_push_back(&dict, dict_entry_new("recall", "verb", "вспомнить")))
+		return -1;
+	if(-1 == list1_push_back(&dict, dict_entry_new("nice", "adjective", "красивый")))
+		return -1;
+	if(-1 == list1_push_back(&dict, dict_entry_new("cat", "noun", "кот")))
+		return -1;
+	if(-1 == list1_push_back(&dict, dict_entry_new("below", "adverb", "внизу")))
+		return -1;
+	if(-1 == list1_push_back(&dict, dict_entry_new("snake", "noun", "змея")))
+		return -1;
+	if(-1 == list1_push_back(&dict, dict_entry_new("sit", "verb", "сидеть")))
+		return -1;
+	if(-1 == list1_push_back(&dict, dict_entry_new("language", "noun", "язык")))
+		return -1;
+	if(-1 == list1_push_back(&dict, dict_entry_new("he", "pronoun", "он")))
+		return -1;
+	if(-1 == list1_push_back(&dict, dict_entry_new("she", "pronoun", "она")))
+		return -1;
+	if(-1 == list1_push_back(&dict, dict_entry_new("into", "preposition", "в")))
+		return -1;
+	if(-1 == list1_push_back(&dict, dict_entry_new("yours", "pronoun", "твой")))
+		return -1;
+	if(-1 == list1_push_back(&dict, dict_entry_new("today", "adverb", "сегодня")))
+		return -1;
+	if(-1 == list1_push_back(&dict, dict_entry_new("strong", "adjective", "сильный")))
+		return -1;
+	if(-1 == list1_push_back(&dict, dict_entry_new("human", "noun", "человек")))
+		return -1;
+	if(-1 == dict_save(dict_file_name))
+		return -1;
+	list1_clear(&dict);
+	getchar();
+}
 
