@@ -8,13 +8,7 @@
 //---------------------------------------------------------------------------
 // структура записи словаря
 typedef struct DICT_ENTRY {
-	#if 1
 	char* field[DICT_FLD_CNT];
-	#else
-	char* word_eng;
-	char* word_part;
-	char* word_rus;
-	#endif
 } DICT_ENTRY;
 //---------------------------------------------------------------------------
 struct MENU;

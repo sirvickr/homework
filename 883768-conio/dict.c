@@ -11,8 +11,8 @@
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 //---------------------------------------------------------------------------
-const char* dict_file_name = "dictionary.db";
-//int dict_size = 0;
+const char* dict_file_name = "dictionary.dat";
+// глобальный экзепляр словаря
 LIST1 dict;
 // Вспомогательная функция загрузки из файла
 char* file_load(const char* file_name, off_t* psize);
