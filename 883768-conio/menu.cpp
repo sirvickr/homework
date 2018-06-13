@@ -365,8 +365,8 @@ int menu_draw_item(void* data, int index, void* ptr) {
 	return 1; // продолжить итерации по остальным элементам
 }
 
-void menu_draw(MENU* menu, int flags) {
-	int i;
+int menu_draw(MENU* menu, int flags) {
+	int result = 0, i;
 	if(flags & MENU_FLAG_WND) {
 		// Устанавливаем цветовые параметры текста
 		SetConsoleTextAttribute(menu->hStdOut, menu->workWindowAttributes);
@@ -391,7 +391,7 @@ void menu_draw(MENU* menu, int flags) {
 	}
 	//fflush(stdin); // очистить буфер клавиатуры
 	if(!(flags & (MENU_NAVIGATOR | MENU_HOTKEYS)))
-		return; // не запускаем обработку сообщений
+		return 0; // не запускаем обработку сообщений
 	int run = 1;
 	while (run) {
 		if (kbhit()) {
@@ -427,15 +427,6 @@ void menu_draw(MENU* menu, int flags) {
 					}
 					run = check_cb_retcode(menu);
 					break;
-				#if 0
-				case 120: // выход по клавише x
-				case 88: // выход по клавише X
-				case 27: // выход по клавише ESC
-					itemMenu(menu, false); // сделать неактивным пункт меню
-					gotoxy(menu, 0, 0);
-					///menu_cls(menu, WholeWindow);
-					run = 0;///exit(0);
-				#endif
 				} // switch(iKey)
 			}
 			if(flags & MENU_HOTKEYS) {
@@ -444,10 +435,11 @@ void menu_draw(MENU* menu, int flags) {
 				run = check_cb_retcode(menu);
 			}
 		} // if(kbhit())
-	} // while(1)
+	} // while(run)
 	if(menu->parent) {
 		menu_draw(menu->parent, MENU_FLAG_WND | MENU_FLAG_ITEMS | MENU_DRAW_SEL);
 	}
+	return result;
 }
 
 void itemMenu(MENU* menu, bool activate)

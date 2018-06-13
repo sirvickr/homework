@@ -4,7 +4,7 @@
   <MACROS>
     <VERSION value="BCB.06.00"/>
     <PROJECT value="dictionary.exe"/>
-    <OBJFILES value="main.obj menu.obj dict.obj list.obj"/>
+    <OBJFILES value="main.obj menu.obj dict.obj list.obj input.obj"/>
     <RESFILES value="dictionary.res"/>
     <IDLFILES value=""/>
     <IDLGENFILES value=""/>
@@ -59,6 +59,7 @@
       <FILE FILENAME="menu.cpp" FORMNAME="" UNITNAME="menu" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="dict.cpp" FORMNAME="" UNITNAME="dict" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="list.c" FORMNAME="" UNITNAME="list" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="input.c" FORMNAME="" UNITNAME="input" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
   </FILELIST>
   <BUILDTOOLS>
   </BUILDTOOLS>

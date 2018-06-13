@@ -113,7 +113,7 @@ void menu_clear(MENU* menu);
 // Прорисовка фона и рамки
 void menu_fill_wnd(MENU* menu, int items_count);
 // Прорисовка меню
-void menu_draw(MENU* menu, int flags);
+int menu_draw(MENU* menu, int flags);
 // Установка цветовых атрибутов активного пункта
 void menu_active_color(MENU* menu, WORD attr);
 // Установка цветовых атрибутов неактивного пункта

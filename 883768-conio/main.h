@@ -4,6 +4,7 @@
 #include "menu.h"
 
 // Описание функций, которые подключаются к пунктам меню
+int Add(MENU* pm, ITEM*);
 int Edit(MENU* menu, ITEM*);
 int Delete(MENU* menu);
 int Search(MENU* menu, ITEM*);
