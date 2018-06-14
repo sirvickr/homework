@@ -482,7 +482,7 @@ int Add(MENU* pm, ITEM* item) {
 }
 // Функция меню <Изменить>
 int Edit(MENU* pm, ITEM* item) {
-	int i;
+	int i, box_result;
 	SMALL_RECT wndRect = { 10, 11, 49, 15 };
 	int max_width = (wndRect.Right - wndRect.Left - 1) / 2;
 	DICT_ENTRY* entry = (DICT_ENTRY*)list1_curr(&dict);
@@ -506,6 +506,7 @@ int Edit(MENU* pm, ITEM* item) {
 		contents[i][BUFFER][max_width] = '\0';
 	}
 
+	initial_table_index = list1_get_current_index(&dict);
 	if(-1 == box_init(&box, pm->hStdOut, wndRect, contents, row_count)) {
 		return -1;
 	}
@@ -513,16 +514,16 @@ int Edit(MENU* pm, ITEM* item) {
 		box_clear(&box);
 		return -1;
 	}
-	if(-1 == box_draw(&box)) {
-		box_clear(&box);
-		return -1;
+	box_result = box_draw(&box);
+	if(1 == box_result) {
+		for(i = 0; i < row_count; ++i) {
+			//strcpy(entry->field[i], contents[i][BUFFER]);
+			OemToCharA(contents[i][BUFFER], entry->field[i]);
+		}
+		data_modified = 1;
+		redraw_main = 1;
+		exit_code = -1;
 	}
-
-	for(i = 0; i < row_count; ++i) {
-		//strcpy(entry->field[i], contents[i][BUFFER]);
-		OemToCharA(contents[i][BUFFER], entry->field[i]);
-	}
-
 	box_clear(&box);
 
 	for(i = 0; i < row_count; ++i) {
@@ -537,9 +538,6 @@ int Edit(MENU* pm, ITEM* item) {
 	free(contents);
 	contents = NULL;
 
-	data_modified = 1;
-	redraw_main = 1;
-	exit_code = -1;
 	return exit_code;
 }
 // Функция меню <Удалить>

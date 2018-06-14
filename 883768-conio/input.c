@@ -201,7 +201,7 @@ void trim(char *str) {
 }
 
 int box_draw(InputBox* box) {
-	int i, left, top, run = 1;
+	int i, left, top, run = 1, result = 0;
 	int *pos, *len;
 	if(0 == box->row_count)
 		return -1;
@@ -276,6 +276,7 @@ int box_draw(InputBox* box) {
 				for(i = 0; i < box->row_count; ++i)
 					trim(box->contents[i][BUFFER]);
 				//printf("\n%s", box->contents[box->row][BUFFER]);
+				result = 1;
 				run = 0;
 				break;
 			case KEY_BACKSPACE:
@@ -300,6 +301,7 @@ int box_draw(InputBox* box) {
 					box->row =0;
 				break;
 			case KEY_ESC:
+				result = 0;
 				run = 0;
 				break;
 			default:
@@ -336,6 +338,6 @@ int box_draw(InputBox* box) {
 		box_clear(&box);
 		return -1;
 	}
-	return 0;
+	return result;
 }
 
