@@ -11,6 +11,16 @@
 #include "input.h"
 #pragma argsused
 
+// Критерий поиска
+typedef struct SearchCriteria {
+	// индес поля для сравнения (Слово, Часть Речи, Перевод, Количесвто букв)
+	int index;
+	// фильтр - максимальное значение длины строки Слова
+	int value;
+	// строка поиска (для первых трёх полей)
+	const char* str;
+} SearchCriteria;
+
 // Предварительное объявление функций
 
 // Основная рабочая функция программы
@@ -213,8 +223,12 @@ int dict_entry_display(void* data, int index, void* param) {
 // Проверка - подходит ли элемент словаря критерию поиска
 int dict_entry_find(void* data, void* param) {
 	DICT_ENTRY* entry = (DICT_ENTRY*)data;
-	const char* str = (const char*)param;
-	return strcmp(str, entry->field[0]) ? 0 : 1;
+	SearchCriteria* search = (SearchCriteria*)param;
+	if(search->index < DICT_FLD_CNT)
+		return strlen(entry->field[0]) <= search->value &&
+		       strcmp(search->str, entry->field[search->index]) == 0 ? 1 : 0;
+	// поиск по "Количеству букв" (закомментирован как бессмысленный)
+	return 0;//atoi(search->str) == strlen(entry->field[0]) ? 1 : 0;
 }
 
 // Сравнение двух элементов словаря
@@ -538,31 +552,42 @@ int Delete(MENU* menu) {
 	data_modified = 1;
 	return 0;
 }
-// Функция меню <Поиск>
-int Search(MENU* pm, ITEM* item) {
+// Функция подменю <Поиск>
+int SearchItem(MENU* pm, ITEM* item) {
+	#if 0
+	list1_sort(&dict, dict_entry_compare, &item->index);
+	initial_table_index = list1_get_current_index(&dict);
+	redraw_main = 1;
+	exit_code = -1;
+	#else
 	int i;
 	int index;
-	int row = 0;
-	SMALL_RECT wndRect = { 3, 11,  29, 13 };
+	SMALL_RECT wndRect = { 3, 11,  50, 14 };
+	SearchCriteria search;
 	int max_width = (wndRect.Right - wndRect.Left - 1) / 2;
 	InputBox box;
 
 	char*** contents;
-	int row_count = 1;
+	int row_count = 2;
+	char* titles[] = { "Строка поиска:", "Лимит букв в Слове" };
 	contents = (char***)malloc(row_count * sizeof(char**));
 	memset(contents, 0x00, row_count * sizeof(char**));
 	for(i = 0; i < row_count; ++i) {
 		contents[i] = (char**)malloc(COLUMNS * sizeof(char*));
 		// надпись
 		contents[i][TITLE] = (char*)malloc((MAX_TITLE + 1) * sizeof(char));
-		//strcpy(contents[i][TITLE], "Search:");
-		CharToOemA("Слово:  ", contents[i][TITLE]);
+		if (0 == i) {
+			strcpy(contents[i][TITLE], item->str + 1); // копируем без начального пробела
+		} else {
+			CharToOemA(titles[i], contents[i][TITLE]);
+		}
 		// буфер ввода
 		contents[i][BUFFER] = (char*)malloc((max_width + 1) * sizeof(char));
 		memset(contents[i][BUFFER], ' ', max_width * sizeof(char));
 		contents[i][BUFFER][0] = '\0';
 		contents[i][BUFFER][max_width] = '\0';
 	}
+	strcpy(contents[1][BUFFER], "20");
 
 	if(-1 == box_init(&box, pm->hStdOut, wndRect, contents, row_count)) {
 		return -1;
@@ -575,8 +600,11 @@ int Search(MENU* pm, ITEM* item) {
 		box_clear(&box);
 		return -1;
 	}
-
-	index = list1_search(&dict, dict_entry_find, contents[row][BUFFER]);
+	search.str = contents[0][BUFFER];
+	OemToCharA(search.str, search.str);
+	search.index = item->index;
+	search.value = atoi(contents[1][BUFFER]);
+	index = list1_search(&dict, dict_entry_find, &search);
 	list1_set_current_index(&ptable->items, index);
 	menu_fill_wnd(ptable, 0);
 	menu_cls(ptable);
@@ -595,7 +623,43 @@ int Search(MENU* pm, ITEM* item) {
 	}
 	free(contents);
 	contents = NULL;
-
+	#endif
+	return -1;
+}
+// Функция меню <Поиск>
+int Search(MENU* pm, ITEM* item) {
+	int i;
+	int max_len;
+	// без бессмысленного поиска по "Количеству букв"
+	int item_count = main_column_count - 1;
+	int slen;
+	int menu_width = 20;
+	int menu_height = item_count + 2;
+	SMALL_RECT rect;
+	ITEM_DEF* menu_items;
+	if(item) {
+		rect.Left = item->x;
+		rect.Right = rect.Left + menu_width - 1;
+		rect.Top = csbInfo.srWindow.Top + 2;
+		rect.Bottom = rect.Top + menu_height - 1;
+	} else {
+		int left = csbInfo.srWindow.Left, right = csbInfo.srWindow.Right;
+		int top = csbInfo.srWindow.Top, bottom = csbInfo.srWindow.Bottom;
+		rect.Left = left + (right - left + 1 - menu_width) / 2;
+		rect.Right = rect.Left + menu_width - 1;
+		rect.Top = top + (bottom - top + 1 - menu_height) / 2;
+		rect.Bottom = rect.Top + menu_height - 1;
+	}
+	max_len = menu_width - 2; // 2 верт. линии по краям
+	menu_items = (ITEM_DEF*)malloc(item_count * sizeof(ITEM_DEF));
+	memset(menu_items, 0x00, item_count * sizeof(ITEM_DEF));
+	for(i = 0; i < item_count; i++) {
+		menu_items[i].str[0] = (char*)malloc(max_len * sizeof(char));
+		strncpy(menu_items[i].str[0], main_headers[i], max_len);
+		menu_items[i].str[0][max_len] = '\0';
+		menu_items[i].cb = SearchItem;
+	}
+	ShowMenu(pm->hStdOut, menu_items, item_count, NULL, rect, MENU_FULL_FLAGS, MENU_TAG_SORT, F1);
 	return -1;
 }
 // Функция подменю <Сортировка>
