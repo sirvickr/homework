@@ -253,6 +253,7 @@ int Run() {
 	SMALL_RECT rect;
 	ITEM_DEF* main_menu_items = NULL;
 	int main_menu_items_count = 0;
+	WORD background = BACKGROUND_INTENSITY | BACKGROUND_BLUE;
 	#if 0
 	LoadInitialData();
 	return 0;
@@ -281,10 +282,13 @@ int Run() {
 	}
 	// Получаем размеры консоли
 	GetConsoleScreenBufferInfo(hstdout, &csbInfo);
-	rect.Left = csbInfo.srWindow.Left + 1;
-	rect.Right = csbInfo.srWindow.Right - 1;
-	rect.Top = csbInfo.srWindow.Top + 1;
+	rect.Left = csbInfo.srWindow.Left;
+	rect.Right = csbInfo.srWindow.Right;
+	rect.Top = csbInfo.srWindow.Top;
 	rect.Bottom = rect.Top;
+
+	SetConsoleTextAttribute(hstdout, background);
+	system("cls");
 
 	menu_init(&top_menu, NULL, hstdout, top_menu_items, top_item_count, 1,
 		MENU_ORIENT_HORZ, &rect, 0, NULL);
@@ -352,9 +356,8 @@ int Run() {
 			| FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE
 		);
 		menu_inactive_color(ptable,
-			BACKGROUND_INTENSITY | BACKGROUND_BLUE
-			| FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE
-		);
+			background | FOREGROUND_INTENSITY | FOREGROUND_RED |
+			FOREGROUND_GREEN | FOREGROUND_BLUE);
 		// блокирующий вызов: основной цикл обработки сообщений главной таблицы
 		menu_draw(ptable, MENU_FULL_FLAGS);
 		// возвожно, вышли по глобальному коду завершения, сбрасываем его
@@ -549,12 +552,6 @@ int Delete(MENU* menu) {
 }
 // Функция подменю <Поиск>
 int SearchItem(MENU* pm, ITEM* item) {
-	#if 0
-	list1_sort(&dict, dict_entry_compare, &item->index);
-	initial_table_index = list1_get_current_index(&dict);
-	redraw_main = 1;
-	exit_code = -1;
-	#else
 	int i;
 	int index;
 	SMALL_RECT wndRect = { 3, 11,  50, 14 };
@@ -618,7 +615,6 @@ int SearchItem(MENU* pm, ITEM* item) {
 	}
 	free(contents);
 	contents = NULL;
-	#endif
 	return -1;
 }
 // Функция меню <Поиск>
