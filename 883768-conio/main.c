@@ -242,7 +242,7 @@ int dict_entry_compare(void* data1, void* data2, void* arg) {
 	index = *(int*)arg;
 	if(index < 3)
 		return strcmp(a->field[index], b->field[index]) < 0 ? 1 : 0;
-	return strlen(a->field[0]) < strlen(b->field[0]) < 0 ? 1 : 0;
+	return strlen(a->field[0]) < strlen(b->field[0]) ? 1 : 0;
 }
 
 // Основная рабочая функция программы
