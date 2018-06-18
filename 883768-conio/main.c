@@ -420,13 +420,24 @@ int Exit(MENU* menu, ITEM* item) {
 // Функция меню <Добавить>
 int Add(MENU* pm, ITEM* item) {
 	int i;
-	SMALL_RECT wndRect = { 10, 11, 49, 15 };
-	int max_width = (wndRect.Right - wndRect.Left - 1) / 2;
+	SMALL_RECT rect = { 10, 11, 49, 15 };
+	int max_width;
+	int menu_width = 40;
+	int menu_height = DICT_FLD_CNT + 2; // поля и отступ
+	int row_count = DICT_FLD_CNT;
+	char*** contents;
 	DICT_ENTRY* entry;
 	InputBox box;
 
-	char*** contents;
-	int row_count = DICT_FLD_CNT;
+	int left = csbInfo.srWindow.Left, right = csbInfo.srWindow.Right;
+	int top = csbInfo.srWindow.Top, bottom = csbInfo.srWindow.Bottom;
+	rect.Left = left + (right - left + 1 - menu_width) / 2;
+	rect.Right = rect.Left + menu_width - 1;
+	rect.Top = top + (bottom - top + 1 - menu_height) / 2;
+	rect.Bottom = rect.Top + menu_height - 1;
+
+	max_width = (rect.Right - rect.Left - 1) / 2;
+
 	contents = (char***)malloc(row_count * sizeof(char**));
 	memset(contents, 0x00, row_count * sizeof(char**));
 	for(i = 0; i < row_count; ++i) {
@@ -444,7 +455,7 @@ int Add(MENU* pm, ITEM* item) {
 		contents[i][BUFFER][max_width] = '\0';
 	}
 
-	if(-1 == box_init(&box, pm->hStdOut, wndRect, contents, row_count)) {
+	if(-1 == box_init(&box, pm->hStdOut, rect, contents, row_count)) {
 		return -1;
 	}
 	if(-1 == box_save(&box)) {
@@ -483,13 +494,25 @@ int Add(MENU* pm, ITEM* item) {
 // Функция меню <Изменить>
 int Edit(MENU* pm, ITEM* item) {
 	int i, box_result;
-	SMALL_RECT wndRect = { 10, 11, 49, 15 };
-	int max_width = (wndRect.Right - wndRect.Left - 1) / 2;
+	SMALL_RECT rect = { 10, 11, 49, 15 };
+	int max_width;
+	int menu_width = 40;
+	int menu_height = DICT_FLD_CNT + 2; // поля и отступ
+	int row_count = DICT_FLD_CNT;
+	char*** contents;
 	DICT_ENTRY* entry = (DICT_ENTRY*)list1_curr(&dict);
 	InputBox box;
 
-	char*** contents;
-	int row_count = DICT_FLD_CNT;
+	int left = csbInfo.srWindow.Left, right = csbInfo.srWindow.Right;
+	int top = csbInfo.srWindow.Top, bottom = csbInfo.srWindow.Bottom;
+	rect.Left = left + (right - left + 1 - menu_width) / 2;
+	rect.Right = rect.Left + menu_width - 1;
+	rect.Top = top + (bottom - top + 1 - menu_height) / 2;
+	rect.Bottom = rect.Top + menu_height - 1;
+
+	max_width = (rect.Right - rect.Left - 1) / 2;
+
+
 	contents = (char***)malloc(row_count * sizeof(char**));
 	memset(contents, 0x00, row_count * sizeof(char**));
 	for(i = 0; i < row_count; ++i) {
@@ -507,7 +530,7 @@ int Edit(MENU* pm, ITEM* item) {
 	}
 
 	initial_table_index = list1_get_current_index(&dict);
-	if(-1 == box_init(&box, pm->hStdOut, wndRect, contents, row_count)) {
+	if(-1 == box_init(&box, pm->hStdOut, rect, contents, row_count)) {
 		return -1;
 	}
 	if(-1 == box_save(&box)) {
@@ -554,14 +577,26 @@ int Delete(MENU* menu) {
 int SearchItem(MENU* pm, ITEM* item) {
 	int i;
 	int index;
-	SMALL_RECT wndRect = { 3, 11,  50, 14 };
-	SearchCriteria search;
-	int max_width = (wndRect.Right - wndRect.Left - 1) / 2;
-	InputBox box;
+	SMALL_RECT rect = { 3, 11,  50, 14 };
+	int menu_width = 48;
+	int menu_height = 4;
+	int max_width;
 
+	char* titles[] = { "Строка поиска:", "Лимит букв в Слове" };
 	char*** contents;
 	int row_count = 2;
-	char* titles[] = { "Строка поиска:", "Лимит букв в Слове" };
+	SearchCriteria search;
+	InputBox box;
+
+	int left = csbInfo.srWindow.Left, right = csbInfo.srWindow.Right;
+	int top = csbInfo.srWindow.Top, bottom = csbInfo.srWindow.Bottom;
+	rect.Left = left + (right - left + 1 - menu_width) / 2;
+	rect.Right = rect.Left + menu_width - 1;
+	rect.Top = top + (bottom - top + 1 - menu_height) / 2 + 4;
+	rect.Bottom = rect.Top + menu_height - 1;
+
+	max_width = (rect.Right - rect.Left - 1) / 2;
+
 	contents = (char***)malloc(row_count * sizeof(char**));
 	memset(contents, 0x00, row_count * sizeof(char**));
 	for(i = 0; i < row_count; ++i) {
@@ -581,7 +616,7 @@ int SearchItem(MENU* pm, ITEM* item) {
 	}
 	strcpy(contents[1][BUFFER], "20");
 
-	if(-1 == box_init(&box, pm->hStdOut, wndRect, contents, row_count)) {
+	if(-1 == box_init(&box, pm->hStdOut, rect, contents, row_count)) {
 		return -1;
 	}
 	if(-1 == box_save(&box)) {
