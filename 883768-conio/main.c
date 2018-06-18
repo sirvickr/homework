@@ -470,6 +470,7 @@ int Add(MENU* pm, ITEM* item) {
 		list1_push_back(&dict,
 			dict_entry_new(contents[0][BUFFER], contents[1][BUFFER], contents[2][BUFFER])
 		);
+		initial_table_index = dict.count - 1;
 		data_modified = 1;
 		redraw_main = 1;
 		exit_code = -1;
