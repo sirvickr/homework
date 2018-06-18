@@ -463,10 +463,10 @@ int Add(MENU* pm, ITEM* item) {
 		return -1;
 	}
 	if(1 == box_draw(&box)) {
-		/*for(i = 0; i < row_count; ++i) {
+		for(i = 0; i < row_count; ++i) {
 			//strcpy(entry->field[i], contents[i][BUFFER]);
-			OemToCharA(contents[i][BUFFER], entry->field[i]);
-		}*/
+			OemToCharA(contents[i][BUFFER], contents[i][BUFFER]);
+		}
 		list1_push_back(&dict,
 			dict_entry_new(contents[0][BUFFER], contents[1][BUFFER], contents[2][BUFFER])
 		);
