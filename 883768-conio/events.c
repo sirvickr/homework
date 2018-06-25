@@ -4,7 +4,7 @@
 #pragma hdrstop
 #include "events.h"
 
-ConsoleEvents* ConsoleEventsCreate(HANDLE hStdin) {
+ConsoleEvents* ConsoleEventsCreate(HANDLE hStdin, void* cbParam) {
 	ConsoleEvents* self;
 	if(INVALID_HANDLE_VALUE == hStdin)
 		return NULL;
@@ -13,6 +13,7 @@ ConsoleEvents* ConsoleEventsCreate(HANDLE hStdin) {
 		return NULL;
 	memset(self, 0x00, sizeof(ConsoleEvents));
 	self->hStdin = hStdin;
+	self->cbParam = cbParam;
 	return self;
 }
 
@@ -52,7 +53,6 @@ int ConsoleEventLoop(ConsoleEvents* self) {
 	DWORD fdwSaveOldMode;
 	DWORD cNumRead, i;
 	DWORD fdwMode = 0;
-	int counter = 0;
 	int result = 0;
 	INPUT_RECORD irInBuf[EVENT_BUF_SIZE];
 	if (! GetConsoleMode(self->hStdin, &fdwSaveOldMode) )
@@ -63,9 +63,9 @@ int ConsoleEventLoop(ConsoleEvents* self) {
 		fdwMode |= ENABLE_MOUSE_INPUT;
 	// è ò.ä.
     if (! SetConsoleMode(self->hStdin, fdwMode) ) 
-        ErrorExit("SetConsoleMode"); 
-	
-	while (counter++ <= 100)
+		return -1;
+
+	while (0 == result)
     { 
         // Wait for the events. 
 
@@ -85,24 +85,25 @@ int ConsoleEventLoop(ConsoleEvents* self) {
             switch(irInBuf[i].EventType) 
             { 
                 case KEY_EVENT: // keyboard input 
-					self->cbKey(irInBuf[i].Event.KeyEvent);
-                    break; 
+					result = self->cbKey(irInBuf[i].Event.KeyEvent, self->cbParam);
+					break;
 
                 case MOUSE_EVENT: // mouse input 
-					self->cbMouse(irInBuf[i].Event.MouseEvent);
+					result = self->cbMouse(irInBuf[i].Event.MouseEvent, self->cbParam);
                     break; 
 
                 case WINDOW_BUFFER_SIZE_EVENT: // scrn buf. resizing 
-                    self->cbResize( irInBuf[i].Event.WindowBufferSizeEvent ); 
+					result = self->cbResize(irInBuf[i].Event.WindowBufferSizeEvent, self->cbParam);
                     break; 
 
-                case FOCUS_EVENT:  // disregard focus events 
+				case FOCUS_EVENT:  // disregard focus events
+					break;
 
                 case MENU_EVENT:   // disregard menu events 
                     break; 
 
                 default: 
-                    ErrorExit("Unknown event type"); 
+                    //ErrorExit("Unknown event type"); 
                     break; 
             } 
         }
