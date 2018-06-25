@@ -8,6 +8,7 @@ using namespace std;
 void Swap_Max_Min(btree *root) {
 	if (!root)
 		return;
+	// спускаемс€ к минимальному элементу
 	btree *pmin = root;
 	while (1) {
 		btree *left = pmin->left;
@@ -16,6 +17,7 @@ void Swap_Max_Min(btree *root) {
 		}
 		pmin = left;
 	}
+	// спускаемс€ к минимальному элементу
 	btree *pmax = root;
 	while (1) {
 		btree *right = pmax->right;
@@ -24,6 +26,7 @@ void Swap_Max_Min(btree *root) {
 		}
 		pmax = right;
 	}
+	// мен€ем их местами
 	swap(pmin->value, pmax->value);
 }
 
@@ -33,7 +36,7 @@ int main()
 	btree *root = NULL;
 #if 1
 	const int size = 10;
-	int a[size] = { 3, -1, 5, 9, 8, -7, 0, 2, 1, 4 };
+	int a[size] = { 3, -1, 5, 9, 8, -7, -5, 2, 1, 4 };
 	for(int i = 0; i < size; i++)
 		Ins_Btree(a[i], &root);
 #else
