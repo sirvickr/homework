@@ -558,14 +558,71 @@ int Edit(MENU* pm, ITEM* item) {
 
 	return exit_code;
 }
+// флаг удаления записи
+int del_record = 0;
+// Выход - сохранить данные
+int DelYes(MENU* menu, ITEM* item) {
+	del_record = 1;
+	return -1;
+}
+// Выход - не сохранять данные
+int DelNo(MENU* menu, ITEM* item) {
+	del_record = 0;
+	return -1;
+}
 // Функция меню <Удалить>
-int Delete(MENU* menu) {
-	list1_erase_current(&dict);
-	menu_del_curr(menu);
-	menu_fill_wnd(menu, 0);
-	menu_cls(menu);
-	menu_draw(menu, MENU_FLAG_WND | MENU_FLAG_ITEMS | MENU_DRAW_SEL);
-	data_modified = 1;
+int Delete(MENU* pm) {
+	// количество ячеек (столбцов) меню подтверждения удаления
+	#define del_column_count 1
+	// количество пунктов меню подтверждения удаления
+	#define del_item_count 2
+	// массив с описаниями элементов меню подтверждения удаления
+	const char* item_captions[del_item_count] = { "Да", "Нет" };
+	ITEM_DEF menu_items[del_item_count] = {
+		{ { NULL, 0 }, DelYes },
+		{ { NULL, 0 }, DelNo },
+	};
+	// массив заголовков (1 заголовок) меню подтверждения выхода
+	char* headers[del_column_count];
+	int i;
+	MENU menu;
+	SMALL_RECT rect;
+	const int width = 24;
+	const int height = 7;
+	rect.Left = (csbInfo.srWindow.Right - csbInfo.srWindow.Left - width) / 2;
+	rect.Right = rect.Left + width - 1;
+	rect.Top = (csbInfo.srWindow.Bottom - csbInfo.srWindow.Top - height) / 2;
+	rect.Bottom = rect.Top + height - 1;
+	for(i = 0; i < del_column_count; i++)
+		headers[i] = (char*)malloc(MAX_MENU_HDR * sizeof(char));
+	CharToOemA("Удалить запись?", headers[0]);
+	for(i = 0; i < del_item_count; i++) {
+		menu_items[i].str[0] = (char*)malloc(MAX_MENU_HDR * sizeof(char));
+		CharToOemA(item_captions[i], menu_items[i].str[0]);
+	}
+	menu_init(&menu, ptable, pm->hStdOut, menu_items, del_item_count,
+		del_column_count, MENU_ORIENT_VERT, &rect, 1, headers);
+	menu.user_tag = MENU_TAG_EXIT;
+	menu_active_color(&menu, BACKGROUND_INTENSITY | BACKGROUND_BLUE | BACKGROUND_GREEN);
+	menu_inactive_color(&menu, BACKGROUND_BLUE | BACKGROUND_GREEN);
+	menu_add_hotkey(&menu, KEY_ESC, DefaultESC);
+	menu_draw(&menu, MENU_FULL_FLAGS);
+	menu_clear(&menu);
+	for(i = 0; i < del_item_count; i++)
+		if(menu_items[i].str[0])
+			free(menu_items[i].str[0]);
+	for(i = 0; i < del_column_count; ++i)
+		if(headers[i])
+			free(headers[i]);
+	if(del_record) {
+		del_record = 0;
+		list1_erase_current(&dict);
+		menu_del_curr(pm);
+		menu_fill_wnd(pm, 0);
+		menu_cls(pm);
+		menu_draw(pm, MENU_FLAG_WND | MENU_FLAG_ITEMS | MENU_DRAW_SEL);
+		data_modified = 1;
+	}
 	return 0;
 }
 // Функция подменю <Поиск>
