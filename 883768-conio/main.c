@@ -76,8 +76,6 @@ int HelpFromFile(HANDLE hStdOut, const char* file_name, const char* title, SMALL
 int ShowMenu(HANDLE hStdOut, ITEM_DEF* menu_items, int item_count, const char* title, SMALL_RECT rect, int flags, int user_tag, ExecuteHotketCB f1CB);
 // Загрузка пунктов меню из файла
 ITEM_DEF* MenuItemsFromFile(const char* file_name, int max_count, int max_len, int* pcount);
-// Загрузка тестовых данных в словарь
-void LoadInitialData();
 
 // максимально допустимая длина строки
 #define MAX_STRING 256
@@ -88,6 +86,7 @@ void LoadInitialData();
 #define MENU_TAG_EXIT        3
 #define MENU_TAG_HELP_GLOBAL 4
 #define MENU_TAG_SORT        5
+#define MENU_TAG_FIND        6
 // количество пунктов верхнего меню
 #define top_item_count 7
 // количество ячеек (столбцов) основного табличного меню
@@ -225,8 +224,7 @@ int dict_entry_find(void* data, void* param) {
 	DICT_ENTRY* entry = (DICT_ENTRY*)data;
 	SearchCriteria* search = (SearchCriteria*)param;
 	if(search->index < DICT_FLD_CNT)
-		return strlen(entry->field[0]) <= search->value &&
-		       strcmp(search->str, entry->field[search->index]) == 0 ? 1 : 0;
+		return strlen(entry->field[0]) <= search->value && strcmp(search->str, entry->field[search->index]) == 0 ? 1 : 0;
 	// поиск по "Количеству букв" (закомментирован как бессмысленный)
 	return 0;//atoi(search->str) == strlen(entry->field[0]) ? 1 : 0;
 }
@@ -254,10 +252,7 @@ int Run() {
 	ITEM_DEF* main_menu_items = NULL;
 	int main_menu_items_count = 0;
 	WORD background = BACKGROUND_INTENSITY | BACKGROUND_BLUE;
-	#if 0
-	LoadInitialData();
-	return 0;
-	#endif
+
 	// Инициализация заголовков глобальных меню
 	for(i = 0; i < main_column_count; i++)
 		main_headers[i] = (char*)malloc(MAX_MENU_HDR * sizeof(char));
@@ -309,7 +304,7 @@ int Run() {
 	main_menu_items_count = dict.count;
 
 	while (redraw_main) {
-		redraw_main = 0; // любой callback может запланировать перерисовку
+		redraw_main = 0;
 		//
 		if(main_menu_items) {
 			for(i = 0; i < main_menu_items_count; i++)
@@ -513,7 +508,6 @@ int Edit(MENU* pm, ITEM* item) {
 
 	max_width = (rect.Right - rect.Left - 1) / 2;
 
-
 	contents = (char***)malloc(row_count * sizeof(char**));
 	memset(contents, 0x00, row_count * sizeof(char**));
 	for(i = 0; i < row_count; ++i) {
@@ -644,7 +638,7 @@ int SearchItem(MENU* pm, ITEM* item) {
 		if(contents[i]) {
 			if(contents[i][TITLE])
 				free(contents[i][TITLE]);
-			if(contents[i][BUFFER]);
+			if(contents[i][BUFFER])
 				free(contents[i][BUFFER]);
 			free(contents[i]);
 		}
@@ -657,7 +651,6 @@ int SearchItem(MENU* pm, ITEM* item) {
 int Search(MENU* pm, ITEM* item) {
 	int i;
 	int max_len;
-	// без бессмысленного поиска по "Количеству букв"
 	int item_count = main_column_count - 1;
 	int slen;
 	int menu_width = 20;
@@ -686,7 +679,7 @@ int Search(MENU* pm, ITEM* item) {
 		menu_items[i].str[0][max_len] = '\0';
 		menu_items[i].cb = SearchItem;
 	}
-	ShowMenu(pm->hStdOut, menu_items, item_count, NULL, rect, MENU_FULL_FLAGS, MENU_TAG_SORT, F1);
+	ShowMenu(pm->hStdOut, menu_items, item_count, NULL, rect, MENU_FULL_FLAGS, MENU_TAG_FIND, F1);
 	return -1;
 }
 // Функция подменю <Сортировка>
@@ -731,7 +724,7 @@ int Save(MENU* menu, ITEM* item) {
 	dict_save(dict_file_name);
 	return -1;
 }
-// Функция меню <Помощь>. Заполняется кодом пользователя
+// Функция меню <Помощь>.
 int Help(MENU* pm, ITEM* item) {
 	int result = 0;
 	SMALL_RECT rect;
@@ -746,13 +739,22 @@ int Help(MENU* pm, ITEM* item) {
 		result = HelpFromFile(pm->hStdOut, "help.txt", "Справка о программе", rect);
 		break;
 	case MENU_TAG_SORT:
-		width = 55;
-		height = 6;
+		width = 95;
+		height = 8;
 		rect.Left = (csbInfo.srWindow.Right - csbInfo.srWindow.Left - width) / 2;
 		rect.Right = rect.Left + width - 1;
 		rect.Top = (csbInfo.srWindow.Bottom - csbInfo.srWindow.Top - height) / 2;
 		rect.Bottom = rect.Top + height - 1;
 		result = HelpFromFile(pm->hStdOut, "sort.txt", "Справка: Функция сортировки", rect);
+		break;
+	case MENU_TAG_FIND:
+		width = 80;
+		height = 7;
+		rect.Left = (csbInfo.srWindow.Right - csbInfo.srWindow.Left - width) / 2;
+		rect.Right = rect.Left + width - 1;
+		rect.Top = (csbInfo.srWindow.Bottom - csbInfo.srWindow.Top - height) / 2;
+		rect.Bottom = rect.Top + height - 1;
+		result = HelpFromFile(pm->hStdOut, "find.txt", "Справка: Функция поиска", rect);
 		break;
 	}
 	return result;
@@ -848,7 +850,7 @@ int ShowMenu(HANDLE hStdOut, ITEM_DEF* menu_items, int item_count, const char* t
 // Отображение текста справки из файла на всплывающем окне
 int HelpFromFile(HANDLE hStdOut, const char* file_name, const char* title, SMALL_RECT rect) {
 	int i;
-	//int menu_width = rect.Right - rect.Left + 1;
+	int menu_width = rect.Right - rect.Left + 1;
 	int menu_height = rect.Bottom - rect.Top + 1;
 	int item_count = 0;
 	// 4 = заголовок + 3 гориз. линиии
@@ -857,62 +859,5 @@ int HelpFromFile(HANDLE hStdOut, const char* file_name, const char* title, SMALL
 		return -1;
 	}
 	return ShowMenu(hStdOut, menu_items, item_count, title, rect, MENU_FLAG_WND | MENU_FLAG_ITEMS | MENU_HOTKEYS, MENU_TAG_HELP_GLOBAL, DefaultESC);
-}
-// Загрузка тестовых данных в словарь
-void LoadInitialData() {
-	if(-1 == list1_push_back(&dict, dict_entry_new("hello", "noun", "привет")))
-		return -1;
-	if(-1 == list1_push_back(&dict, dict_entry_new("world", "noun", "мир")))
-		return -1;
-	if(-1 == list1_push_back(&dict, dict_entry_new("go", "verb", "идти")))
-		return -1;
-	if(-1 == list1_push_back(&dict, dict_entry_new("here", "adverb", "здесь")))
-		return -1;
-	if(-1 == list1_push_back(&dict, dict_entry_new("run", "noun", "бежать")))
-		return -1;
-	if(-1 == list1_push_back(&dict, dict_entry_new("smart", "adjective", "умный")))
-		return -1;
-	if(-1 == list1_push_back(&dict, dict_entry_new("those", "pronoun", "те")))
-		return -1;
-	if(-1 == list1_push_back(&dict, dict_entry_new("between", "preposition", "между")))
-		return -1;
-	if(-1 == list1_push_back(&dict, dict_entry_new("under", "preposition", "под")))
-		return -1;
-	if(-1 == list1_push_back(&dict, dict_entry_new("star", "noun", "звезда")))
-		return -1;
-	if(-1 == list1_push_back(&dict, dict_entry_new("label", "noun", "метка")))
-		return -1;
-	if(-1 == list1_push_back(&dict, dict_entry_new("recall", "verb", "вспомнить")))
-		return -1;
-	if(-1 == list1_push_back(&dict, dict_entry_new("nice", "adjective", "красивый")))
-		return -1;
-	if(-1 == list1_push_back(&dict, dict_entry_new("cat", "noun", "кот")))
-		return -1;
-	if(-1 == list1_push_back(&dict, dict_entry_new("below", "adverb", "внизу")))
-		return -1;
-	if(-1 == list1_push_back(&dict, dict_entry_new("snake", "noun", "змея")))
-		return -1;
-	if(-1 == list1_push_back(&dict, dict_entry_new("sit", "verb", "сидеть")))
-		return -1;
-	if(-1 == list1_push_back(&dict, dict_entry_new("language", "noun", "язык")))
-		return -1;
-	if(-1 == list1_push_back(&dict, dict_entry_new("he", "pronoun", "он")))
-		return -1;
-	if(-1 == list1_push_back(&dict, dict_entry_new("she", "pronoun", "она")))
-		return -1;
-	if(-1 == list1_push_back(&dict, dict_entry_new("into", "preposition", "в")))
-		return -1;
-	if(-1 == list1_push_back(&dict, dict_entry_new("yours", "pronoun", "твой")))
-		return -1;
-	if(-1 == list1_push_back(&dict, dict_entry_new("today", "adverb", "сегодня")))
-		return -1;
-	if(-1 == list1_push_back(&dict, dict_entry_new("strong", "adjective", "сильный")))
-		return -1;
-	if(-1 == list1_push_back(&dict, dict_entry_new("human", "noun", "человек")))
-		return -1;
-	if(-1 == dict_save(dict_file_name))
-		return -1;
-	list1_clear(&dict);
-	getchar();
 }
 

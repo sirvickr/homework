@@ -74,22 +74,6 @@ int dict_save(const char* file_name) {
 		return -1;
 	#if 1
 	list1_for_each(&dict, dict_entry_save, file);
-	#else
-	DICT_ENTRY* curr = dict_head;
-	while(curr) {
-		int i, nwrote;
-		for(i = 0; i < DICT_FLD_CNT; i++) {
-			if(curr->field[i]) {
-				nwrote = fwrite(curr->field[i], strlen(curr->field[i]) + 1, 1, file);
-			} else {
-				nwrote = fwrite(empty, 2, 1, file);
-			}
-			if(nwrote != 1) {
-				return -1;
-			}
-		}
-		curr = curr->next;
-	}
 	#endif
 	fclose(file);
 	return 0;

@@ -1,6 +1,7 @@
 #include "input.h"
 #include "codes.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <conio.h>
 
@@ -31,39 +32,11 @@ int box_init(InputBox* box, HANDLE handle, SMALL_RECT rect, char*** contents, in
 	memset(box->wnd, 0x00, size);
 
 	box->max_width = (box->size.X - 2) / 2;
-	/*box->buffer = (char*)malloc((box->max_width + 1) * sizeof(char));
-	if(!box->buffer) {
-		free(box->bak);
-		free(box->wnd);
-		return -1;
-	}
-	memset(box->buffer, 0x00, box->max_width * sizeof(char));*/
+
 
 	box->row_count = row_count;
 	#if 1 // используем внешнюю память
 	box->contents = contents;
-	#else
-	box->contents = (char***)malloc(box->row_count * sizeof(char**));
-	if(!box->contents) {
-		free(box->bak);
-		free(box->wnd);
-		//free(box->buffer);
-		return -1;
-	}
-	memset(box->contents, 0x00, box->row_count * sizeof(char**));
-	for(i = 0; i < row_count; ++i) {
-		box->contents[i] = (char**)malloc(COLUMNS * sizeof(char*));
-		// надпись
-		box->contents[i][TITLE] = (char*)malloc((MAX_TITLE + 1) * sizeof(char));
-		strcpy(box->contents[i][TITLE], contents[i][TITLE]);
-		// буфер ввода
-		box->contents[i][BUFFER] = (char*)malloc((box->max_width + 1) * sizeof(char));
-		memset(box->contents[i][BUFFER], ' ', (box->max_width + 1) * sizeof(char));
-		if(contents[i][BUFFER]) {
-			strncpy(box->contents[i][BUFFER], contents[i][BUFFER], box->max_width);
-		}
-		box->contents[i][BUFFER][box->max_width] = '\0';
-	}
 	#endif
 
 	box->edit_attr = BACKGROUND_INTENSITY | BACKGROUND_GREEN | BACKGROUND_BLUE
@@ -82,23 +55,7 @@ void box_clear(InputBox* box) {
 		free(box->wnd);
 		box->wnd = NULL;
 	}
-	/*if(box->buffer) {
-		free(box->buffer);
-		box->buffer = NULL;
-	}
-	if(box->contents) {
-		for(i = 0; i < box->row_count; ++i) {
-			if(box->contents[i]) {
-				if(box->contents[i][TITLE])
-					free(box->contents[i][TITLE]);
-				if(box->contents[i][BUFFER]);
-					free(box->contents[i][BUFFER]);
-				free(box->contents[i]);
-			}
-		}
-		free(box->contents);
-		box->contents = NULL;
-	}*/
+
 }
 
 int box_save(InputBox* box) {
@@ -217,16 +174,7 @@ int box_draw(InputBox* box) {
 	left = box->rect.Left + box->max_width; // 1;
 	top = box->rect.Top + 1;
 	// Draw wnd
-	/*SetConsoleTextAttribute(box->handle, pm->activeItemAttributes);
-	box_gotoxy(box, left + 0, top + 0);
-	printf("                         ");
-	box_gotoxy(box, left + 0, top);
-	printf("                         ");
-	box_gotoxy(box, left + 0, top + 2);
-	printf("                         ");
-	box_gotoxy(box, left, top);
-	SetConsoleTextAttribute(box->handle, box->inactiveItemAttributes);
-	printf("                       ");   */
+
 	SetConsoleTextAttribute(box->handle, box->edit_attr);
 	// Input
 	box_gotoxy(box, left, top);
@@ -322,10 +270,7 @@ int box_draw(InputBox* box) {
 				}
 				break;
 			} // switch(iKey)
-			#if 0 // отладка
-			box_gotoxy(box, left, top + 10);
-			printf("%c\t%d\tpos %d\tlen %d", ch, ch, pos[box->row], len[box->row]);
-			#endif
+
 			box_gotoxy(box, left, top + box->row);
 			printf("%s", box->contents[box->row][BUFFER]);
 			box_gotoxy(box, left + pos[box->row], top + box->row);
@@ -335,7 +280,7 @@ int box_draw(InputBox* box) {
 	free(pos);
 	
 	if(-1 == box_restore(box)) {
-		box_clear(&box);
+		box_clear(box);
 		return -1;
 	}
 	return result;
