@@ -335,6 +335,7 @@ int Run() {
 			MENU_ORIENT_VERT, &rect, 1, main_headers);
 		// устанавливаем текущий индекс
 		list1_set_current_index(&ptable->items, initial_table_index);
+		list1_set_current_index(&dict, initial_table_index);
 		initial_table_index = 0;
 		// продолжаем настройку меню
 		ptable->user_tag = MENU_TAG_MAIN;
@@ -587,8 +588,8 @@ int Delete(MENU* pm) {
 	int i;
 	MENU menu;
 	SMALL_RECT rect;
-	const int width = 24;
-	const int height = 7;
+	const int width = 19;
+	const int height = 6;
 	rect.Left = (csbInfo.srWindow.Right - csbInfo.srWindow.Left - width) / 2;
 	rect.Right = rect.Left + width - 1;
 	rect.Top = (csbInfo.srWindow.Bottom - csbInfo.srWindow.Top - height) / 2;
