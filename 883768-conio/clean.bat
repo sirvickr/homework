@@ -1,1 +1,1 @@
-del *.obj *.ddp *.dsk *.exe *.tds *.~*
+del *.obj *.ddp *.~dsk *.exe *.tds *.~*
