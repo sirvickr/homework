@@ -243,7 +243,13 @@ int list1_search(LIST1* list, LIST_ITEM_FIND check, void* param) {
 }
 
 void list1_sort(LIST1* list, LIST_ITEM_COMP compare, void* param) {
+	LIST1_ITEM* curr;
 	mergeSort(&list->head, compare, param);
+	curr = list->head;
+	while(curr) {
+		list->tail = curr;
+		curr = curr->next;
+	}
 }
 
 // вспомогательные функции
