@@ -1,22 +1,31 @@
-#include <clocale>
-#include <iostream>
-#include <iomanip>
-#include <algorithm>
-
 #include "Menu.h"
 
 using namespace std;
 
-Menu::Menu() {
+Menu::Menu(int timeout) : timeout(timeout) {
+	currUser = users.end();
+	#ifdef __DEBUG__
 	users["a"] = "a";
-	songs.push_back(Song("aa", "aaa"));
-	songs.push_back(Song("bb", "bbb"));
-	songs.push_back(Song("cc", "ccc"));
-	songs.push_back(Song("dd", "ddd"));
+	users["b"] = "b";
+	users["c"] = "c";
+	users["d"] = "d";
+	users["e"] = "e";
+	songs.push_back(new Song("aa", "aaa", 1));
+	songs.push_back(new Song("bb", "bbb", 2));
+	songs.push_back(new Song("cc", "ccc", 3));
+	songs.push_back(new Song("dd", "ddd", 4));
+	#endif
+	startTime = chrono::steady_clock::now();
+	checkTimeout();
+}
+
+Menu::~Menu() {
+	for(auto song : songs) {
+		delete song;
+	}
 }
 
 int Menu::run() {
-	setlocale(LC_ALL, "Russian");
 	int counter = 0;
 	int menu = -1;
     while (menu != 0) {
@@ -24,13 +33,11 @@ int Menu::run() {
         cout << "[0] Завершение работы\n";
         cout << "[1] Войти в систему подачи заявок\n";
         cout << "[2] Зарегистрироваться в системе подачи заявок\n";
-
-        cout  << endl;
-
-        cout << "Ваш выбор: ";
+        cout << endl << "Ваш выбор: ";
         cin.sync();
         cin >> menu;
-
+		cout << endl;
+		
         switch(menu) {
         case 1:
             if(signIn() && runAuth())
@@ -45,16 +52,21 @@ int Menu::run() {
         	cout << "emergency exit" << endl;
         	break;
 		}
-    }
+		if(menu != 0 && checkTimeout()) {
+			break;
+		}
+		
+    } // while()
 
 	return 0;
 }
 
 bool Menu::signIn() {
 	Menu::Users::value_type user = inputUser();
-	Users::const_iterator it = users.find(user.first);
-	if(it == users.end() || it->second != user.second) {
+	currUser = users.find(user.first);
+	if(currUser == users.end() || currUser->second != user.second) {
 		cout << "Неверное сочетание имени пользователя и пароля" << endl;
+		currUser = users.end();
 		return false;
 	}
 	cout << "Авторизация пройдена" << endl;
@@ -68,7 +80,7 @@ bool Menu::signUp() {
 		cout << "Такой пользователь уже существует" << endl;
 		return false;
 	}
-	users[user.first] = user.second;
+	currUser = users.insert(user).first;
 	cout << "Регистрация завершена" << endl;
 	return true;
 }
@@ -82,12 +94,13 @@ bool Menu::runAuth() {
         cout << "\n\nГЛАВНОЕ МЕНЮ\n\n";
         cout << "[0] Завершение работы\n";
         cout << "[1] Выйти из учётной записи\n";
-        cout << "[2] Список песен\n";
-        cout << "[3] Проголосовать за песню\n";
-        cout << "[4] Добавить песню\n";
-        cout << "[5] Редактировать информацию о песне\n";
-        cout << "[6] Удалить песню\n";
-        cout << "[7] Найти песню\n";
+        cout << "[2] Общий cписок песен\n";
+        cout << "[3] Список песен для выбора\n";
+        cout << "[4] Проголосовать за песню\n";
+        cout << "[5] Добавить песню\n";
+        cout << "[6] Редактировать информацию о песне\n";
+        cout << "[7] Удалить песню\n";
+        cout << "[8] Найти песню\n";
 
         cout  << endl;
 
@@ -104,21 +117,24 @@ bool Menu::runAuth() {
         	running = false;
         	break;
         case 2:
-        	printSongs();
+        	printSongs(songs, PrintSong());
         	break;
         case 3:
-        	selectSong();
+        	printSongs(songs, PrintAvailableSong(userSongs, currUser));
         	break;
         case 4:
-        	addSong();
+        	selectSong();
         	break;
         case 5:
-        	editSong();
+        	addSong();
         	break;
         case 6:
-        	delSong();
+        	editSong();
         	break;
         case 7:
+        	delSong();
+        	break;
+        case 8:
         	findSong();
         	break;
         }
@@ -126,48 +142,48 @@ bool Menu::runAuth() {
         	cout << "emergency exit" << endl;
         	break;
 		}
-    }
+		if(checkTimeout()) {
+        	exit = true;
+        	break;
+		}
+    } // while()
+    
+	currUser = users.end();
 
 	return exit;
 }
 
-void Menu::printSongs() {
-	if(songs.empty())
-		cout << "Список песен пуст" << endl;
-	else {
-   		cout << setw(4) << "№" << "  Рейтинг Песня" << endl;
-   		PrintSong printSong(1);
-    	for_each(songs.begin(), songs.end(), printSong);
-	}
-}
-
 void Menu::selectSong() {
 	try {
+		printSongs(songs, PrintAvailableSong(userSongs, currUser));
 		size_t index = inputIndex();
-		songs[index].vote();
-		printSongs();
+		Song* song = songs[index];
+		song->vote();
+		userSongs.push_back(UserSongs::value_type(song, currUser));
+		printSongs(songs, PrintAvailableSong(userSongs, currUser));
 	} catch(InvalidOrdinalError&) {
 		cout << "Недопустимое значение" << endl;
 	}
 }
 
 void Menu::addSong() {
-	Song song = inputSong();
-	Songs::const_iterator it = find(songs.begin(), songs.end(), song);
+	Song* song = inputSong();
+	const auto it = find(songs.begin(), songs.end(), song);
 	if(it != songs.end()) {
 		cout << "Такая песня уже есть" << endl;
 		return;
 	}
 	songs.push_back(song);
-	printSongs();
+	for(size_t i = 0; i < songs.size(); i++) 
+		songs[i]->setId(i + 1);
+	printSongs(songs, PrintSong());
 }
 
 void Menu::editSong() {
 	try {
 		size_t index = inputIndex();
-		Song song = inputSong();
-		songs[index] = song;
-		printSongs();
+		songs[index] = inputSong();
+		printSongs(songs, PrintSong());
 	} catch(InvalidOrdinalError&) {
 		cout << "Недопустимое значение" << endl;
 	}
@@ -177,7 +193,9 @@ void Menu::delSong() {
 	try {
 		size_t index = inputIndex();
 		songs.erase(songs.begin() + index);
-		printSongs();
+		for(size_t i = 0; i < songs.size(); i++) 
+			songs[i]->setId(i + 1);
+		printSongs(songs, PrintSong());
 	} catch(InvalidOrdinalError&) {
 		cout << "Недопустимое значение" << endl;
 	}
@@ -199,10 +217,10 @@ void Menu::findSong() {
 	Songs::iterator it = songs.end();
     switch(menu) {
     case 1:
-		it = find_if(songs.begin(), songs.end(), FindSongByName(s));
+		it = findSong(FindSongByName(s));
     	break;
     case 2:
-		it = find_if(songs.begin(), songs.end(), FindSongBySinger(s));
+		it = findSong(FindSongBySinger(s));
     	break;
     default:
     	return;
@@ -211,7 +229,7 @@ void Menu::findSong() {
 		cout << "Песня не найдена" << endl;
 		return;
 	}
-	cout << "Песня найдена, её номер в списке - " << distance(songs.begin(), it) + 1 << endl;
+	cout << "Песня найдена, её номер " << (*it)->getId() << endl;
 }
 
 Menu::Users::value_type Menu::inputUser() {
@@ -223,13 +241,13 @@ Menu::Users::value_type Menu::inputUser() {
 	return Users::value_type(name, pass);
 }
 
-Song Menu::inputSong() {
+Song* Menu::inputSong() {
 	string name, singer;
 	cout << "Введите название песни: ";
 	cin >> name;
 	cout << "Введите исполнителя: ";
 	cin >> singer;
-	return Song(name, singer);
+	return new Song(name, singer);
 }
 
 size_t Menu::inputIndex() {
@@ -241,15 +259,43 @@ size_t Menu::inputIndex() {
 	return index - 1;
 }
 
-void PrintSong::operator()(const Song& song) {
-	cout << setw(4) << index++ << ". " << setw(7) << song.getVotes() << " \"" << song.getName() << "\" (" << song.getSinger() << ")" << endl;
+void Menu::PrintSong::operator()(const Song* song) {
+	cout << setw(4) << song->getId() << ". " << setw(7) << song->getVotes() << " \"" << song->getName() << "\" (" << song->getSinger() << ")" << endl;
 }
 
-bool FindSongByName::operator()(const Song& song) {
-	return song.getName() == field;
+void Menu::PrintAvailableSong::operator()(const Song* song) {
+	Menu::UserSongs::iterator it = find(userSongs.begin(), userSongs.end(), Menu::UserSongs::value_type(song, currUser));
+	if(it == userSongs.end()) {
+		cout << setw(4) << song->getId() << ". " << setw(7) << song->getVotes() << " \"" << song->getName() << "\" (" << song->getSinger() << ")" << endl;
+	}
 }
 
-bool FindSongBySinger::operator()(const Song& song) {
-	return song.getSinger() == field;
+bool Menu::checkTimeout() {
+	bool result = false;
+	auto now = chrono::steady_clock::now();
+	auto delta = chrono::duration_cast<chrono::seconds>(now - startTime).count();
+	auto rest = timeout - delta;
+	if(rest <= 0) {
+	   	cout << "Концерт начинается:" << endl;
+	   	Songs program = createConcertProgram<2>();
+    	printSongs(program, PrintSong());
+    	result = true;
+	} else {
+	   	cout << "До начала концерта осталось секунд: " << rest << endl;
+	}
+	return result;
+}
+
+bool FindSongByName::operator()(const Song* song) {
+	return song->getName() == field;
+}
+
+bool FindSongBySinger::operator()(const Song* song) {
+	return song->getSinger() == field;
+}
+
+// Функция-предикат для сортировки песен по убыванию рейтинга
+bool CompareSongsRating(const Song* a, const Song* b) {
+	return a->getVotes() > b->getVotes();
 }
 
