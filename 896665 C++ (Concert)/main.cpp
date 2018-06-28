@@ -1,7 +1,7 @@
 #include <clocale>
 #include <sstream>
 
-#include "Menu.h"
+#include "Concert.h"
 
 int main(int argc, char** argv) {
 	setlocale(LC_CTYPE, "Russian");
@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
 			timeout = value;
 		}
 	}
-	Menu menu(timeout);
-	return menu.run();
+	Concert concert(timeout);
+	return concert.run();
 }
 

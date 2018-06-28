@@ -1,5 +1,5 @@
-#ifndef MENU_H
-#define MENU_H
+#ifndef CONCERT_H
+#define CONCERT_H
 
 #include <string>
 #include <map>
@@ -33,7 +33,7 @@ private:
 // Функция-предикат для сортировки песен по убыванию рейтинга
 bool CompareSongsRating(const Song* a, const Song* b);
 
-class Menu
+class Concert
 {
 	class InvalidOrdinalError {
 	public:
@@ -46,8 +46,8 @@ class Menu
 		size_t value;
 	};
 public:
-	Menu(int timeout);
-	~Menu();
+	Concert(int timeout);
+	~Concert();
 	int run();
 public:
 	typedef std::map<std::string, std::string> Users;

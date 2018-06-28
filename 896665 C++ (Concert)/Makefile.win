@@ -4,8 +4,8 @@
 CPP      = g++.exe -D__DEBUG__
 CC       = gcc.exe -D__DEBUG__
 WINDRES  = windres.exe
-OBJ      = main.o Menu.o Song.o
-LINKOBJ  = main.o Menu.o Song.o
+OBJ      = main.o Song.o Concert.o
+LINKOBJ  = main.o Song.o Concert.o
 LIBS     = -L"D:/Software/Dev-Cpp/MinGW64/lib32" -L"D:/Software/Dev-Cpp/MinGW64/x86_64-w64-mingw32/lib32" -static-libgcc -m32 -g3
 INCS     = -I"D:/Software/Dev-Cpp/MinGW64/include" -I"D:/Software/Dev-Cpp/MinGW64/x86_64-w64-mingw32/include" -I"D:/Software/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include"
 CXXINCS  = -I"D:/Software/Dev-Cpp/MinGW64/include" -I"D:/Software/Dev-Cpp/MinGW64/x86_64-w64-mingw32/include" -I"D:/Software/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include" -I"D:/Software/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include/c++"
@@ -27,8 +27,8 @@ $(BIN): $(OBJ)
 main.o: main.cpp
 	$(CPP) -c main.cpp -o main.o $(CXXFLAGS)
 
-Menu.o: Menu.cpp
-	$(CPP) -c Menu.cpp -o Menu.o $(CXXFLAGS)
-
 Song.o: Song.cpp
 	$(CPP) -c Song.cpp -o Song.o $(CXXFLAGS)
+
+Concert.o: Concert.cpp
+	$(CPP) -c Concert.cpp -o Concert.o $(CXXFLAGS)
