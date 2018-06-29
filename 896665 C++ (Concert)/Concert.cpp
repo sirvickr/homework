@@ -4,16 +4,21 @@ using namespace std;
 
 Concert::Concert(int timeout) : timeout(timeout) {
 	currUser = users.end();
+	// В любой конфигурации с "Debug" для удобства отладки
+	// в систему изначально добавляется набор условных пользователей
+	// и набор из 4 песен
+	// Для отключения этой возможности нужно пересобрать проект
+	// в любой из конфигураций с "Release"
 	#ifdef __DEBUG__
 	users["a"] = "a";
 	users["b"] = "b";
 	users["c"] = "c";
 	users["d"] = "d";
 	users["e"] = "e";
-	songs.push_back(new Song("aa", "aaa", 1));
-	songs.push_back(new Song("bb", "bbb", 2));
-	songs.push_back(new Song("cc", "ccc", 3));
-	songs.push_back(new Song("dd", "ddd", 4));
+	songs.push_back(new Song("Sonne", "Rammstein", 1));
+	songs.push_back(new Song("Twenty One", "Cranberries", 2));
+	songs.push_back(new Song("Only Time", "Enya", 3));
+	songs.push_back(new Song("Our Farewell", "Within Temptation", 4));
 	#endif
 	startTime = chrono::steady_clock::now();
 	checkTimeout();
@@ -162,29 +167,28 @@ void Concert::selectSong() {
 		Song* song = songs[index];
 		song->vote();
 		userSongs.push_back(UserSongs::value_type(song, currUser));
-		printSongs(songs, PrintAvailableSong(userSongs, currUser));
 	} catch(InvalidOrdinalError&) {
 		cout << "Недопустимое значение" << endl;
 	}
 }
 
 void Concert::addSong() {
-	Song* song = inputSong();
+	Song* song = inputSong(songs.size() + 1);
 	const auto it = find(songs.begin(), songs.end(), song);
 	if(it != songs.end()) {
 		cout << "Такая песня уже есть" << endl;
+		delete song;
 		return;
 	}
 	songs.push_back(song);
-	for(size_t i = 0; i < songs.size(); i++) 
-		songs[i]->setId(i + 1);
 	printSongs(songs, PrintSong());
 }
 
 void Concert::editSong() {
 	try {
+		printSongs(songs, PrintSong());
 		size_t index = inputIndex();
-		songs[index] = inputSong();
+		songs[index] = inputSong(index + 1);
 		printSongs(songs, PrintSong());
 	} catch(InvalidOrdinalError&) {
 		cout << "Недопустимое значение" << endl;
@@ -193,6 +197,7 @@ void Concert::editSong() {
 
 void Concert::delSong() {
 	try {
+		printSongs(songs, PrintSong());
 		size_t index = inputIndex();
 		songs.erase(songs.begin() + index);
 		for(size_t i = 0; i < songs.size(); i++) 
@@ -206,7 +211,7 @@ void Concert::delSong() {
 void Concert::findSong() {
 	int menu = -1;
 	string s;
-    cout << "По какому параметру искать песню?";
+    cout << "По какому параметру искать песню?\n";
     cout << "[0] Отменить поиск\n";
     cout << "[1] Название\n";
     cout << "[2] Исполнитель" << endl;
@@ -243,13 +248,13 @@ Concert::Users::value_type Concert::inputUser() {
 	return Users::value_type(name, pass);
 }
 
-Song* Concert::inputSong() {
+Song* Concert::inputSong(size_t id) {
 	string name, singer;
 	cout << "Введите название песни: ";
 	cin >> name;
 	cout << "Введите исполнителя: ";
 	cin >> singer;
-	return new Song(name, singer);
+	return new Song(name, singer, id);
 }
 
 size_t Concert::inputIndex() {

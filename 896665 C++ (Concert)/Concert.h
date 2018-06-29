@@ -4,7 +4,6 @@
 #include <string>
 #include <map>
 #include <vector>
-#include <list>
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
@@ -110,7 +109,7 @@ private:
 	// Ввод данных пользователя
 	Users::value_type inputUser();
 	// Ввода данных песни
-	Song* inputSong();
+	Song* inputSong(size_t id);
 	// Выбор номера песни
 	size_t inputIndex();
 	// Проверка оставшегося времени до концерта

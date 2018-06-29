@@ -8,7 +8,7 @@ int main(int argc, char** argv) {
 	// Установка кириллицы в консоли
 	setlocale(LC_CTYPE, "Russian");
 	// Получение таймаута из параметра командной строки
-	int timeout = 120;
+	int timeout = 300; // по умолчанию 300 сек (5 мин)
 	if(argc > 1) {
 		std::istringstream iss;
 		iss.str(argv[1]);
