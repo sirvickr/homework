@@ -1,6 +1,7 @@
 *.opendb
 *.db
 *.res
+*.o
 *.obj
 *.exe
 *.iobj
