@@ -5,7 +5,3 @@ Song::Song(const std::string& name, const std::string& singer, size_t id)
 {
 }
 
-bool operator==(const Song& a, const Song& b) {
-	return a.getName() == b.getName() && a.getSinger() == b.getSinger();
-}
-

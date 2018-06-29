@@ -3,11 +3,14 @@
 
 #include <string>
 
+// Песня
 class Song
 {
 	public:
+		// Конструктор
 		Song(const std::string& name = "", 
 			const std::string& singer = "", size_t id = 0);
+		// Методы доступа к полям класса
 		inline void setName(const std::string& value) {
 			name = value;
 		}
@@ -26,22 +29,26 @@ class Song
 		inline size_t getId() const {
 			return id;
 		}
-		inline size_t vote() {
-			return ++votes;
-		}
-		inline void resetVotes() {
-			votes = 0;
-		}
 		inline size_t getVotes() const {
 			return votes;
 		}
+		// Выбор песни (голосование) 
+		inline size_t vote() {
+			return ++votes;
+		}
+		// Обнулить результаты голосования
+		inline void resetVotes() {
+			votes = 0;
+		}
 	private:
+		// Название
 		std::string name;
+		// Исполнитель
 		std::string singer;
+		// Идентификатор
 		size_t id;
+		// Количество голосов
 		size_t votes;
 };
-
-bool operator==(const Song& a, const Song& b);
 
 #endif

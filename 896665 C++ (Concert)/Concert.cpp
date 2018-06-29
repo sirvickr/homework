@@ -296,7 +296,6 @@ bool FindSongBySinger::operator()(const Song* song) {
 	return song->getSinger() == field;
 }
 
-// Функция-предикат для сортировки песен по убыванию рейтинга
 bool CompareSongsRating(const Song* a, const Song* b) {
 	return a->getVotes() > b->getVotes();
 }
