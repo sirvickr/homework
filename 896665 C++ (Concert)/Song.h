@@ -6,7 +6,8 @@
 class Song
 {
 	public:
-		Song(const std::string& name = "", const std::string& singer = "", size_t id = 0);
+		Song(const std::string& name = "", 
+			const std::string& singer = "", size_t id = 0);
 		inline void setName(const std::string& value) {
 			name = value;
 		}

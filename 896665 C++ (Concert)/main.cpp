@@ -3,8 +3,11 @@
 
 #include "Concert.h"
 
+// Точка входа приложения
 int main(int argc, char** argv) {
+	// Установка кириллицы в консоли
 	setlocale(LC_CTYPE, "Russian");
+	// Получение таймаута из параметра командной строки
 	int timeout = 120;
 	if(argc > 1) {
 		std::istringstream iss;
@@ -14,6 +17,7 @@ int main(int argc, char** argv) {
 			timeout = value;
 		}
 	}
+	// Основной объект приложения
 	Concert concert(timeout);
 	return concert.run();
 }
