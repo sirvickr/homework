@@ -25,5 +25,6 @@
 *.~h
 *.~ddp
 *.~dfm
+*.layout
 .metadata
 build-*
