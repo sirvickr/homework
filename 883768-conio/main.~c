@@ -11,6 +11,11 @@
 #define __DICTIONARY_DB_CODES_H__
 #define __DICTIONARY_INPUT_DLG_H__
 #include "common.h"
+//#include "menu.h"
+//#include "dict.h"
+//#include "codes.h"
+//#include "list.h"
+//#include "input.h"
 #pragma argsused
 
 // Критерий поиска

@@ -1,9 +1,13 @@
-#include "input.h"
-#include "codes.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <windows.h>
+#pragma hdrstop
 #include <conio.h>
+
+#define __DICTIONARY_INPUT_DLG_H__
+#define __DICTIONARY_DB_CODES_H__
+#include "common.h"
 
 int box_init(InputBox* box, HANDLE handle, SMALL_RECT rect, char*** contents, int row_count) {
 	int i, size;

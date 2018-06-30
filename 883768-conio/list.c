@@ -1,6 +1,7 @@
-#include "list.h"
 #include <stdlib.h>
 #include <string.h>
+#define __LIST1_H__
+#include "common.h"
 
 static LIST1_ITEM* create_item(void* data);
 static void delete_item(LIST1* list, LIST1_ITEM* item);
