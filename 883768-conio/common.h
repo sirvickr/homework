@@ -123,10 +123,6 @@ DICT_ENTRY* dict_entry_new(const char* word_eng, const char* word_part, const ch
 int dict_load(const char* file_name);
 //
 int dict_save(const char* file_name);
-//
-void dict_clear();
-//
-void dict_entry_clear(DICT_ENTRY* entry);
 //--------------------------------------------
 extern const char* dict_file_name;
 extern LIST1 dict;
@@ -251,8 +247,6 @@ void menu_next(MENU* menu);
 void menu_gotoxy(MENU* menu, int x, int y);
 // Выделить пункт меню
 void itemMenu(MENU* menu, int activate);
- // Запомнить положение курсора
-void saveCursorPosition(MENU* menu);
 // Очистка окна
 void menu_cls(MENU* menu);
 // Сохранить координаты курсора в переменную curspos

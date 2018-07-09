@@ -217,7 +217,10 @@ int list1_get_current_index(LIST1* list) {
 
 int list1_set_current_index(LIST1* list, int index) {
 	int i = 0;
-	LIST1_ITEM* curr = list->head;
+	LIST1_ITEM* curr;
+	if(!list || !list->head)
+		return -1;
+	curr = list->head;
 	while(curr) {
 		if(i == index) {
 			list->curr = curr;

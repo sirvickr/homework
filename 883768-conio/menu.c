@@ -500,13 +500,6 @@ void menu_gotoxy(MENU* menu, int x, int y)
 	///SetConsoleCursorPosition(hStdOut, {x,y});
 }
 
-void saveCursorPosition(MENU* menu)
-{
-	CONSOLE_SCREEN_BUFFER_INFO csbInfo;// информация о консольном окне в структуре csbInfo
-	GetConsoleScreenBufferInfo(menu->hStdOut, &csbInfo);
-///	menu->curspos = csbInfo.dwCursorPosition;
-}
-
 void showCursor(MENU* menu, int visible)
 {
 	CONSOLE_CURSOR_INFO ccInfo;
@@ -522,7 +515,7 @@ int check_cb_retcode(MENU* menu) {
 		itemMenu(menu, 0); // сделать неактивным пункт меню
 		return 0;
 	} else if(0 == menu->cb_retcode) {
-		saveCursorPosition(menu);
+		;
 	}
 	// очистить буфер клавиатуры
 	fflush(stdin);

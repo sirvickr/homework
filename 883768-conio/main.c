@@ -69,8 +69,6 @@ int F9(MENU* menu);
 void curr_menu_changed(MENU* menu, int direction, int wrap);
 // Перенос очередного элемента словаря в элемент описания пункта меню
 int dict_entry_display(void* data, int index, void* param);
-// Проверка элемента словаря на соответствие критерию поиска
-int dict_entry_find(void* data, void* param);
 // Сравнение двух элементов словаря
 int dict_entry_compare(void* data1, void* data2, void* arg);
 
@@ -178,30 +176,22 @@ int F1(MENU* menu) {
 // Обработчик клавиши F2 (Сохранить)
 int F2(MENU* menu) {
 	Save(menu, NULL);
-	if(exit_code)
-		return exit_code;
-	return 0;
+	return exit_code;
 }
 // Обработчик клавиши F3 (Поиск)
 int F3(MENU* menu) {
 	Search(menu, NULL);
-	if(exit_code)
-		return exit_code;
-	return 0;
+	return exit_code;
 }
 // Обработчик клавиши F4 (Редактирование)
 int F4(MENU* menu) {
 	Edit(menu, NULL);
-	if(exit_code)
-		return exit_code;
-	return 0;
+	return exit_code;
 }
 // Обработчик клавиши F9 (Переход на верхнее меню)
 int F9(MENU* menu) {
 	menu_draw(&top_menu, MENU_FULL_FLAGS);
-	if(exit_code)
-		return exit_code;
-	return 0;
+	return exit_code;
 }
 // Обработчик прокрутки меню на один элемент вперёд или назад
 void curr_menu_changed(MENU* menu, int direction, int wrap) {
@@ -237,7 +227,6 @@ int check_entry_display(void* data, int index, void* param) {
 	}
 	return 1;
 }
-
 // Сравнение двух элементов словаря
 int dict_entry_compare(void* data1, void* data2, void* arg) {
 	DICT_ENTRY *a, *b;

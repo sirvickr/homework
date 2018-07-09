@@ -96,17 +96,6 @@ DICT_ENTRY* dict_entry_new(const char* word_eng, const char* word_part, const ch
 
 	return new_entry;
 }
-//
-void dict_entry_delete(void* data) {
-	int i;
-	DICT_ENTRY* entry = (DICT_ENTRY*)data;
-	if(entry) {
-		for(i = 0; i < DICT_FLD_CNT; i++)
-			if(entry->field[i])
-				free(entry->field[i]);
-		free(entry);
-	}
-}
 
 char* file_load(const char* file_name, off_t* psize) {
 	int nread;
