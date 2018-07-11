@@ -3,16 +3,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <conio.h>
-#define __EDIT_H__
+#define __SEARCH_H__
 #define __DICTIONARY_DB_CODES_H__
 #include "common.h"
 
 #define WND_LEFT 18
 #define WND_TOP 8
-#define WND_WIDTH (INPUT_LENGTH * 2 - 5)
-#define WND_HEIGHT (INPUT_COUNT + 2)
+#define WND_WIDTH (SEARCH_LENGTH * 2 - 5)
+#define WND_HEIGHT (SEARCH_COUNT + 2)
 
-char contents[INPUT_COUNT][INPUT_LENGTH + 1];
+char search_contents[SEARCH_COUNT][SEARCH_LENGTH + 1];
 
 static void trim(char *str) {
 	 int len = strlen(str);
@@ -35,12 +35,12 @@ static int accept_input(char ch) {
 	return 0;
 }
 
-int edit_window(int reset)
+int search_window(int reset)
 {
 	int result = 0;
-	int i, j, row = 0, left = WND_WIDTH - INPUT_LENGTH - 1, top = 2, run = 1;
-	int pos[INPUT_COUNT] = { 0 };
-	int len[INPUT_COUNT] = { 0 };
+	int i, j, row = 0, left = WND_WIDTH - SEARCH_LENGTH - 1, top = 2, run = 1;
+	int pos[SEARCH_COUNT] = { 0 };
+	int len[SEARCH_COUNT] = { 0 };
 	char line[WND_WIDTH * WND_HEIGHT + 1];
 	memset(line, ' ', sizeof(line));
 	// верхняя граница
@@ -65,46 +65,34 @@ int edit_window(int reset)
 	cprintf(line);
 	// надписи
 	gotoxy(3, 2);
-	cprintf("Word");
+	cprintf("Часть речи");
 	gotoxy(3, 3);
-	cprintf("Part");
-	gotoxy(3, 4);
-	cprintf("Translate");
-
-	//cprintf("     База данных пуста!   ");
-	//window(38, 11, 40, 11);
-	//textattr(BLUE * 16 | WHITE);
+	cprintf("Лимит букв в Слове");
 
 	textattr(LIGHTGREEN * 16 | WHITE);
 	if(reset) {
-		for(i = 0; i < INPUT_COUNT; ++i) {
-			memset(contents[i], ' ', INPUT_LENGTH);
-			contents[i][INPUT_LENGTH] = '\0';
+		for(i = 0; i < SEARCH_COUNT; ++i) {
+			memset(search_contents[i], ' ', SEARCH_LENGTH);
+			search_contents[i][SEARCH_LENGTH] = '\0';
 			gotoxy(left, top + i);
-			cprintf("%s", contents[i]);
+			cprintf("%s", search_contents[i]);
 		}
 	} else {
-		for(i = 0; i < INPUT_COUNT; ++i) {
-			len[i] = 0;//strlen(contents[i]);
-			for(j = 0; j < INPUT_LENGTH; ++j) {
-				char next = contents[i][len[i]];
+		for(i = 0; i < SEARCH_COUNT; ++i) {
+			len[i] = 0;
+			for(j = 0; j < SEARCH_LENGTH; ++j) {
+				char next = search_contents[i][len[i]];
 				if(' ' == next || '\0' == next)
 					break;
 				len[i]++;
 			}
 			pos[i] = len[i];
 			gotoxy(left, top + i);
-			cprintf("%s", contents[i]);
+			cprintf("%s", search_contents[i]);
 		}
 	}
 
 	gotoxy(left + pos[0], top);
-
-	//window(1, 1, 80, 25);
-
-	//while(getch() != KEY_ENTER)
-	//	;
-	//gotoxy(1, 1);
 
 	while (run) {
 		if (kbhit()) {
@@ -130,20 +118,17 @@ int edit_window(int reset)
 				pos[row] = len[row];
 				gotoxy(left + pos[row], top);
 				break;
-			//case KEY_ARROW_UP: case KEY_ARROW_DOWN:
-			//	break;
 			case KEY_ENTER:
-				for(i = 0; i < INPUT_COUNT; ++i)
-					trim(contents[i]);
-				//printf("\n%s", contents[row]);
+				for(i = 0; i < SEARCH_COUNT; ++i)
+					trim(search_contents[i]);
 				result = 1;
 				run = 0;
 				break;
 			case KEY_BACKSPACE:
 				if(pos[row] > 0) {
 					for(i = pos[row]; i < len[row]; ++i)
-						contents[row][i - 1] = contents[row][i];
-					contents[row][len[row] - 1] = ' ';
+						search_contents[row][i - 1] = search_contents[row][i];
+					search_contents[row][len[row] - 1] = ' ';
 					pos[row]--;
 					len[row]--;
 				}
@@ -151,13 +136,13 @@ int edit_window(int reset)
 			case KEY_DEL:
 				if(pos[row] < len[row]) {
 					for(i = pos[row]; i < len[row]; ++i)
-						contents[row][i] = contents[row][i + 1];
-					contents[row][len[row] - 1] = ' ';
+						search_contents[row][i] = search_contents[row][i + 1];
+					search_contents[row][len[row] - 1] = ' ';
 					len[row]--;
 				}
 				break;
 			case KEY_TAB:
-				if(++row == INPUT_COUNT)
+				if(++row == SEARCH_COUNT)
 					row = 0;
 				break;
 			case KEY_ESC:
@@ -166,15 +151,15 @@ int edit_window(int reset)
 				break;
 			default:
 				if(accept_input(ch)) {
-					if(len[row] < INPUT_LENGTH) {
+					if(len[row] < SEARCH_LENGTH) {
 						if(pos[row] < len[row]) {
 							for(i = len[row]; i > pos[row]; --i)
-								contents[row][i] = contents[row][i - 1];
-							contents[row][pos[row]] = ch;
+								search_contents[row][i] = search_contents[row][i - 1];
+							search_contents[row][pos[row]] = ch;
 							pos[row]++;
 							len[row]++;
 						} else {
-							contents[row][pos[row]] = ch;
+							search_contents[row][pos[row]] = ch;
 							pos[row]++;
 							len[row]++;
 						}
@@ -185,13 +170,11 @@ int edit_window(int reset)
 			} // switch(iKey)
 
 			gotoxy(left, top + row);
-			cprintf("%s", contents[row]);
+			cprintf("%s", search_contents[row]);
 			gotoxy(left + pos[row], top + row);
 		} // if (kbhit())
 	} // while
-	//window(18, 8, 58, 12);
-	//textattr(BLACK * 16 | WHITE);
-	//clrscr();
 	return result;
 }
 
+ 

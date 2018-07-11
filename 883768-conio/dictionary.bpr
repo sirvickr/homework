@@ -4,7 +4,7 @@
   <MACROS>
     <VERSION value="BCB.06.00"/>
     <PROJECT value="dictionary.exe"/>
-    <OBJFILES value="list.obj input.obj dict.obj menu.obj main.obj"/>
+    <OBJFILES value="list.obj dict.obj menu.obj main.obj edit.obj search.obj"/>
     <RESFILES value="dictionary.res"/>
     <IDLFILES value=""/>
     <IDLGENFILES value=""/>
@@ -56,10 +56,11 @@
       <FILE FILENAME="dictionary.res" FORMNAME="" UNITNAME="dictionary.res" CONTAINERID="ResTool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="dictionary.bpf" FORMNAME="" UNITNAME="dictionary" CONTAINERID="BPF" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="list.c" FORMNAME="" UNITNAME="list" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="input.c" FORMNAME="" UNITNAME="input" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="dict.c" FORMNAME="" UNITNAME="dict" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="menu.c" FORMNAME="" UNITNAME="menu" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="main.c" FORMNAME="" UNITNAME="main" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="edit.c" FORMNAME="" UNITNAME="edit" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="search.c" FORMNAME="" UNITNAME="search" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
   </FILELIST>
   <BUILDTOOLS>
   </BUILDTOOLS>

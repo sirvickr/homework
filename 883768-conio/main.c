@@ -7,9 +7,9 @@
 #define __DICT_H__
 #define __LIST1_H__
 #define __MENU_H__
-#define __LIST1_H__
+#define __EDIT_H__
+#define __SEARCH_H__
 #define __DICTIONARY_DB_CODES_H__
-#define __DICTIONARY_INPUT_DLG_H__
 #include "common.h"
 #pragma argsused
 
@@ -415,146 +415,40 @@ int Exit(MENU* menu, ITEM* item) {
 int Add(MENU* pm, ITEM* item) {
 	int i;
 	SMALL_RECT rect = { 10, 11, 49, 15 };
-	int max_width;
-	int menu_width = 40;
-	int menu_height = DICT_FLD_CNT + 2; // поля и отступ
-	int row_count = DICT_FLD_CNT;
-	char*** contents;
-	DICT_ENTRY* entry;
-	InputBox box;
-
-	int left = csbInfo.srWindow.Left, right = csbInfo.srWindow.Right;
-	int top = csbInfo.srWindow.Top, bottom = csbInfo.srWindow.Bottom;
-	rect.Left = left + (right - left + 1 - menu_width) / 2;
-	rect.Right = rect.Left + menu_width - 1;
-	rect.Top = top + (bottom - top + 1 - menu_height) / 2;
-	rect.Bottom = rect.Top + menu_height - 1;
-
-	max_width = (rect.Right - rect.Left - 1) / 2;
-
-	contents = (char***)malloc(row_count * sizeof(char**));
-	memset(contents, 0x00, row_count * sizeof(char**));
-	for(i = 0; i < row_count; ++i) {
-		contents[i] = (char**)malloc(COLUMNS * sizeof(char*));
-		// надпись
-		contents[i][TITLE] = (char*)malloc((MAX_TITLE + 1) * sizeof(char));
-		strcpy(contents[i][TITLE], main_headers[i]);
-		//CharToOemA(main_headers[i], contents[i][TITLE]);
-		// буфер ввода
-		contents[i][BUFFER] = (char*)malloc((max_width + 1) * sizeof(char));
-		memset(contents[i][BUFFER], ' ', max_width * sizeof(char));
-		//strcpy(contents[i][BUFFER], entry->field[i]);
-		//CharToOemA(entry->field[i], contents[i][BUFFER]);
-		contents[i][BUFFER][0] = '\0';
-		contents[i][BUFFER][max_width] = '\0';
-	}
-
-	if(-1 == box_init(&box, pm->hStdOut, rect, contents, row_count)) {
-		return -1;
-	}
-	if(-1 == box_save(&box)) {
-		box_clear(&box);
-		return -1;
-	}
-	if(1 == box_draw(&box)) {
-		for(i = 0; i < row_count; ++i) {
-			//strcpy(entry->field[i], contents[i][BUFFER]);
-			OemToCharA(contents[i][BUFFER], contents[i][BUFFER]);
-		}
+	if(1 == edit_window(RESET_INPUT)) {
+		for(i = 0; i < INPUT_COUNT; ++i)
+			OemToCharA(contents[i], contents[i]);
 		list1_push_back(&dict,
-			dict_entry_new(contents[0][BUFFER], contents[1][BUFFER], contents[2][BUFFER])
+			dict_entry_new(contents[0], contents[1], contents[2])
 		);
 		initial_table_index = dict.count - 1;
 		data_modified = 1;
-		redraw_main = 1;
-		exit_code = -1;
 	}
-
-	box_clear(&box);
-
-	for(i = 0; i < row_count; ++i) {
-		if(contents[i]) {
-			if(contents[i][TITLE])
-				free(contents[i][TITLE]);
-			if(contents[i][BUFFER]);
-				free(contents[i][BUFFER]);
-			free(contents[i]);
-		}
-	}
-	free(contents);
-	contents = NULL;
-
+	exit_code = -1;
+	redraw_main = 1;
 	return exit_code;
 }
 // Функция меню <Изменить>
 int Edit(MENU* pm, ITEM* item) {
 	int i, box_result;
-	SMALL_RECT rect = { 10, 11, 49, 15 };
-	int max_width;
-	int menu_width = 40;
-	int menu_height = DICT_FLD_CNT + 2; // поля и отступ
-	int row_count = DICT_FLD_CNT;
-	char*** contents;
 	DICT_ENTRY* entry = (DICT_ENTRY*)list1_curr(&dict);
-	InputBox box;
-
-	int left = csbInfo.srWindow.Left, right = csbInfo.srWindow.Right;
-	int top = csbInfo.srWindow.Top, bottom = csbInfo.srWindow.Bottom;
-	rect.Left = left + (right - left + 1 - menu_width) / 2;
-	rect.Right = rect.Left + menu_width - 1;
-	rect.Top = top + (bottom - top + 1 - menu_height) / 2;
-	rect.Bottom = rect.Top + menu_height - 1;
-
-	max_width = (rect.Right - rect.Left - 1) / 2;
-
-	contents = (char***)malloc(row_count * sizeof(char**));
-	memset(contents, 0x00, row_count * sizeof(char**));
-	for(i = 0; i < row_count; ++i) {
-		contents[i] = (char**)malloc(COLUMNS * sizeof(char*));
-		// надпись
-		contents[i][TITLE] = (char*)malloc((MAX_TITLE + 1) * sizeof(char));
-		strcpy(contents[i][TITLE], main_headers[i]);
-		//CharToOemA(main_headers[i], contents[i][TITLE]);
-		// буфер ввода
-		contents[i][BUFFER] = (char*)malloc((max_width + 1) * sizeof(char));
-		memset(contents[i][BUFFER], ' ', max_width * sizeof(char));
-		//strcpy(contents[i][BUFFER], entry->field[i]);
-		CharToOemA(entry->field[i], contents[i][BUFFER]);
-		contents[i][BUFFER][max_width] = '\0';
-	}
-
 	initial_table_index = list1_get_current_index(&dict);
-	if(-1 == box_init(&box, pm->hStdOut, rect, contents, row_count)) {
-		return -1;
+	for(i = 0; i < INPUT_COUNT; ++i) {
+		// буфер ввода
+		memset(contents[i], ' ', INPUT_LENGTH);
+		//strcpy(contents[i], entry->field[i]);
+		CharToOemBuffA(entry->field[i], contents[i], strlen(entry->field[i]));
+		contents[i][INPUT_LENGTH] = '\0';
 	}
-	if(-1 == box_save(&box)) {
-		box_clear(&box);
-		return -1;
-	}
-	box_result = box_draw(&box);
-	if(1 == box_result) {
-		for(i = 0; i < row_count; ++i) {
-			//strcpy(entry->field[i], contents[i][BUFFER]);
-			OemToCharA(contents[i][BUFFER], entry->field[i]);
+	if(1 == edit_window(DONT_RESET_INPUT)) {
+		for(i = 0; i < INPUT_COUNT; ++i) {
+			//strcpy(entry->field[i], contents[i]);
+			OemToCharA(contents[i], entry->field[i]);
 		}
 		data_modified = 1;
-		redraw_main = 1;
-		exit_code = -1;
 	}
-	box_clear(&box);
-
-	for(i = 0; i < row_count; ++i) {
-		if(contents[i]) {
-			if(contents[i][TITLE])
-				free(contents[i][TITLE]);
-			if(contents[i][BUFFER]);
-				free(contents[i][BUFFER]);
-			free(contents[i]);
-		}
-	}
-	free(contents);
-	contents = NULL;
-
+	exit_code = -1;
+	redraw_main = 1;
 	return exit_code;
 }
 // флаг удаления записи
@@ -626,54 +520,17 @@ int Delete(MENU* pm) {
 }
 // Функция меню <Поиск>
 int Search(MENU* pm, ITEM* item) {
-	int i, retc;
-	int index;
-	SMALL_RECT rect = { 3, 11,  50, 14 };
-	int menu_width = 48;
-	int menu_height = 4;
-	int max_width;
-	char* titles[] = { "Часть речи", "Лимит букв в Слове" };
-	char*** contents;
-	int row_count = 2;
+	int i;
 	SearchCriteria search;
-	InputBox box;
-
-	int left = csbInfo.srWindow.Left, right = csbInfo.srWindow.Right;
-	int top = csbInfo.srWindow.Top, bottom = csbInfo.srWindow.Bottom;
-	rect.Left = left + (right - left + 1 - menu_width) / 2;
-	rect.Right = rect.Left + menu_width - 1;
-	rect.Top = top + (bottom - top + 1 - menu_height) / 2;
-	rect.Bottom = rect.Top + menu_height - 1;
-
-	max_width = (rect.Right - rect.Left - 1) / 2;
-
-	contents = (char***)malloc(row_count * sizeof(char**));
-	memset(contents, 0x00, row_count * sizeof(char**));
-	for(i = 0; i < row_count; ++i) {
-		contents[i] = (char**)malloc(COLUMNS * sizeof(char*));
-		// надпись
-		contents[i][TITLE] = (char*)malloc((MAX_TITLE + 1) * sizeof(char));
-		CharToOemA(titles[i], contents[i][TITLE]);
+	for(i = 0; i < INPUT_COUNT; ++i) {
 		// буфер ввода
-		contents[i][BUFFER] = (char*)malloc((max_width + 1) * sizeof(char));
-		memset(contents[i][BUFFER], ' ', max_width * sizeof(char));
-		contents[i][BUFFER][0] = '\0';
-		contents[i][BUFFER][max_width] = '\0';
+		memset(search_contents[i], ' ', INPUT_LENGTH);
+		search_contents[i][INPUT_LENGTH] = '\0';
 	}
-	strcpy(contents[1][BUFFER], "20");
-
-	if(-1 == box_init(&box, pm->hStdOut, rect, contents, row_count)) {
+	strncpy(search_contents[1], "20", 2);
+	if(1 != search_window(DONT_RESET_SEARCH)) {
 		return -1;
 	}
-	if(-1 == box_save(&box)) {
-		box_clear(&box);
-		return -1;
-	}
-	if(1 != box_draw(&box)) {
-		box_clear(&box);
-		return -1;
-	}
-
 	memset(&search, 0x00, sizeof(search));
 	search.menu_items = (ITEM_DEF*)malloc(dict.count * sizeof(ITEM_DEF));
 	if(search.menu_items) {
@@ -689,10 +546,10 @@ int Search(MENU* pm, ITEM* item) {
 			search.menu_items[i].str[0][0] = '\0';
 		}
 		// ищем слова для отображения
-		search.str = contents[0][BUFFER];
+		search.str = search_contents[0];
 		OemToCharA(search.str, search.str);
 		search.index = 1;
-		search.value = atoi(contents[1][BUFFER]);
+		search.value = atoi(search_contents[1]);
 		list1_for_each(&dict, check_entry_display, &search);
 		menu_height = search.item_count + 4;
 
@@ -706,20 +563,6 @@ int Search(MENU* pm, ITEM* item) {
 
 		memset(&search, 0x00, sizeof(search));
 	}
-
-	box_clear(&box);
-
-	for(i = 0; i < row_count; ++i) {
-		if(contents[i]) {
-			if(contents[i][TITLE])
-				free(contents[i][TITLE]);
-			if(contents[i][BUFFER])
-				free(contents[i][BUFFER]);
-			free(contents[i]);
-		}
-	}
-	free(contents);
-	contents = NULL;
 	return -1;
 }
 // Функция подменю <Сортировка>

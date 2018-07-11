@@ -329,7 +329,7 @@ void menu_prev(MENU* menu) {
 	itemMenu(menu, 0); // сделать неактивным пункт меню
 	list1_curr_rev(&menu->items, wrap);
 	itemMenu(menu, 1); // выделить активный пункт меню
-	showCursor(menu, 0);
+	menu_show_cursor(menu, 0);
 	if(menu->changed_cb) {
 		menu->changed_cb(menu, MENU_CURR_REV, wrap);
 	}
@@ -340,7 +340,7 @@ void menu_next(MENU* menu) {
 	itemMenu(menu, 0); // сделать неактивным пункт меню
 	list1_curr_fwd(&menu->items, wrap);
 	itemMenu(menu, 1); // выделить активный пункт меню
-	showCursor(menu, 0);
+	menu_show_cursor(menu, 0);
 	if(menu->changed_cb) {
 		menu->changed_cb(menu, MENU_CURR_FWD, wrap);
 	}
@@ -424,7 +424,7 @@ int menu_draw(MENU* menu, int flags) {
 					///menu_gotoxy(menu, menu->curspos.X, menu->curspos.Y);
 					// Установить цвет рабочих сообщений
 					///SetConsoleTextAttribute(menu->hStdOut, menu->workWindowAttributes);
-					///showCursor(menu, 1);
+					///menu_show_cursor(menu, 1);
 					// Вызываем обработчик пункта меню
 					{
 						ITEM* item = (ITEM*)list1_curr(&menu->items);
@@ -500,12 +500,12 @@ void menu_gotoxy(MENU* menu, int x, int y)
 	///SetConsoleCursorPosition(hStdOut, {x,y});
 }
 
-void showCursor(MENU* menu, int visible)
+void menu_show_cursor(MENU* menu, int visible)
 {
-	CONSOLE_CURSOR_INFO ccInfo;
+	/*CONSOLE_CURSOR_INFO ccInfo;
 	ccInfo.bVisible = visible;
 	ccInfo.dwSize = 20;
-	SetConsoleCursorInfo(menu->hStdOut, &ccInfo);
+	SetConsoleCursorInfo(menu->hStdOut, &ccInfo);*/
 }
 
 int check_cb_retcode(MENU* menu) {
@@ -522,7 +522,7 @@ int check_cb_retcode(MENU* menu) {
 	// курсор в текущий пункт меню
 	///menu_gotoxy(menu, menu->items[menu->current].x, menu->items[menu->current].y);
 	// спрятать курсор
-	showCursor(menu, 0);
+	menu_show_cursor(menu, 0);
 	return 1;
 }
 

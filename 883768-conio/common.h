@@ -250,40 +250,37 @@ void itemMenu(MENU* menu, int activate);
 // Очистка окна
 void menu_cls(MENU* menu);
 // Сохранить координаты курсора в переменную curspos
-void showCursor(MENU* menu, int visible); // скрыть/показать курсор
+void menu_show_cursor(MENU* menu, int visible); // скрыть/показать курсор
 // Удалить текущий элемент
 void menu_del_curr(MENU* menu);
 #endif /*__MENU_H__*/
 
-#ifdef __DICTIONARY_INPUT_DLG_H__
-#define MAX_TITLE 50
+#ifdef __EDIT_H__
 
-#define TITLE   0
-#define BUFFER  1
-#define COLUMNS 2
+#define RESET_INPUT 1
+#define DONT_RESET_INPUT 0
 
-typedef struct InputBox {
-	HANDLE handle;
-	SMALL_RECT rect;
-	CHAR_INFO* bak;
-	CHAR_INFO* wnd;
-	COORD size; // width, height
-	WORD edit_attr;
-	int max_width;
-	// буфер ввода
-	//char* buffer;
-	// 2-мерный массив строк: 1я колонка - надписи
-	// 2я колонка - редактируемые поля (можно передавать начальные значения)
-	char*** contents;
-	int row_count; // количество полей (пар надпись/значение)
-	int row; // текущее редактируемое поле
-} InputBox;
+#define INPUT_LENGTH 20
+#define INPUT_COUNT 3
 
-int box_init(InputBox* box, HANDLE handle, SMALL_RECT rect, char*** contents, int row_count);
-void box_clear(InputBox* box);
-int box_save(InputBox* box);
-int box_draw(InputBox* box);
-int box_restore(InputBox* box);
-#endif /*__DICTIONARY_INPUT_DLG_H__*/
+extern char contents[INPUT_COUNT][INPUT_LENGTH + 1];
+
+int edit_window(int reset);
+
+#endif /*__EDIT_H__*/
+
+#ifdef __SEARCH_H__
+
+#define RESET_SEARCH 1
+#define DONT_RESET_SEARCH 0
+
+#define SEARCH_LENGTH 20
+#define SEARCH_COUNT 2
+
+extern char search_contents[SEARCH_COUNT][SEARCH_LENGTH + 1];
+
+int search_window(int reset);
+
+#endif /*__SEARCH_H__*/
 
 #endif /*__MODULE_HEADER__*/
