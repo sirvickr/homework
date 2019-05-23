@@ -4,10 +4,10 @@ package task1;
  * @author User
  */
 public class BigNum {
-    static final int base = 100;
-    static final int len = 4;
-    byte [] digits;
-    int digitsCount = 0;
+    static final protected int base = 100;
+    static final protected int len = 4;
+    protected byte [] digits;
+    protected int digitsCount = 0;
 
     public BigNum(){
         digits = new byte[len];
@@ -24,7 +24,7 @@ public class BigNum {
         digitsCount = bigNum.digitsCount;
     }
 
-    private void fromLong(long x){
+    protected void fromLong(long x){
         digitsCount = 0;
         for(int i = 0; x > 0; i++){
             digits[i] = (byte) (x % base);
@@ -86,9 +86,11 @@ public class BigNum {
     }
 
     public boolean isLarger(BigNum x){
-        for(int i = 0; i < len; i++) {
+        for(int i = len - 1; i > 0; i--) {
             if(digits[i] > x.digits[i]){
                 return true;
+            } else if(x.digits[i] > digits[i]) {
+                return false;
             }
         }
         return false;
@@ -110,16 +112,16 @@ public class BigNum {
         return x;
     }
 
-    void shift(int x){
+    protected void shift(int x){
         int i;
-        if(x > 0) {
+        if(x > 0) { // сдвиг влево
             for(i = len - 1; i >= x; i--) {
                 digits[i] = digits[i - x];
             }
             for(i = 0; i < x; i++) {
                 digits[i] = 0;
             }
-        } else if(x < 0) {
+        } else if(x < 0) { // сдвиг вправо
             for(i = 0; i < len + x; i++) {
                 digits[i] = digits[i - x];
             }
