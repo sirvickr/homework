@@ -28,9 +28,6 @@ public class BigSignNumTest {
     public static void tearDownClass() {
     }
 
-    /**
-     * Test of add method, of class BigSignNum.
-     */
     @Test
     public void add() {
         BigSignNum x = new BigSignNum(2);
@@ -44,27 +41,50 @@ public class BigSignNumTest {
         assertEquals(x.toString(),"-10");
     }
 
-    /**
-     * Test of sub method, of class BigSignNum.
-     */
     @Test
     public void sub() {
-        System.out.println("sub");
-        fail("The test case is a prototype.");
-    }
+        BigSignNum x = new BigSignNum(5);
+        x.sub(new BigSignNum(3));
+        assertEquals(x.toString(),"2");
+        x = new BigSignNum(-3);
+        x.sub(new BigSignNum(-5));
+        assertEquals(x.toString(),"2");
+        x = new BigSignNum(-5);
+        x.sub(new BigSignNum(-3));
+        assertEquals(x.toString(),"-2");
+        x = new BigSignNum(3);
+        x.sub(new BigSignNum(5));
+        assertEquals(x.toString(),"-2");
+        x = new BigSignNum(-5);
+        x.sub(new BigSignNum(3));
+        assertEquals(x.toString(),"-8");
+        x = new BigSignNum(-3);
+        x.sub(new BigSignNum(5));
+        assertEquals(x.toString(),"-8");
+        x = new BigSignNum(5);
+        x.sub(new BigSignNum(-3));
+        assertEquals(x.toString(),"8");
+        x = new BigSignNum(3);
+        x.sub(new BigSignNum(-5));
+        assertEquals(x.toString(),"8");
+}
 
-    /**
-     * Test of mul method, of class BigSignNum.
-     */
     @Test
     public void mul() {
-        System.out.println("mul");
-        fail("The test case is a prototype.");
+        BigSignNum x = new BigSignNum(5);
+        x.mul(new BigSignNum(3));
+        assertEquals(x.toString(),"15");
+        x = new BigSignNum(-3);
+        x.mul(new BigSignNum(-5));
+        assertEquals(x.toString(),"15");
+        x = new BigSignNum(-5);
+        x.mul(new BigSignNum(3));
+        assertEquals(x.toString(),"-15");
+        x = new BigSignNum(-3);
+        x.mul(new BigSignNum(5));
+        assertEquals(x.toString(),"-15");
     }
 
-    /**
-     * Test of toString method, of class BigSignNum.
-     */
     @Test
     public void toStringTest() {
         assertEquals(new BigSignNum(10).toString(), "10");

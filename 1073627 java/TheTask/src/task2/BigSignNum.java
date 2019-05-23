@@ -49,14 +49,20 @@ public class BigSignNum {
         if(this.num.isLarger(x.num) && isPositive && x.isPositive || x.num.isLarger(this.num) && !isPositive && !x.isPositive) {
             if(this.num.isLarger(x.num))
                 this.num.sub(x.num);
-            else
-                x.num.sub(this.num);
+            else {
+                BigSignNum tmp = new BigSignNum(this);
+                this.num = new BigNum(x.num);
+                this.num.sub(tmp.num);
+            }
             this.isPositive = true;
         } else if(x.num.isLarger(this.num) && isPositive && x.isPositive || this.num.isLarger(x.num) && !isPositive && !x.isPositive) {
             if(this.num.isLarger(x.num))
                 this.num.sub(x.num);
-            else
-                x.num.sub(this.num);
+            else {
+                BigSignNum tmp = new BigSignNum(this);
+                this.num = new BigNum(x.num);
+                this.num.sub(tmp.num);
+            }
             this.isPositive = false;
         } else if(this.num.isLarger(x.num) && !isPositive && x.isPositive || x.num.isLarger(this.num) && !isPositive && x.isPositive) {
             this.num.add(x.num);
@@ -67,7 +73,9 @@ public class BigSignNum {
         }
     }
 
-    void mul(BigSignNum x, int shift){
+    void mul(BigSignNum x){
+        this.num.mul(x.num);
+        this.isPositive = (this.isPositive == x.isPositive);
     }
 
     public String toString(){
@@ -118,6 +126,22 @@ public class BigSignNum {
             x = new BigSignNum(3);
             x.sub(new BigSignNum(-5));
             System.out.println(" = " + x.toString() + " (8)");
+        }
+        {
+            System.out.println("*************************************************");
+            System.out.println("********************** mul **********************");
+            BigSignNum x = new BigSignNum(5);
+            x.mul(new BigSignNum(3));
+            System.out.println(" = " + x.toString() + " (15)");
+            x = new BigSignNum(-3);
+            x.mul(new BigSignNum(-5));
+            System.out.println(" = " + x.toString() + " (15)");
+            x = new BigSignNum(-5);
+            x.mul(new BigSignNum(3));
+            System.out.println(" = " + x.toString() + " (-15)");
+            x = new BigSignNum(-3);
+            x.mul(new BigSignNum(5));
+            System.out.println(" = " + x.toString() + " (-15)");
         }
     }
 }
