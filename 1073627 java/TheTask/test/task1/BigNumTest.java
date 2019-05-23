@@ -23,25 +23,13 @@ public class BigNumTest {
     }
 
     @Test
-    public void testFromLong() {
-        System.out.println("fromLong");
-        long x = 0L;
-        BigNum instance = new BigNum();
-        instance.fromLong(x);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+    public void fromLong() {
+        BigNum x = new BigNum(12345678);
+        assertEquals(x.toString(), "12345678");
     }
 
     @Test
-    public void testAdd() {
-        /*
-        System.out.println("add");
-        BigNum x = null;
-        BigNum instance = new BigNum();
-        instance.add(x);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-        */
+    public void add() {
         BigNum x = new BigNum(55);
         x.add(x);
         assertEquals(x.toString(), "110");
@@ -50,62 +38,51 @@ public class BigNumTest {
     }
 
     @Test
-    public void testSub() {
-        System.out.println("sub");
-        BigNum x = null;
-        BigNum instance = new BigNum();
-        instance.sub(x);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+    public void sub() {
+        BigNum x = new BigNum(25382457);
+        x.sub(new BigNum(1101599));
+        assertEquals(x.toString(), "24280858");
+        x.sub(new BigNum(95612));
+        assertEquals(x.toString(), "24185246");
     }
 
     @Test
-    public void testMul() {
-        System.out.println("mul");
-        BigNum x = null;
-        BigNum instance = new BigNum();
-        instance.mul(x);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+    public void mul() {
+        BigNum x = new BigNum(812);
+        BigNum y = new BigNum(215);
+        x.mul(y);
+        assertEquals(x.toString(), "174580");
     }
 
     @Test
-    public void testIsLarger() {
-        System.out.println("isLarger");
-        BigNum x = null;
-        BigNum instance = new BigNum();
-        boolean expResult = false;
-        boolean result = instance.isLarger(x);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+    public void isLarger() {
+        BigNum x = new BigNum(550);
+        assertEquals(x.isLarger(new BigNum(549)), true);
+        assertEquals(x.isLarger(new BigNum(550)), false);
+        assertEquals(x.isLarger(new BigNum(551)), false);
     }
 
-    /**
-     * Test of shift method, of class BigNum.
-     */
     @Test
-    public void testShift() {
-        System.out.println("shift");
-        int x = 0;
-        BigNum instance = new BigNum();
-        instance.shift(x);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+    public void shift() {
+        BigNum x = new BigNum(812);
+        x.shift(2);
+        assertEquals(x.toString(), "8120000");
+        x.shift(-1);
+        assertEquals(x.toString(), "81200");
+        x.shift(1);
+        assertEquals(x.toString(), "8120000");
+        x.shift(-2);
+        assertEquals(x.toString(), "812");
     }
 
-    /**
-     * Test of toString method, of class BigNum.
-     */
     @Test
-    public void testToString() {
-        System.out.println("toString");
-        BigNum instance = new BigNum();
-        String expResult = "";
-        String result = instance.toString();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+    public void toStringTest() {
+        assertEquals(new BigNum(10).toString(), "10");
+        assertEquals(new BigNum(9999).toString(), "9999");
+        assertEquals(new BigNum(10203).toString(), "10203");
+        BigNum x = new BigNum(1);
+        long y = Integer.parseInt(x.toString());
+        assertEquals(y, 1);
     }
     
 }

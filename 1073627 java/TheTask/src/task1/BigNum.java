@@ -7,23 +7,24 @@ public class BigNum {
     static final int base = 100;
     static final int len = 4;
     byte [] digits;
-    public int digitsCount = 0;
+    int digitsCount = 0;
 
-    BigNum(){
+    public BigNum(){
         digits = new byte[len];
         digitsCount = 0;
     }
 
-    BigNum(long x){
+    public BigNum(long x){
         this();
         fromLong(x);
     }
 
-    BigNum(BigNum bigNum){
+    public BigNum(BigNum bigNum){
         digits = bigNum.digits.clone();
+        digitsCount = bigNum.digitsCount;
     }
-    
-    void fromLong(long x){
+
+    private void fromLong(long x){
         digitsCount = 0;
         for(int i = 0; x > 0; i++){
             digits[i] = (byte) (x % base);
@@ -33,7 +34,7 @@ public class BigNum {
         //System.out.println("fromLong: " + this.toString() + " digitsCount " + this.digitsCount);
     }
 
-    void add(BigNum x){
+    public void add(BigNum x){
         //System.out.println("add: " + x.toString());
         byte c = 0;
         int sum;
@@ -51,7 +52,7 @@ public class BigNum {
         //System.out.println("add: " + this.toString() + " digitsCount " + this.digitsCount);
     }
 
-    void sub(BigNum x){
+    public void sub(BigNum x){
         System.out.println("sub: " + x.toString());
         byte c = 0;
         int diff;
@@ -78,7 +79,7 @@ public class BigNum {
         //System.out.println("sub: " + this.toString() + " digitsCount " + this.digitsCount);
     }
 
-    void mul(BigNum x){
+    public void mul(BigNum x){
         System.out.println("mul: x " + x.toString() + " : " + x.digitsCount);
         BigNum result = new BigNum();
         for(int i = 0; i < x.digitsCount; i++) {
@@ -92,7 +93,7 @@ public class BigNum {
             System.out.println(this.toString() + " * " + x.digits[i] + " = " + y.toString() + " result " + result.toString());
         }
         digits = result.digits;
-        for(int i = x.len - 1; i >= 0; i--) {
+        for(int i = len - 1; i >= 0; i--) {
             if (digits[i] > 0) {
                 digitsCount = i + 1;
                 break;
@@ -101,7 +102,7 @@ public class BigNum {
         System.out.println("mul: " + this.toString() + " digitsCount " + this.digitsCount);
     }
 
-    boolean isLarger(BigNum x){
+    public boolean isLarger(BigNum x){
         for(int i = 0; i < len; i++) {
             if(digits[i] > x.digits[i]){
                 return true;
@@ -130,7 +131,27 @@ public class BigNum {
         return x;
     }
 
-    void shift(int x){ // TODO
+    void shift(int x){
+        System.out.println("shift: x " + x);
+        int i;
+        if(x > 0) {
+            for(i = len - 1; i >= x; i--) {
+                digits[i] = digits[i - x];
+                System.out.println(" digits[" + i + "] ");
+            }
+            for(i = 0; i < x; i++) {
+                digits[i] = 0;
+            }
+        } else if(x < 0) {
+            for(i = 0; i < len + x; i++) {
+                digits[i] = digits[i - x];
+                System.out.println(" digits[" + i + "] ");
+            }
+            for(int j = i; j < len; j++) {
+                digits[j] = 0;
+            }
+        }
+        System.out.println("shift: this " + toString());
     }
 
     public String toString(){
@@ -190,6 +211,17 @@ public class BigNum {
             BigNum y = new BigNum(215);
             x.mul(y);
             System.out.println("BigNum: " + "812" + " * " + y.toString() + " = " + x.toString());
+        }
+        {
+            System.out.println("*************************************************");
+            System.out.println("********************* shift *********************");
+            BigNum x = new BigNum(812);
+            x.shift(2);
+            x.shift(-1);
+            x.shift(1);
+            x.shift(-2);
+            x.shift(3);
+            //System.out.println("BigNum: " + "812" + " * " + y.toString() + " = " + x.toString());
         }
     }
 }
