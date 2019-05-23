@@ -86,7 +86,7 @@ public class BigNum {
     }
 
     public boolean isLarger(BigNum x){
-        for(int i = len - 1; i > 0; i--) {
+        for(int i = len - 1; i >= 0; i--) {
             if(digits[i] > x.digits[i]){
                 return true;
             } else if(x.digits[i] > digits[i]) {
