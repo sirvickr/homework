@@ -18,12 +18,36 @@
 #include "lines.h"
 #include "utils.h"
 
-word_list_t word_list;
-
 #define MAX_INPUT_SIZE 4096
 
 static char input_buffer[ MAX_INPUT_SIZE ];
 static char delimeters[ MAX_INPUT_SIZE ];
+
+word_list_t word_list;
+
+int get_line( line_t* lines, line_t*** ppp, char* text ) {
+	size_t length = strlen( text );
+	// при вводе с консоли, последним символом будет \0', а предпоследним - '\n'
+	if( length < 1 ) {
+		fprintf( stderr, "input error\n" );
+		return 0;
+	}
+	text[ --length ] = '\0'; // удаляем '\n' (заменяем '\n' на '\0')
+
+	printf( "text (len = %lu) %s\n", length, text );
+
+	if( lines_find( lines, text ) ) {
+		printf( "duplicate line, input finished\n" );
+		return 0;
+	}
+	
+	line_t* line = add_line( *ppp, text );
+
+	**ppp = line;
+	*ppp = &line->next;
+
+	return 1;
+}
 
 // точка входа программы
 int main( int argc, char* argv[] )
@@ -39,32 +63,15 @@ int main( int argc, char* argv[] )
 #if 1
 	const char* debug_lines[] = {
 		"one two three four\n",
-		"first;second third fourth fifth\n",
+		"first;seconddd third fourthh fifth\n",
 	};
 	{
 		int count = sizeof( debug_lines ) / sizeof( debug_lines[ 0 ] );
 		for( int i = 0; i < count; ++i ) {
 			strcpy( input_buffer, debug_lines[ i ] );
-			
-			size_t length = strlen( input_buffer );
-			// при вводе с консоли, последним символом будет \0', а предпоследним - '\n'
-			if( length < 1 ) {
-				fprintf( stderr, "input error\n" );
+			if( 0 == get_line( lines, &pp, input_buffer ) ) {
 				break;
 			}
-			input_buffer[ --length ] = '\0'; // удаляем '\n' (заменяем '\n' на '\0')
-
-			printf( "input_buffer (len = %lu) %s\n", length, input_buffer );
-
-			if( lines_find( lines, input_buffer ) ) {
-				printf( "duplicate line, input finished\n" );
-				break;
-			}
-			
-			line_t* line = add_line( pp, input_buffer );
-
-			*pp = line;
-			pp = &line->next;
 		}
 	}
 #else
@@ -72,31 +79,12 @@ int main( int argc, char* argv[] )
 
 		printf( "input string: " );
 		if( fgets( input_buffer, MAX_INPUT_SIZE, stdin ) ) {
-
-			size_t length = strlen( input_buffer );
-			// при вводе с консоли, последним символом будет \0', а предпоследним - '\n'
-			if( length < 1 ) {
-				fprintf( stderr, "input error\n" );
+			if( 0 == get_line( lines, &pp, input_buffer ) ) {
 				break;
 			}
-			input_buffer[ --length ] = '\0'; // удаляем '\n' (заменяем '\n' на '\0')
-
-			printf( "input_buffer (len = %lu) %s\n", length, input_buffer );
-
-			if( lines_find( lines, input_buffer ) ) {
-				printf( "duplicate line, input finished\n" );
-				break;
-			}
-			
-			line_t* line = add_line( pp, input_buffer );
-
-			*pp = line;
-			pp = &line->next;
-			++line_count;
 		} else {
 			printf( "input error\n" );
 		}
-		break;///DEBUG
 
 	} // while( 1 )
 #endif
@@ -129,25 +117,11 @@ int main( int argc, char* argv[] )
 		printf( "%d)\t'%c'\n", i, delimeters[ i ] );
 	}
 
-	printf( "process:\n" );
-	{
-		line_t* curr = lines;
-		while( curr ) {
-			printf( "%s:\n", curr->text );
-
-			char* pch = strtok( curr->text, delimeters );
-			while( pch != NULL ) {
-				printf( " %s\n", pch );
-				pch = strtok( NULL, delimeters );
-			}
-
-			printf( "\n" );
-			curr = curr->next;
-		}
-	}
-
-	printf( "------------------------------\n" );
-    add_word( &word_list, "hundred" ); // 100
+	printf( "------------------------------------------------------------\n" );
+	lines_process( lines, delimeters );
+	printf( "------------------------------------------------------------\n" );
+	lines_print( lines );
+    /*add_word( &word_list, "hundred" ); // 100
     add_word( &word_list, "twelve" ); // 12
     add_word( &word_list, "six" ); // 56
     add_word( &word_list, "seven" ); // 67
@@ -155,7 +129,8 @@ int main( int argc, char* argv[] )
     pint_words( &word_list );
     sort_words( word_list.head, word_list.tail );
     pint_words( &word_list );
-    remove_words( &word_list );
+    remove_words( &word_list );*/
+	printf( "------------------------------------------------------------\n" );
 
 	return 0;
 }

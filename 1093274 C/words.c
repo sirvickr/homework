@@ -6,8 +6,9 @@ void add_word( word_list_t* list, const char* word ) {
 	if( word == NULL )
 		return;
     word_t *item = ( word_t* )malloc( sizeof( word_t ) );
-    item->p = ( char* )malloc( strlen( word ) );
-    strcpy( item->p, word );
+    item->text = ( char* )malloc( strlen( word ) );
+    strcpy( item->text, word );
+    //printf( "add_word: %s\n", item->text );
     if ( list->head == NULL ) {
         list->head = list->tail = item;
         item->next = item->prev = NULL;
@@ -23,8 +24,8 @@ void add_word( word_list_t* list, const char* word ) {
 void remove_words( word_list_t* list ) {
     word_t *temp, *item = list->head;
     while( item != NULL ) {
-    	if( item->p != NULL )
-    		free( item->p );
+    	if( item->text != NULL )
+    		free( item->text );
         temp = item;
         item = item->next;
         free( temp );
@@ -36,7 +37,7 @@ void remove_words( word_list_t* list ) {
 void pint_words( word_list_t* list ) {
     word_t *item = list->head;
     while ( item != NULL ) {
-        printf( "%s ", item->p );
+        printf( "%s ", item->text );
         item = item->next;
     }
 	printf( "\n" );
@@ -59,10 +60,10 @@ void sort_words( word_t *left, word_t *right ) {
     // итерация по списку слева направо
     while ( 1 ) {
         // элемент с максимальным значением помещается в начало списка
-        if ( consonant_count( start->p ) < consonant_count( curr->p ) ) {
-            p = curr->p;
-            curr->p = start->p;
-            start->p = p;
+        if ( consonant_count( start->text ) < consonant_count( curr->text ) ) {
+            p = curr->text;
+            curr->text = start->text;
+            start->text = p;
         }   
          
         if ( curr == right )
@@ -71,9 +72,9 @@ void sort_words( word_t *left, word_t *right ) {
     }
  
     // переключение First и Current - максимум попадает в правый конец списка
-    p = left->p;
-    left->p = curr->p;
-    curr->p = p;
+    p = left->text;
+    left->text = curr->text;
+    curr->text = p;
  
  
     // сохранение Current

@@ -1,5 +1,4 @@
 #include "lines.h"
-#include "words.h"
 
 // добавление строки в список
 line_t* add_line( line_t** head, const char* text ) {
@@ -41,4 +40,47 @@ int lines_find( line_t* head, const char* text ) {
 		curr = curr->next;
 	}
 	return 0;
+}
+
+void lines_process( line_t* head, const char* delimeters ) {
+	line_t* curr = head;
+	while( curr ) {
+		char* pch = strtok( curr->text, delimeters );
+		while( pch != NULL ) {
+    		add_word( &curr->words, pch );
+			pch = strtok( NULL, delimeters );
+		}
+
+		curr = curr->next;
+	}
+	curr = head; // DEBUG
+	while( curr ) {
+     	int index = 0;
+
+		printf( "%s:\n", curr->text );
+		
+		sort_words( curr->words.head, curr->words.tail );
+     	
+     	pint_words( &curr->words );
+
+		word_t* word = curr->words.head;
+		while( word != NULL ) {
+			#if 0
+    		printf( " >> word: %s\n", word->text );
+			#else
+			char* pc = word->text;
+			printf( " >> word: " );
+			while( *pc != '\0' ) {
+				printf( "%c", *pc );
+				curr->text[ index++ ] = *pc;
+				pc++;
+			}
+			curr->text[ index ] = '\0';
+			printf( "\t>>: %s\n", curr->text );
+			#endif
+			word = word->next;
+		}
+
+		curr = curr->next;
+	}
 }

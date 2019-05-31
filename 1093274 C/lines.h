@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "words.h"
 
 struct word_list_t;
 
@@ -11,7 +12,7 @@ struct word_list_t;
 typedef struct line_t {
 	char* text;
 	struct line_t* next; // указатель на следующий элемент списка
-	struct word_list_t* words;
+	word_list_t words;
 } line_t;
 
 // добавление строки в список
@@ -22,5 +23,7 @@ void lines_clear( line_t** head ) ;
 void lines_print( line_t* head );
 // находит строку в списке строк
 int lines_find( line_t* head, const char* text );
+// упорядочение слов в строках
+void lines_process( line_t* head, const char* delimeters );
 
 #endif // __LINES_H__

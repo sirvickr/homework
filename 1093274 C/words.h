@@ -9,7 +9,7 @@
 typedef struct word_t
 {
     //int nInteger;
-    char* p;
+    char* text;
     struct word_t *prev;
     struct word_t *next;
 } word_t;
