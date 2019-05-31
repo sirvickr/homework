@@ -1,9 +1,11 @@
 * {margin: 0; padding: 0;}
+
 html, body {
 	width: 100%;
 	height: 100%;
 	overflow: hidden;
 }
+
 .game {
 	position: relative;
 	display: flex;
@@ -27,6 +29,7 @@ html, body {
 	box-sizing: border-box;
 	color: #c6e84c;
 }
+
 .game .field {
 	position: relative;
 	z-index: 1;
@@ -36,39 +39,43 @@ html, body {
 	height: 80vmin;
 	width: 80vmin;
 }
-	.game .field .cell {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		margin: 1vmin;
-		box-sizing: border-box;
-		background-color: rgba(255, 255, 255, 0.2);
-		border-radius: 2vmin;
-		font-size: 10vmin;
-		background-image: none;
-		background-position: center;
-		background-repeat: no-repeat;
-		background-size: cover;
-		color: transparent;
-		transition: background-image 0.2s ease-in-out, height 0.2s, width 0.2s, margin 0.2s;
-	}
-	.game .field .cell.hightlight {
-		margin: 0;
-	}
-	@keyframes hide {
-		from {opacity: 1;}
-		to {opacity: 0;}
-	}
-	.game .field .cell.animate {
-		position: absolute;
-		margin: 0;
-		transition: left 0.2s, top 0.2s;
-		z-index: -1;
-		animation-name: hide;
-		animation-duration: 0.2s;
-		animation-iteration-count: 1;
-		animation-fill-mode: forwards;
-	}
+
+.game .field .cell {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin: 1vmin;
+	box-sizing: border-box;
+	background-color: rgba(255, 255, 255, 0.2);
+	border-radius: 2vmin;
+	font-size: 10vmin;
+	background-image: none;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: cover;
+	color: #c6e84c;
+	transition: background-image 0.2s ease-in-out, height 0.2s, width 0.2s, margin 0.2s;
+}
+
+.game .field .cell.hightlight {
+	margin: 0;
+}
+
+@keyframes hide {
+	from {opacity: 1;}
+	to {opacity: 0;}
+}
+
+.game .field .cell.animate {
+	position: absolute;
+	margin: 0;
+	transition: left 0.2s, top 0.2s;
+	z-index: -1;
+	animation-name: hide;
+	animation-duration: 0.2s;
+	animation-iteration-count: 1;
+	animation-fill-mode: forwards;
+}
 
 .game .field .cell[data-ship="2"] {
     background-image: url(/img/units/gammadrone.png);
