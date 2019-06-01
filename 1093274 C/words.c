@@ -8,7 +8,6 @@ void add_word( word_list_t* list, const char* word ) {
     word_t *item = ( word_t* )malloc( sizeof( word_t ) );
     item->text = ( char* )malloc( strlen( word ) );
     strcpy( item->text, word );
-    //printf( "add_word: %s\n", item->text );
     if ( list->head == NULL ) {
         list->head = list->tail = item;
         item->next = item->prev = NULL;
@@ -34,7 +33,7 @@ void remove_words( word_list_t* list ) {
 }
  
 // вывод содержимого списка в консоль
-void pint_words( word_list_t* list ) {
+void print_words( word_list_t* list ) {
     word_t *item = list->head;
     while ( item != NULL ) {
         printf( "%s ", item->text );

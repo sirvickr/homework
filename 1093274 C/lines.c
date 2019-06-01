@@ -25,7 +25,6 @@ void lines_print( line_t* head ) {
 	printf( "lines:\n" );
 	line_t* curr = head;
 	while( curr ) {
-		//printf( "%s\t(%d)\n", curr->text, consonant_count( curr->text ) );
 		printf( "%s\n", curr->text );
 		curr = curr->next;
 	}
@@ -42,42 +41,37 @@ int lines_find( line_t* head, const char* text ) {
 	return 0;
 }
 
+// разделяет слова в каждой строке и сортирует 
+// их по возрастанию количества согласных в слове
 void lines_process( line_t* head, const char* delimeters ) {
-	line_t* curr = head;
+	line_t* curr;
+	// разбиваем каждую строку на слова, имходя из списка разделителей
+	// отдельные слова помещаем в список для последующей сортировки
+	curr = head;
 	while( curr ) {
 		char* pch = strtok( curr->text, delimeters );
 		while( pch != NULL ) {
     		add_word( &curr->words, pch );
 			pch = strtok( NULL, delimeters );
 		}
-
 		curr = curr->next;
 	}
-	curr = head; // DEBUG
+	// сортируем каждый список слов и склеиваем отсортированные слова обратно в строку
+	curr = head;
 	while( curr ) {
      	int index = 0;
 
-		printf( "%s:\n", curr->text );
-		
 		sort_words( curr->words.head, curr->words.tail );
-     	
-     	pint_words( &curr->words );
 
 		word_t* word = curr->words.head;
 		while( word != NULL ) {
-			#if 0
-    		printf( " >> word: %s\n", word->text );
-			#else
 			char* pc = word->text;
-			printf( " >> word: " );
 			while( *pc != '\0' ) {
-				printf( "%c", *pc );
 				curr->text[ index++ ] = *pc;
 				pc++;
 			}
+			curr->text[ index++ ] = delimeters[0];
 			curr->text[ index ] = '\0';
-			printf( "\t>>: %s\n", curr->text );
-			#endif
 			word = word->next;
 		}
 

@@ -6,7 +6,7 @@
 #include <string.h>
 #include "words.h"
 
-struct word_list_t;
+// односвязный список для хранения строк текста
 
 // структура, представляющая строку текста в списке
 typedef struct line_t {

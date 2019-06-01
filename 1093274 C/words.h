@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+// двусвязный список для хранения отдельных слов, встречающихся в строке текста
+
 // элемент двусвязного списка
 typedef struct word_t
 {
@@ -27,7 +29,7 @@ void add_word( word_list_t* list, const char* p );
 // удаление
 void remove_words( word_list_t* list );
 // вывод содержимого списка в консоль
-void pint_words( word_list_t* list );
+void print_words( word_list_t* list );
 // быстрая сортировка (quick sort)
 void sort_words( word_t *left, word_t *right );
 

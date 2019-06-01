@@ -23,8 +23,6 @@
 static char input_buffer[ MAX_INPUT_SIZE ];
 static char delimeters[ MAX_INPUT_SIZE ];
 
-word_list_t word_list;
-
 int get_line( line_t* lines, line_t*** ppp, char* text ) {
 	size_t length = strlen( text );
 	// при вводе с консоли, последним символом будет \0', а предпоследним - '\n'
@@ -33,8 +31,6 @@ int get_line( line_t* lines, line_t*** ppp, char* text ) {
 		return 0;
 	}
 	text[ --length ] = '\0'; // удаляем '\n' (заменяем '\n' на '\0')
-
-	printf( "text (len = %lu) %s\n", length, text );
 
 	if( lines_find( lines, text ) ) {
 		printf( "duplicate line, input finished\n" );
@@ -60,10 +56,10 @@ int main( int argc, char* argv[] )
 	line_t** pp = &lines; //
 	// количество разделителей
 	int delimeter_count = 0; 
-#if 1
+#if 0
 	const char* debug_lines[] = {
 		"one two three four\n",
-		"first;seconddd third fourthh fifth\n",
+		"appalling;great astonisged so-so;well-known;splendid outstanding awful yandex.ru excellent astounded\n",
 	};
 	{
 		int count = sizeof( debug_lines ) / sizeof( debug_lines[ 0 ] );
@@ -89,7 +85,7 @@ int main( int argc, char* argv[] )
 	} // while( 1 )
 #endif
 	lines_print( lines );
-#if 1
+#if 0
 	delimeters[ 0 ] = ' ';
 	delimeters[ 1 ] = ';';
 	delimeter_count = 2;
@@ -100,7 +96,6 @@ int main( int argc, char* argv[] )
 
 		int c = getchar();
 		if ( c != '\n' && c != '\r' ) {
-			//printf( "You entered: '%c' (c %d sum %d)\n", c, c, sum + c );
 			if( sum > 0 && c > sum ) {
 				printf( "input finished\n" );
 				break;
@@ -117,20 +112,8 @@ int main( int argc, char* argv[] )
 		printf( "%d)\t'%c'\n", i, delimeters[ i ] );
 	}
 
-	printf( "------------------------------------------------------------\n" );
 	lines_process( lines, delimeters );
-	printf( "------------------------------------------------------------\n" );
 	lines_print( lines );
-    /*add_word( &word_list, "hundred" ); // 100
-    add_word( &word_list, "twelve" ); // 12
-    add_word( &word_list, "six" ); // 56
-    add_word( &word_list, "seven" ); // 67
- 
-    pint_words( &word_list );
-    sort_words( word_list.head, word_list.tail );
-    pint_words( &word_list );
-    remove_words( &word_list );*/
-	printf( "------------------------------------------------------------\n" );
 
 	return 0;
 }
