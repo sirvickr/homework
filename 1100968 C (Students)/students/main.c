@@ -49,8 +49,6 @@ int main( int argc, char *argv[] ) {
 			case 4:
 				Del_Student( &students );
 				break;
-			default:
-				printf( "Unknown choice\n" );
 			}
 		} else {
 			printf( "Not number\n" );
@@ -117,4 +115,3 @@ void Del_Student( Students* students )
 		Students_Del_Index( students, index - 1 );
 	}
 }
-

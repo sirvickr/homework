@@ -91,7 +91,7 @@ void Students_Print( Students* list )
 		printf( "List is empty\n" );
     	return;
 	}
-	printf( "List contents:\n" );
+	printf( "Num\tName\tAge\tScore\n" );
     while ( item != NULL ) {
         printf( "%d\t%s\t%d\t%.2f\n", ++i, item->name, (int)item->age, item->score );
         item = item->next;
