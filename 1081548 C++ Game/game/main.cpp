@@ -12,6 +12,15 @@ const int TILE_SIZE = 40;
 SDL_Window *window = NULL;
 SDL_Renderer *renderer = NULL;
 
+/**
+* Log an SDL error with some error message to the output stream of our choice
+* @param os The output stream to write the message to
+* @param msg The error message to write, format will be msg error: SDL_GetError()
+*/
+void logSDLError(std::ostream &os, const std::string &msg) {
+	os << msg << " failed: " << SDL_GetError() << std::endl;
+}
+
 SDL_Texture* LoadImage(const std::string& file){
 	SDL_Texture *image = NULL;
 	SDL_Surface *bmp = SDL_LoadBMP(file.c_str());
@@ -20,8 +29,7 @@ SDL_Texture* LoadImage(const std::string& file){
 		SDL_FreeSurface(bmp);
 	}
 	else {
-		std::cout << SDL_GetError() << std::endl;
-		//MessageBox(NULL, "SDL_LoadBMP Error", file.c_str(), MB_ICONSTOP);
+		logSDLError(std::cout, "SDL_CreateTextureFromSurface");
 	}
 	return image;
 }
@@ -35,8 +43,7 @@ SDL_Texture* LoadImage(const std::string& file){
 SDL_Texture* loadTexture(const std::string &file, SDL_Renderer *ren){
 	SDL_Texture *texture = IMG_LoadTexture(ren, file.c_str());
 	if (texture == NULL){
-		//logSDLError(std::cout, "LoadTexture");
-		//MessageBox(NULL, "IMG_LoadTexture Error", file.c_str(), MB_ICONSTOP);
+		logSDLError(std::cout, "loadTexture");
 	}
 	return texture;
 }
@@ -87,13 +94,11 @@ void ApplySurface(int x, int y, SDL_Texture *tex, SDL_Renderer *rend){
 int main(int argc, char* argv[])
 {
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0){
-		std::cout << "SDL_Init failed: " << SDL_GetError() << std::endl;
-		//MessageBox(NULL, "SDL_Init failed", "Error", MB_ICONSTOP);
+		logSDLError(std::cout, "SDL_Init");
 		return 1;
 	}
 	if ((IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG) != IMG_INIT_PNG){
-		//logSDLError(std::cout, "IMG_Init");
-		//MessageBox(NULL, "IMG_Init failed", "Error", MB_ICONSTOP);
+		logSDLError(std::cout, "IMG_Init");
 		SDL_Quit();
 		return 1;
 	}
@@ -104,88 +109,78 @@ int main(int argc, char* argv[])
 	window = SDL_CreateWindow("Hello World!", 100, 100, 640, 480, SDL_WINDOW_SHOWN);
 	#endif
 	if (window == NULL){
-		std::cout << "SDL_CreateWindow failed: " << SDL_GetError() << std::endl;
-		//MessageBox(NULL, "SDL_CreateWindow failed", "Error", MB_ICONSTOP);
+		logSDLError(std::cout, "SDL_CreateWindow");
 		return 1;
 	}
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	if (renderer == NULL){
-		std::cout << "SDL_CreateRenderer failed: " << SDL_GetError() << std::endl;
-		//MessageBox(NULL, "SDL_CreateRenderer failed", "Error", MB_ICONSTOP);
+		logSDLError(std::cout, "SDL_CreateRenderer");
 		return 1;
 	}
 	
-	#if 0
-	SDL_Texture *background = loadTexture("img/background.png", renderer);
-	SDL_Texture *image = loadTexture("img/image.png", renderer);
+	#if 1
+	SDL_Texture *background = loadTexture("img/Lesson3/background.png", renderer);
+	SDL_Texture *image = loadTexture("img/Lesson3/image.png", renderer);
 	if (background == NULL || image == NULL) {
-		//MessageBox(NULL, "LoadImage failed", "Error", MB_ICONSTOP);
+		logSDLError(std::cout, "Loading images");
 		return 4;
 	}
 	#else
-	SDL_Texture *background = LoadImage("img/background.bmp");
-	SDL_Texture *image = LoadImage("img/image.bmp");
+	SDL_Texture *background = LoadImage("img/Lesson2/background.bmp");
+	SDL_Texture *image = LoadImage("img/Lesson2image.bmp");
 	if (background == NULL || image == NULL) {
-		//MessageBox(NULL, "LoadImage failed", "Error", MB_ICONSTOP);
+		logSDLError(std::cout, "LoadImage");
 		return 4;
 	}
-	/*SDL_Surface *bmp = SDL_LoadBMP("img/hello.bmp");
-	if (bmp == NULL){
-		std::cout << "SDL_LoadBMP Error: " << SDL_GetError() << std::endl;
-		//MessageBox(NULL, "SDL_LoadBMP failed", "Error", MB_ICONSTOP);
-		return 1;
-	}
-	SDL_Texture *image = SDL_CreateTextureFromSurface(renderer, bmp);
-	SDL_FreeSurface(bmp);
-	if (image == NULL){
-		std::cout << "SDL_CreateTextureFromSurface Error: " << SDL_GetError() << std::endl;
-		//MessageBox(NULL, "SDL_CreateTextureFromSurface failed", "Error", MB_ICONSTOP);
-		return 1;
-	}*/
 	#endif
-	
+	/*
 	SDL_RenderClear(renderer);
 	SDL_RenderCopy(renderer, background, NULL, NULL);
-	SDL_RenderPresent(renderer);
-	
-	SDL_Delay(2000);
+	*/
 
 	//Determine how many tiles we'll need to fill the screen
 	int xTiles = SCREEN_WIDTH / TILE_SIZE;
 	int yTiles = SCREEN_HEIGHT / TILE_SIZE;
 	//Draw the tiles by calculating their positions
-	/*for (int i = 0; i < xTiles * yTiles; ++i){
+	for (int i = 0; i < xTiles * yTiles; ++i){
 		int x = i % xTiles;
 		int y = i / xTiles;
-		renderTexture(background, renderer, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE,
-			TILE_SIZE);
+		renderTexture(background, renderer, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 	}
 	// Draw foreground
 	int iW, iH;
 	SDL_QueryTexture(image, NULL, NULL, &iW, &iH);
 	int x = SCREEN_WIDTH / 2 - iW / 2;
 	int y = SCREEN_HEIGHT / 2 - iH / 2;
-	renderTexture(image, renderer, x, y);*/
+	renderTexture(image, renderer, x, y);
 
-	/*SDL_Event e;
+	SDL_RenderPresent(renderer);
+
+	SDL_Event e;
 	bool quit = false;
 	while (!quit){
+		SDL_Delay(50);
+		std::cout << ".";
 		while (SDL_PollEvent(&e)){
-			if (e.type == SDL_QUIT){
+			switch (e.type) {
+			case SDL_QUIT:
 				quit = true;
-			}
-			if (e.type == SDL_KEYDOWN){
+				break;
+			case SDL_KEYDOWN:
 				quit = true;
-			}
-			if (e.type == SDL_MOUSEBUTTONDOWN){
+				break;
+			case SDL_MOUSEBUTTONDOWN:
 				quit = true;
+				break;
 			}
 		}
 		//Render the scene
+#if 0
 		SDL_RenderClear(renderer);
 		renderTexture(image, renderer, x, y);
 		SDL_RenderPresent(renderer);
-	}*/
+#endif
+	}
 
 	SDL_DestroyTexture(image);
 	SDL_DestroyRenderer(renderer);
