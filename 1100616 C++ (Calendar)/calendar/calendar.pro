@@ -24,11 +24,21 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 
 SOURCES += \
+        birthday.cpp \
+        calendar.cpp \
+        interaction.cpp \
         main.cpp \
-        mainwindow.cpp
+        mainwindow.cpp \
+        meeting.cpp \
+        task.cpp
 
 HEADERS += \
-        mainwindow.h
+        birthday.h \
+        calendar.h \
+        interaction.h \
+        mainwindow.h \
+        meeting.h \
+        task.h
 
 FORMS += \
         mainwindow.ui
