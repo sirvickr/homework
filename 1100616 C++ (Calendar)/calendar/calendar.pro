@@ -30,7 +30,8 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
         meeting.cpp \
-        task.cpp
+        task.cpp \
+    taskdlg.cpp
 
 HEADERS += \
         birthday.h \
@@ -38,7 +39,9 @@ HEADERS += \
         interaction.h \
         mainwindow.h \
         meeting.h \
-        task.h
+        task.h \
+    taskdlg.h
 
 FORMS += \
-        mainwindow.ui
+        mainwindow.ui \
+    taskdlg.ui

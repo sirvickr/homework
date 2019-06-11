@@ -2,7 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QSharedPointer>
+#include <QStringListModel>
 #include "calendar.h"
 
 namespace Ui {
@@ -19,9 +19,17 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+private Q_SLOTS:
+    void addTask();
+    void editTask();
+    void deleteTask();
+
 private:
-    Ui::MainWindow *ui;
-	QSharedPointer<Calendar> m_calendar;
+    void initActions();
+
+private:
+    Ui::MainWindow *ui = nullptr;
+    Calendar* m_calendar = nullptr;
 };
 
 #endif // MAINWINDOW_H

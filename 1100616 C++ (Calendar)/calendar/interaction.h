@@ -8,7 +8,8 @@ class Interaction : public Task
 public:
 	Interaction();
 	Interaction(const QDateTime& when, const QString& name, const QString& who);
-	QString who() const {
+    QString toString() const override;
+    QString who() const {
 		return m_who;
 	}
 	void setWho(const QString& who) {

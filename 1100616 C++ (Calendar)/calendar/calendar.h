@@ -2,18 +2,24 @@
 #define CALENDAR_H
 
 #include <QMap>
-#include <QSharedPointer>
-#include <QList>
+#include <QVector>
 
 class Task;
 
 class Calendar
 {
 public:
-	Calendar();
-	void addTask(const QSharedPointer<Task>& task);
+    Calendar() = default;
+    ~Calendar();
+    Task* task(int index) const;
+    bool setTask(int index, Task* task);
+    bool delTask(int index);
+    void addTask(Task* task);
+    int taskCount() const {
+        return m_tasks.size();
+    }
 private:
-	QList<QSharedPointer<Task>> m_tasks;
+    QVector<Task*> m_tasks;
 };
 
 #endif // CALENDAR_H

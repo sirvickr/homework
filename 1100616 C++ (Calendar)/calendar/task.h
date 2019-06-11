@@ -9,7 +9,14 @@ class Task
 public:
 	Task();
 	Task(const QDateTime& when, const QString& name);
-	QString name() const {
+    // Виртуальный деструктор нужен для того, чтобы
+    // компилятор сформировал таблицу виртуальных функций
+    // и при удалении экземпляра одного из потомков
+    // корректно вызывал деструкторы для всеё цепочки наследования
+    virtual ~Task() = default;
+
+    virtual QString toString() const;
+    QString name() const {
 		return m_name;
 	}
 	void setName(const QString& name) {

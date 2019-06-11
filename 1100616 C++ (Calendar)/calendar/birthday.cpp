@@ -8,3 +8,13 @@ Birthday::Birthday(const QDateTime& when, const QString& name, const QString& wh
 	: Interaction(when, name, who)
 {
 }
+
+QString Birthday::toString() const
+{
+    QString result = Interaction::toString();
+    result += " подарки:";
+    for(auto gift : m_presents) {
+        result += (" " + gift);
+    }
+    return result;
+}

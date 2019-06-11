@@ -8,3 +8,8 @@ Meeting::Meeting(const QDateTime& when, const QString& name, const QString& who,
 	: Interaction(when, name, who), m_where(where)
 {
 }
+
+QString Meeting::toString() const
+{
+    return Interaction::toString() + " место: " + where();
+}
