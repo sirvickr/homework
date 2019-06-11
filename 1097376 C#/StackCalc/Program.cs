@@ -11,7 +11,7 @@ namespace StackCalc
         // Ссылка на класс калькулятора
         static Calc calc = new Calc();
 
-        // Основная функця (точка входа) приложения
+        // Основная функция (точка входа) приложения
         static void Main(string[] args)
         {
             Console.WriteLine("Программа-калькулятор");
@@ -70,7 +70,7 @@ namespace StackCalc
         }
 
         // Функция обработки отдельной команды
-        // Возвражаемое значение:
+        // Возвращаемое значение:
         // false - продолжаем ввод команд
         // true - завершаем работу
         static bool processCommand(string cmd, bool trace)
