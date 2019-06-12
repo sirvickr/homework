@@ -52,6 +52,12 @@ public:
 	void y(int value) {
 		_y = value;
 	}
+	int w() const {
+		return _w;
+	}
+	int h() const {
+		return _h;
+	}
 
 private:
 	Orient _orient = Orient::right;

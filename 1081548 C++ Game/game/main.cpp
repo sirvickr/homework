@@ -6,12 +6,17 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include <list>
+// для генерации пседвослучайных чисел (ПСЧ)
+#include <random>  
+#include <ctime>
 
 #include "Cockroach.h"
 
-const int SCREEN_WIDTH = 1000;// 640;
-const int SCREEN_HEIGHT = 700;// 480;
-const int TILE_SIZE = 40;
+#include "Game.h"
+
+static const int SCREEN_WIDTH = 800;// 640;
+static const int SCREEN_HEIGHT = 600;// 480;
+static const int TILE_SIZE = 40;
 
 SDL_Window* window = nullptr;
 SDL_Renderer* renderer = nullptr;
@@ -86,13 +91,13 @@ void renderTexture(SDL_Texture *tex, SDL_Renderer *ren, int x, int y){
 	renderTexture(tex, ren, x, y, w, h);
 }
 
-void ApplySurface(int x, int y, SDL_Texture *tex, SDL_Renderer *rend){
+/*void ApplySurface(int x, int y, SDL_Texture *tex, SDL_Renderer *rend){
 	SDL_Rect pos;
 	pos.x = x;
 	pos.y = y;
 	SDL_QueryTexture(tex, nullptr, nullptr, &pos.w, &pos.h);
 	SDL_RenderCopy(rend, tex, nullptr, &pos);
-}
+}*/
 
 using Beetles = std::list<Cockroach*>;
 
@@ -104,18 +109,13 @@ struct StartParams {
 	const char* imgName;
 };
 
-static const int delta = 1;
-// up, down, left, right
-StartParams startParams[] = {
-	{ { SCREEN_WIDTH / 2,  SCREEN_HEIGHT     }, -delta, "img/crU.jpg" },
-	{ { SCREEN_WIDTH / 2,  0                 },  delta, "img/crD.jpg" },
-	{ { SCREEN_WIDTH,      SCREEN_HEIGHT / 2 }, -delta, "img/crL.jpg" },
-	{ { 0,                 SCREEN_HEIGHT / 2 },  delta, "img/crR.jpg" },
-};
-
 #if 1
 int main(int argc, char* argv[])
 {
+#if 1
+	Game game(SCREEN_WIDTH, SCREEN_HEIGHT);
+	game.run();
+#else
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0){
 		logSDLError(std::cout, "SDL_Init");
 		return 1;
@@ -145,10 +145,10 @@ int main(int argc, char* argv[])
 	SDL_Texture *background = loadTexture("img/Lesson3/background.png", renderer);
 //	SDL_Texture *image = loadTexture("img/Lesson3/image.png", renderer);
 	SDL_Texture *cross = loadTexture("img/target.png", renderer);
-	/*SDL_Texture *crU = loadTexture("img/crU.jpg", renderer);
-	SDL_Texture *crD = loadTexture("img/crD.jpg", renderer);
-	SDL_Texture *crL = loadTexture("img/crL.jpg", renderer);
-	SDL_Texture *crR = loadTexture("img/crR.jpg", renderer);*/
+	/*SDL_Texture *crU = loadTexture("img/crU.png", renderer);
+	SDL_Texture *crD = loadTexture("img/crD.png", renderer);
+	SDL_Texture *crL = loadTexture("img/crL.png", renderer);
+	SDL_Texture *crR = loadTexture("img/crR.png", renderer);*/
 	if (background == nullptr || cross == nullptr/* || crU == nullptr || crD == nullptr || crL == nullptr || crR == nullptr*/) {
 		logSDLError(std::cout, "Loading images");
 		return 4;
@@ -182,21 +182,49 @@ int main(int argc, char* argv[])
 	int y = SCREEN_HEIGHT / 2 - iH / 2;
 #if 1
 	// Draw foreground
-	renderTexture(cross, renderer, x, y);
+	//renderTexture(cross, renderer, x, y);
 
-	SDL_RenderPresent(renderer);
+	//SDL_RenderPresent(renderer);
 #endif
+	// генераторы ПСЧ
+	std::mt19937 gen;
+	gen.seed(time(0));
+	
+	//std::cout << "My number: " << gen() << std::endl;
+	//std::uniform_int_distribution<> uid(0, 3);
+	std::uniform_int_distribution<> uidOrient(0, 3);
+	std::uniform_int_distribution<> uidCount(2, 3);
+	//std::cout << "My numbers: " << uid(gen) << " " << uid(gen) << " " << uid(gen) << " " << uid(gen) << " " << uid(gen) << " " << uid(gen) << " " << uid(gen) << " " << uid(gen) << std::endl;
 
-	Cockroach::Orient orient = Cockroach::Orient::right;
-	const auto& startPoint = startParams[static_cast<int>(orient)];
-	beetles.push_back(new Cockroach(renderer, startPoint.imgName, orient, startPoint.pt.x, startPoint.pt.y, startPoint.delta));
+	//std::mt19937 gen1, gen2(time(0));
 
-	const int delta = 10;
+	static const int delta = 1;
+	// up, down, left, right
+	StartParams startParams[] = {
+		{ { SCREEN_WIDTH / 2,  SCREEN_HEIGHT     }, -delta, "img/crU.jpg" },
+		{ { SCREEN_WIDTH / 2,  0                 },  delta, "img/crD.jpg" },
+		{ { SCREEN_WIDTH,      SCREEN_HEIGHT / 2 }, -delta, "img/crL.jpg" },
+		{ { 0,                 SCREEN_HEIGHT / 2 },  delta, "img/crR.jpg" },
+	};
+
+	auto initCount = static_cast<size_t>(4);
+//	auto initCount = static_cast<size_t>(uidCount(gen));
+	for (size_t i = 0; i < initCount; ++i) {
+	//	Cockroach::Orient orient = Cockroach::Orient::right;
+		Cockroach::Orient orient = static_cast<Cockroach::Orient>(i & 3);
+	//	Cockroach::Orient orient = static_cast<Cockroach::Orient>(uidOrient(gen));
+		const auto& startPoint = startParams[static_cast<int>(orient)];
+		beetles.push_back(new Cockroach(renderer, startPoint.imgName, orient, startPoint.pt.x, startPoint.pt.y, startPoint.delta));
+	}
+
+	const int crossDelta = 10;
+	size_t killCount = 0;
 	SDL_Event evt;
 	bool quit = false;
 	while (!quit){
 		SDL_Delay(50);
 		std::cout << ".";
+		bool pressed = false;
 		while (SDL_PollEvent(&evt)){
 			switch (evt.type) {
 			case SDL_QUIT:
@@ -207,16 +235,20 @@ int main(int argc, char* argv[])
 				switch (evt.key.keysym.scancode)
 				{
 				case SDL_SCANCODE_UP:
-					y -= delta;
+					y -= crossDelta;
+					pressed = true;
 					break;
 				case SDL_SCANCODE_DOWN:
-					y += delta;
+					y += crossDelta;
+					pressed = true;
 					break;
 				case SDL_SCANCODE_LEFT:
-					x -= delta;
+					x -= crossDelta;
+					pressed = true;
 					break;
 				case SDL_SCANCODE_RIGHT:
-					x += delta;
+					x += crossDelta;
+					pressed = true;
 					break;
 				case SDL_SCANCODE_ESCAPE:
 					quit = true;
@@ -244,16 +276,15 @@ int main(int argc, char* argv[])
 			renderTexture(background, renderer, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 		}
 		// тараканы
-		for (auto it = std::begin(beetles); it != std::end(beetles); it++) {
+		for (auto it = std::begin(beetles); it != std::end(beetles); ) {
 			(*it)->draw();
-			// центр прицела
-			if ((*it)->evade(x + iW / 2, y + iH / 2)) {
-				(*it)->move();
+			if (!pressed || (*it)->evade(x + iW / 2, y + iH / 2)) { // центр прицела
+				(*it++)->move();
 			}
 			else { // не увернулся..
-				std::cout << "############################################" << std::endl;
-				std::cout << "################### ++++ ###################" << std::endl;
-				std::cout << "############################################" << std::endl;
+				//std::cout << "################### ++++ ###################" << std::endl;
+				it = beetles.erase(it);
+				killCount++;
 			}
 		}
 		// прицел
@@ -276,7 +307,7 @@ int main(int argc, char* argv[])
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
-	
+#endif
 	return 0;
 }
 

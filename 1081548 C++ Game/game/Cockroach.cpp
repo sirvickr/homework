@@ -27,8 +27,24 @@ bool Cockroach::initGraphics(SDL_Renderer* renderer, const char* imageName) {
 	}
 	_renderer = renderer;
 	_image = IMG_LoadTexture(renderer, imageName);
-	if (_image) {
-		return 0 == SDL_QueryTexture(_image, nullptr, nullptr, &_w, &_h);
+	if (_image && 0 == SDL_QueryTexture(_image, nullptr, nullptr, &_w, &_h)) {
+		switch (_orient) {
+		case Orient::right:
+			_x -= _w;
+			_y -= _h / 2;
+			break;
+		case Orient::down:
+			_x -= _w / 2;
+			_y -= _h;
+			break;
+		case Orient::left:
+			_y -= _h / 2;
+			break;
+		case Orient::up:
+			_x -= _w / 2;
+			break;
+		}
+		return true;
 	}
 	return false;
 }
@@ -56,7 +72,7 @@ void Cockroach::draw()
 	dst.y = _y;
 	dst.w = _w;
 	dst.h = _h;
-	std::cout << "\ndraw: R " << _renderer << " I " << _renderer << ": " << dst.x << " " << dst.y << "      " << " w " << dst.w << " h " << dst.h << std::endl;
+	//std::cout << "\ndraw: R " << _renderer << " I " << _renderer << ": " << dst.x << " " << dst.y << "      " << " w " << dst.w << " h " << dst.h << std::endl;
 	SDL_RenderCopy(_renderer, _image, nullptr, &dst);
 }
 
