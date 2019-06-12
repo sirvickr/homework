@@ -4,8 +4,11 @@
 #include "task.h"
 #include "birthday.h"
 #include "meeting.h"
+#include "calendar.h"
 
 #include <QDebug>
+#include <QImage>
+//#include <QToolButton>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -13,15 +16,14 @@ MainWindow::MainWindow(QWidget *parent) :
 {
 	ui->setupUi(this);
     m_calendar = new Calendar();
+    m_dateFilter = QDate::currentDate();
 
     QStringList List;
 
     initActions();
-    QString message = tr("");
-    statusBar()->showMessage(message);
+
     setWindowTitle(tr("Личный календарь"));
     setMinimumSize(500, 350);
-    //resize(600, 450);
 }
 
 MainWindow::~MainWindow()
@@ -38,12 +40,7 @@ void MainWindow::addTask()
     if(dlg.exec() && dlg.task()) {
         // добавляем задачу в календарь
         m_calendar->addTask(dlg.task());
-        // создаём элемент визуального списка
-        auto item = new QListWidgetItem(dlg.task()->toString());
-        // сохраняем в этом элементе индекс задачи
-        item->setData(Qt::UserRole, m_calendar->taskCount() - 1);
-        // добавляем элемент в список
-        ui->lstTasks->addItem(item);
+        showTask(dlg.task(), m_calendar->taskCount() - 1);
     }
 }
 
@@ -91,6 +88,7 @@ void MainWindow::editTask()
 
 void MainWindow::deleteTask()
 {
+    int row = ui->lstTasks->currentRow();
     QListWidgetItem* item = ui->lstTasks->currentItem();
     if(!item) {
         return;
@@ -102,9 +100,18 @@ void MainWindow::deleteTask()
         return;
     }
     m_calendar->delTask(index);
+    showTasks();
+    if(ui->lstTasks->count()) {
+        if(ui->lstTasks->count() == row)
+            --row;
+        ui->lstTasks->setCurrentRow(row);
+    }
+}
 
-    ui->lstTasks->removeItemWidget(item);
-    delete item;
+void MainWindow::on_calendarWidget_clicked(const QDate &date)
+{
+    m_dateFilter = date;
+    showTasks();
 }
 
 // реализация методов
@@ -115,16 +122,60 @@ void MainWindow::initActions()
 
     ui->actNew->setShortcuts(QKeySequence::New);
     ui->actNew->setStatusTip("Создать новую задачу");
+    //const QImage image("add.png");
+    //ui->actNew->setIcon(QPixmap::fromImage(image));
+    ui->actNew->setIcon(QIcon("img/add.png"));
     connect(ui->actNew, &QAction::triggered, this, &MainWindow::addTask);
 
     ui->actEdit->setStatusTip("Редактировать выбранную задачу");
+    ui->actEdit->setIcon(QIcon("img/edit.png"));
     connect(ui->actEdit, &QAction::triggered, this, &MainWindow::editTask);
 
     ui->actDelete->setShortcuts(QKeySequence::Delete);
     ui->actDelete->setStatusTip("Удалить выбранную задачу");
+    ui->actDelete->setIcon(QIcon("img/del.png"));
     connect(ui->actDelete, &QAction::triggered, this, &MainWindow::deleteTask);
 
     ui->actExit->setShortcuts(QKeySequence::Quit);
     ui->actExit->setStatusTip("Завершение работы");
     connect(ui->actExit, &QAction::triggered, this, &MainWindow::close);
+    // Toolbar
+    //QToolButton* btnNew = new QToolButton;
+    //btnNew->setDefaultAction(ui->actNew);
+    //ui->mainToolBar->addWidget(btnNew);
+    ui->mainToolBar->addAction(ui->actNew);
+    ui->mainToolBar->addAction(ui->actEdit);
+    ui->mainToolBar->addAction(ui->actDelete);
+}
+
+void MainWindow::showTasks()
+{
+    ui->lstTasks->clear();
+    int taskCount = m_calendar->taskCount();
+    for(int i = 0; i < taskCount; ++i) {
+        Task* task = m_calendar->task(i);
+        if(task->when().date() == m_dateFilter) {
+            showTask(task, i);
+        }
+    }
+}
+
+void MainWindow::showTask(Task* task, int index)
+{
+    const char* imgFileName = "";
+    // создаём элемент визуального списка
+    if(dynamic_cast<const Meeting*>(task)) {
+        imgFileName = "img/share.png";
+    } else if(dynamic_cast<const Birthday*>(task)) {
+        imgFileName = "img/shopping-cart.png";
+    } else if(dynamic_cast<const Interaction*>(task)) {
+        imgFileName = "img/phone-call.png";
+    } else { // базовый класс Task
+        imgFileName = "img/star.png";
+    }
+    auto item = new QListWidgetItem(QIcon(imgFileName), task->toString());
+    // сохраняем в этом элементе индекс задачи
+    item->setData(Qt::UserRole, index);
+    // добавляем элемент в список
+    ui->lstTasks->addItem(item);
 }

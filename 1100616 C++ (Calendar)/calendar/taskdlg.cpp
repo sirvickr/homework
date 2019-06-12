@@ -99,6 +99,7 @@ void TaskDlg::on_optTask_clicked()
 {
     qDebug() << "TASK";
     m_taskType = ttCommon;
+    ui->txtName->setText("Дело");
     ui->gbxList->setVisible(false);
     ui->txtWhere->setEnabled(false);
     ui->lblWhere->setEnabled(false);
@@ -111,6 +112,7 @@ void TaskDlg::on_optMeeting_clicked()
 {
     qDebug() << "MEETING";
     m_taskType = ttMeeting;
+    ui->txtName->setText("Встреча");
     ui->gbxList->setVisible(false);
     ui->txtWhere->setEnabled(true);
     ui->lblWhere->setEnabled(true);
@@ -123,6 +125,7 @@ void TaskDlg::on_optCall_clicked()
 {
     qDebug() << "CALL";
     m_taskType = ttCall;
+    ui->txtName->setText("Звонок");
     ui->gbxList->setVisible(false);
     ui->txtWhere->setEnabled(false);
     ui->lblWhere->setEnabled(false);
@@ -135,6 +138,7 @@ void TaskDlg::on_optBirthday_clicked()
 {
     qDebug() << "BIRTHDAY";
     m_taskType = ttBirthday;
+    ui->txtName->setText("ДР");
     ui->gbxList->setVisible(true);
     ui->txtWhere->setEnabled(false);
     ui->lblWhere->setEnabled(false);

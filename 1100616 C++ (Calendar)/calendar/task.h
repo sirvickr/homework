@@ -4,6 +4,13 @@
 #include <QString>
 #include <QDateTime>
 
+enum TaskType {
+    ttCommon,
+    ttMeeting,
+    ttCall,
+    ttBirthday
+};
+
 class Task
 {
 public:

@@ -2,24 +2,17 @@
 #define TASKDLG_H
 
 #include <QDialog>
+#include "task.h"
 
 namespace Ui {
 class TaskDlg;
 }
-
-class Task;
 
 class TaskDlg : public QDialog
 {
     Q_OBJECT
 
 public:
-    enum TaskType {
-        ttCommon,
-        ttMeeting,
-        ttCall,
-        ttBirthday
-    };
     // для добавления
     explicit TaskDlg(QWidget *parent = 0);
     // для редактирования дела (Task)
