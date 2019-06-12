@@ -17,12 +17,14 @@ Cockroach::~Cockroach()
 {
 }
 
-void Cockroach::initGraphics(SDL_Renderer* renderer, SDL_Texture* image) {
+bool Cockroach::initGraphics(SDL_Renderer* renderer, SDL_Texture* image) {
 	_renderer = renderer;
 	_image = image;
 	if(_image) {
 		SDL_QueryTexture(_image, nullptr, nullptr, &_w, &_h);
+		return true;
 	}
+	return false;
 }
 
 void Cockroach::move()
@@ -48,6 +50,7 @@ void Cockroach::draw()
 	dst.y = _y;
 	dst.w = _w;
 	dst.h = _h;
+	std::cout << "\ndraw: R " << _renderer << " I " << _renderer << ": " << dst.x << " " << dst.y << "      " << " w " << dst.w << " h " << dst.h << std::endl;
 	SDL_RenderCopy(_renderer, _image, nullptr, &dst);
 }
 

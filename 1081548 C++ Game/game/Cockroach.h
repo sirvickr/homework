@@ -18,7 +18,7 @@ public:
 	void move();
 	void draw();
 	bool evade(int x, int y);
-	void initGraphics(SDL_Renderer* renderer, SDL_Texture* image);
+	bool initGraphics(SDL_Renderer* renderer, SDL_Texture* image);
 	SDL_Renderer* renderer() const {
 		return _renderer;
 	}
