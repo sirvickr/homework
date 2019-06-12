@@ -11,23 +11,24 @@ public:
 	enum class Orient : int {
 		up, down, left, right
 	};
-	Cockroach();
-	Cockroach(SDL_Renderer* renderer, const char* imageName, Orient orient, int x, int y, int d = 1);
+	Cockroach(int fieldW, int fieldH, SDL_Renderer* renderer, const char* imageName, Orient orient, int d = 1);
 	~Cockroach();
 
-	void move();
-	void draw();
-	bool evade(int x, int y);
 	bool initGraphics(SDL_Renderer* renderer, const char* imageName);
+	// сделать следующий шаг (смена координат)
+	void move();
+	// нарисовать себя на экране
+	void draw();
+	// вышел за пределы экрана?
+	bool away() const;
+	// увернулся от тапка?
+	bool evade(int x, int y) const;
 	SDL_Renderer* renderer() const {
 		return _renderer;
 	}
 	SDL_Texture* image() const {
 		return _image;
 	}
-	//void image(SDL_Texture* value) {
-	//	_image = value;
-	//}
 	Orient orient() const {
 		return _orient;
 	}
@@ -66,6 +67,8 @@ private:
 	int _y = 0;
 	int _w = 0;
 	int _h = 0;
+	int _fieldW = 0;
+	int _fieldH = 0;
 	SDL_Renderer* _renderer = nullptr;
 	SDL_Texture* _image = nullptr;
 };

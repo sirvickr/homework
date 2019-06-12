@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <sstream>
-#include <string>
 #include <chrono>
 #include <SDL.h>
 #include <SDL_image.h>
@@ -17,12 +16,28 @@
 Game::Game(int scrWidth, int scrHeight)
 :	_active(true), _scrWidth(scrWidth), _scrHeight(scrHeight)
 {
+	userName = "user1";
 }
 
 
 Game::~Game()
 {
 }
+
+const char* imgNames[] = {
+	"img/crU.png",
+	"img/crD.png",
+	"img/crL.png",
+	"img/crR.png",
+};
+/*
+	StartParams startParams[] = {
+		{ _scrWidth,  _scrWidth / 2,  _scrHeight    , -1, "img/crU.png" },
+		{ _scrWidth,  _scrWidth / 2,  0             ,  1, "img/crD.png" },
+		{ _scrHeight, _scrWidth,      _scrHeight / 2, -1, "img/crL.png" },
+		{ _scrHeight, 0,              _scrHeight / 2,  1, "img/crR.png" },
+	};
+*/
 
 int Game::run()
 {
@@ -61,35 +76,36 @@ int Game::run()
 	std::mt19937 gen;
 	gen.seed(static_cast<uint32_t>(time(0)));
 	std::uniform_int_distribution<> uidOrient(0, 3);
-	std::uniform_int_distribution<> uidCount(2, 3);
 	std::uniform_int_distribution<> uidSpeed(1, 3);
-
-	//static const int delta = 2;
-	// up, down, left, right
-	StartParams startParams[] = {
-		{ _scrWidth / 2,  _scrHeight    , -1, "img/crU.png" },
-		{ _scrWidth / 2,  0             ,  1, "img/crD.png" },
-		{ _scrWidth,      _scrHeight / 2, -1, "img/crL.png" },
-		{ 0,              _scrHeight / 2,  1, "img/crR.png" },
-	};
-
-	auto initCount = static_cast<size_t>(4);
-	//	auto initCount = static_cast<size_t>(uidCount(gen));
+	// создаём начальный список тараканов
+	size_t initCount = 5;
 	for (size_t i = 0; i < initCount; ++i) {
-		//	Cockroach::Orient orient = Cockroach::Orient::right;
-		Cockroach::Orient orient = static_cast<Cockroach::Orient>(i & 3);
-		//	Cockroach::Orient orient = static_cast<Cockroach::Orient>(uidOrient(gen));
-		const auto& startPoint = startParams[static_cast<int>(orient)];
-		beetles.push_back(new Cockroach(_renderer, startPoint.imgName, orient, 
-			startPoint.x, startPoint.y, startPoint.delta * uidSpeed(gen)));
+		auto index = uidOrient(gen);
+		beetles.push_back(new Cockroach(_scrWidth, _scrHeight, _renderer, imgNames[index], 
+			static_cast<Cockroach::Orient>(index), uidSpeed(gen)));
 	}
 
-	const int crossDelta = 10;
-	size_t killCount = 0;
+	// дальность перемещения прицела за 1 шаг
+	const int crossDelta = 15;
+	// событие SDL
 	SDL_Event evt;
+	// счётчик убитых тараканов
+	size_t killCount = 0;
+	// время игры - 1 мин
+	constexpr uint32_t gameTime = 60000; // ms
+	// время одного шага - 50 мс
+	constexpr uint32_t stepDelay = 50; // ms
+	// время игры в шагах
+	constexpr uint32_t stepCount = gameTime / stepDelay;
+	// счётчик шагов
+	uint32_t stepCounter = 0;
 	while (_active) {
-		SDL_Delay(50);
+		if (stepCounter++ == stepCount) {
+			break;
+		}
+		SDL_Delay(stepDelay);
 		std::cout << ".";
+		// Обработка событий пользователя
 		bool pressed = false;
 		while (SDL_PollEvent(&evt)) {
 			switch (evt.type) {
@@ -127,49 +143,60 @@ int Game::run()
 				break;
 			}
 		}
+
 		// Отрисовка сцены
-#if 1
+
 		// очистка экрана
 		SDL_RenderClear(_renderer);
 		// заполнение фона
-#if 1
 		renderTexture(background, 0, 0);
-#else
-		const int TILE_SIZE = 200;
-		int xTiles = _scrWidth / TILE_SIZE;
-		int yTiles = _scrHeight / TILE_SIZE;
-		//Draw the tiles by calculating their positions
-		for (int i = 0; i < xTiles * yTiles; ++i) {
-			int x = i % xTiles;
-			int y = i / xTiles;
-			renderTexture(background, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-		}
-#endif
-		// тараканы
+		// обработка и отрисовка тараканов
 		for (auto it = std::begin(beetles); it != std::end(beetles); ) {
 			(*it)->draw();
 			if (!pressed || (*it)->evade(x + iW / 2, y + iH / 2)) { // центр прицела
-				(*it++)->move();
+				(*it)->move();
+				if ((*it)->away()) {
+					// убежал - создать нового таракана, взамен сбежавшего
+					it = replaceCockroach(it, uidOrient(gen), uidSpeed(gen));
+					/*delete (*it);
+					it = beetles.erase(it);
+					auto index = uidOrient(gen);
+					beetles.push_back(new Cockroach(_scrWidth, _scrHeight, _renderer, imgNames[index],
+						static_cast<Cockroach::Orient>(index), uidSpeed(gen)));*/
+				}
+				else {
+					it++;
+				}
 			}
-			else { // не увернулся..
-				//std::cout << "################### ++++ ###################" << std::endl;
+			else {
+				// не увернулся.. создать нового таракана, взамен убитого
+				it = replaceCockroach(it, uidOrient(gen), uidSpeed(gen));
+				/*delete (*it);
 				it = beetles.erase(it);
+				auto index = uidOrient(gen);
+				beetles.push_back(new Cockroach(_scrWidth, _scrHeight, _renderer, imgNames[index],
+					static_cast<Cockroach::Orient>(index), uidSpeed(gen)));*/
 				killCount++;
 			}
 		}
 		// прицел
 		renderTexture(cross, x, y);
-
+		// показ сцены в окне
 		SDL_RenderPresent(_renderer);
-#endif
-	}
+	} // while(active)
+	std::cout << "killCount for " << userName << " = " << killCount << std::endl;
 
+	// Очистка ресурсов
+
+	// удаление списка тараканов
 	for (auto it = std::begin(beetles); it != std::end(beetles); it++) {
 		delete (*it);
 	}
-
+	
+	// освобождение ресурсов SDL
+	
 	SDL_DestroyTexture(cross);
-
+	
 	SDL_DestroyRenderer(_renderer);
 	SDL_DestroyWindow(_window);
 	SDL_Quit();
@@ -178,6 +205,14 @@ int Game::run()
 	_renderer = nullptr;
 
 	return 0;
+}
+
+Game::Beetles::iterator Game::replaceCockroach(Beetles::iterator it, int index, int speed) {
+	delete *it;
+	Beetles::iterator result = beetles.erase(it);
+	beetles.push_back(new Cockroach(_scrWidth, _scrHeight, _renderer, imgNames[index],
+		static_cast<Cockroach::Orient>(index), speed));
+	return result;
 }
 
 void Game::stop()

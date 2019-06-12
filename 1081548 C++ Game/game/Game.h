@@ -13,6 +13,7 @@ class Cockroach;
 class Game
 {
 	struct StartParams {
+		int size;
 		int x;
 		int y;
 		int delta;
@@ -60,12 +61,17 @@ private:
 	*/
 	void logSDLError(std::ostream &os, const std::string &msg);
 
+	Beetles::iterator replaceCockroach(Beetles::iterator it, int index, int speed);
+
 private:
+	//static StartParams startParams[];
 	bool _active;
 	int _scrWidth, _scrHeight;
 	Beetles beetles;
 
 	SDL_Window* _window = nullptr;
 	SDL_Renderer* _renderer = nullptr;
+
+	std::string userName;
 };
 
