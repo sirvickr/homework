@@ -94,7 +94,7 @@ void ApplySurface(int x, int y, SDL_Texture *tex, SDL_Renderer *rend){
 	SDL_RenderCopy(rend, tex, nullptr, &pos);
 }
 
-using Beetles = std::list<Cockroach>;
+using Beetles = std::list<Cockroach*>;
 
 Beetles beetles;
 
@@ -189,8 +189,9 @@ int main(int argc, char* argv[])
 
 	Cockroach::Orient orient = Cockroach::Orient::down;
 	const auto& startPoint = startParams[static_cast<int>(orient)];
-	SDL_Texture *cr = loadTexture(startPoint.imgName, renderer);
-	beetles.push_back({renderer, cr, orient, startPoint.pt.x, startPoint.pt.y, startPoint.delta});
+	//SDL_Texture *cr = loadTexture(startPoint.imgName, renderer);
+	SDL_Texture *cr = loadTexture("img/crU.jpg", renderer);
+	beetles.push_back(new Cockroach(renderer, cr, startPoint.imgName, orient, startPoint.pt.x, startPoint.pt.y, startPoint.delta));
 
 	const int delta = 10;
 	SDL_Event evt;
@@ -246,10 +247,10 @@ int main(int argc, char* argv[])
 		}
 		// тараканы
 		for (auto it = std::begin(beetles); it != std::end(beetles); it++) {
-			it->draw();
+			(*it)->draw();
 			// центр прицела
-			if (it->evade(x + iW / 2, y + iH / 2)) {
-				it->move();
+			if ((*it)->evade(x + iW / 2, y + iH / 2)) {
+				(*it)->move();
 			}
 			else { // не увернулся..
 				std::cout << "############################################" << std::endl;
@@ -262,6 +263,10 @@ int main(int argc, char* argv[])
 
 		SDL_RenderPresent(renderer);
 #endif
+	}
+
+	for (auto it = std::begin(beetles); it != std::end(beetles); it++) {
+		delete (*it);
 	}
 
 	SDL_DestroyTexture(cross);
