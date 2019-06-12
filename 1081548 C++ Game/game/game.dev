@@ -10,7 +10,7 @@ PrivateResource=
 ResourceIncludes=
 MakeIncludes=
 Compiler=
-CppCompiler=
+CppCompiler=-std=c++11_@@_
 Linker=-lmingw32 -lSDL2main -lSDL2 -lSDL2_image_@@_
 IsCpp=1
 Icon=

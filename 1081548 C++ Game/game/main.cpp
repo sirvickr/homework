@@ -1,16 +1,20 @@
-#include <windows.h>
+//#include <windows.h>
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <chrono>
 #include <SDL.h>
 #include <SDL_image.h>
+#include <list>
 
-const int SCREEN_WIDTH = 640;
-const int SCREEN_HEIGHT = 480;
+#include "Cockroach.h"
+
+const int SCREEN_WIDTH = 1000;// 640;
+const int SCREEN_HEIGHT = 700;// 480;
 const int TILE_SIZE = 40;
 
-SDL_Window *window = NULL;
-SDL_Renderer *renderer = NULL;
+SDL_Window* window = nullptr;
+SDL_Renderer* renderer = nullptr;
 
 /**
 * Log an SDL error with some error message to the output stream of our choice
@@ -20,11 +24,11 @@ SDL_Renderer *renderer = NULL;
 void logSDLError(std::ostream &os, const std::string &msg) {
 	os << msg << " failed: " << SDL_GetError() << std::endl;
 }
-
+#if 0
 SDL_Texture* LoadImage(const std::string& file){
-	SDL_Texture *image = NULL;
+	SDL_Texture *image = nullptr;
 	SDL_Surface *bmp = SDL_LoadBMP(file.c_str());
-	if (bmp != NULL){
+	if (bmp != nullptr){
 		image = SDL_CreateTextureFromSurface(renderer, bmp);
 		SDL_FreeSurface(bmp);
 	}
@@ -33,7 +37,7 @@ SDL_Texture* LoadImage(const std::string& file){
 	}
 	return image;
 }
-
+#endif
 /*
 * Loads an image into a texture on the rendering device
 * @param file The image file to load
@@ -42,7 +46,7 @@ SDL_Texture* LoadImage(const std::string& file){
 */
 SDL_Texture* loadTexture(const std::string &file, SDL_Renderer *ren){
 	SDL_Texture *texture = IMG_LoadTexture(ren, file.c_str());
-	if (texture == NULL){
+	if (texture == nullptr){
 		logSDLError(std::cout, "loadTexture");
 	}
 	return texture;
@@ -65,7 +69,7 @@ void renderTexture(SDL_Texture *tex, SDL_Renderer *ren, int x, int y, int w, int
 	dst.y = y;
 	dst.w = w;
 	dst.h = h;
-	SDL_RenderCopy(ren, tex, NULL, &dst);
+	SDL_RenderCopy(ren, tex, nullptr, &dst);
 }
 
 /**
@@ -78,7 +82,7 @@ void renderTexture(SDL_Texture *tex, SDL_Renderer *ren, int x, int y, int w, int
 */
 void renderTexture(SDL_Texture *tex, SDL_Renderer *ren, int x, int y){
 	int w, h;
-	SDL_QueryTexture(tex, NULL, NULL, &w, &h);
+	SDL_QueryTexture(tex, nullptr, nullptr, &w, &h);
 	renderTexture(tex, ren, x, y, w, h);
 }
 
@@ -86,9 +90,28 @@ void ApplySurface(int x, int y, SDL_Texture *tex, SDL_Renderer *rend){
 	SDL_Rect pos;
 	pos.x = x;
 	pos.y = y;
-	SDL_QueryTexture(tex, NULL, NULL, &pos.w, &pos.h);
-	SDL_RenderCopy(rend, tex, NULL, &pos);
+	SDL_QueryTexture(tex, nullptr, nullptr, &pos.w, &pos.h);
+	SDL_RenderCopy(rend, tex, nullptr, &pos);
 }
+
+using Beetles = std::list<Cockroach>;
+
+Beetles beetles;
+
+struct StartParams {
+	SDL_Point pt;
+	int delta;
+	const char* imgName;
+};
+
+static const int delta = 1;
+// up, down, left, right
+StartParams startParams[] = {
+	{ { SCREEN_WIDTH / 2,  SCREEN_HEIGHT     }, -delta, "img/crU.jpg" },
+	{ { SCREEN_WIDTH / 2,  0                 },  delta, "img/crD.jpg" },
+	{ { SCREEN_WIDTH,      SCREEN_HEIGHT / 2 }, -delta, "img/crL.jpg" },
+	{ { 0,                 SCREEN_HEIGHT / 2 },  delta, "img/crR.jpg" },
+};
 
 #if 1
 int main(int argc, char* argv[])
@@ -108,36 +131,41 @@ int main(int argc, char* argv[])
 	#else
 	window = SDL_CreateWindow("Hello World!", 100, 100, 640, 480, SDL_WINDOW_SHOWN);
 	#endif
-	if (window == NULL){
+	if (window == nullptr){
 		logSDLError(std::cout, "SDL_CreateWindow");
 		return 1;
 	}
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-	if (renderer == NULL){
+	if (renderer == nullptr){
 		logSDLError(std::cout, "SDL_CreateRenderer");
 		return 1;
 	}
 	
 	#if 1
 	SDL_Texture *background = loadTexture("img/Lesson3/background.png", renderer);
-	SDL_Texture *image = loadTexture("img/Lesson3/image.png", renderer);
-	if (background == NULL || image == NULL) {
+//	SDL_Texture *image = loadTexture("img/Lesson3/image.png", renderer);
+	SDL_Texture *cross = loadTexture("img/target.png", renderer);
+	/*SDL_Texture *crU = loadTexture("img/crU.jpg", renderer);
+	SDL_Texture *crD = loadTexture("img/crD.jpg", renderer);
+	SDL_Texture *crL = loadTexture("img/crL.jpg", renderer);
+	SDL_Texture *crR = loadTexture("img/crR.jpg", renderer);*/
+	if (background == nullptr || cross == nullptr/* || crU == nullptr || crD == nullptr || crL == nullptr || crR == nullptr*/) {
 		logSDLError(std::cout, "Loading images");
 		return 4;
 	}
 	#else
 	SDL_Texture *background = LoadImage("img/Lesson2/background.bmp");
-	SDL_Texture *image = LoadImage("img/Lesson2image.bmp");
-	if (background == NULL || image == NULL) {
+	SDL_Texture *image = LoadImage("img/Lesson2/image.bmp");
+	if (background == nullptr || image == nullptr) {
 		logSDLError(std::cout, "LoadImage");
 		return 4;
 	}
 	#endif
 	/*
 	SDL_RenderClear(renderer);
-	SDL_RenderCopy(renderer, background, NULL, NULL);
+	SDL_RenderCopy(renderer, background, nullptr, nullptr);
 	*/
-
+#if 0
 	//Determine how many tiles we'll need to fill the screen
 	int xTiles = SCREEN_WIDTH / TILE_SIZE;
 	int yTiles = SCREEN_HEIGHT / TILE_SIZE;
@@ -147,42 +175,102 @@ int main(int argc, char* argv[])
 		int y = i / xTiles;
 		renderTexture(background, renderer, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 	}
-	// Draw foreground
+#endif
 	int iW, iH;
-	SDL_QueryTexture(image, NULL, NULL, &iW, &iH);
+	SDL_QueryTexture(cross, nullptr, nullptr, &iW, &iH);
 	int x = SCREEN_WIDTH / 2 - iW / 2;
 	int y = SCREEN_HEIGHT / 2 - iH / 2;
-	renderTexture(image, renderer, x, y);
+#if 1
+	// Draw foreground
+	renderTexture(cross, renderer, x, y);
 
 	SDL_RenderPresent(renderer);
+#endif
 
-	SDL_Event e;
+	Cockroach::Orient orient = Cockroach::Orient::down;
+	const auto& startPoint = startParams[static_cast<int>(orient)];
+	SDL_Texture *cr = loadTexture(startPoint.imgName, renderer);
+	beetles.push_back({renderer, cr, orient, startPoint.pt.x, startPoint.pt.y, startPoint.delta});
+
+	const int delta = 10;
+	SDL_Event evt;
 	bool quit = false;
 	while (!quit){
 		SDL_Delay(50);
 		std::cout << ".";
-		while (SDL_PollEvent(&e)){
-			switch (e.type) {
+		while (SDL_PollEvent(&evt)){
+			switch (evt.type) {
 			case SDL_QUIT:
 				quit = true;
 				break;
 			case SDL_KEYDOWN:
-				quit = true;
+				//std::cout << " \nscancode " << evt.key.keysym.scancode << " vk " << evt.key.keysym.sym << std::endl;
+				switch (evt.key.keysym.scancode)
+				{
+				case SDL_SCANCODE_UP:
+					y -= delta;
+					break;
+				case SDL_SCANCODE_DOWN:
+					y += delta;
+					break;
+				case SDL_SCANCODE_LEFT:
+					x -= delta;
+					break;
+				case SDL_SCANCODE_RIGHT:
+					x += delta;
+					break;
+				case SDL_SCANCODE_ESCAPE:
+					quit = true;
+					break;
+				}
 				break;
 			case SDL_MOUSEBUTTONDOWN:
-				quit = true;
+				std::cout << " \nmouse " << evt.button.x << " " << evt.button.y << std::endl;
+				//quit = true;
 				break;
 			}
 		}
-		//Render the scene
-#if 0
+		// Отрисовка сцены
+#if 1
+		// очистка экрана
 		SDL_RenderClear(renderer);
-		renderTexture(image, renderer, x, y);
+		// заполнение фона
+		//Determine how many tiles we'll need to fill the screen
+		int xTiles = SCREEN_WIDTH / TILE_SIZE;
+		int yTiles = SCREEN_HEIGHT / TILE_SIZE;
+		//Draw the tiles by calculating their positions
+		for (int i = 0; i < xTiles * yTiles; ++i) {
+			int x = i % xTiles;
+			int y = i / xTiles;
+			renderTexture(background, renderer, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+		}
+		// тараканы
+		for (auto it = std::begin(beetles); it != std::end(beetles); it++) {
+			it->draw();
+			// центр прицела
+			if (it->evade(x + iW / 2, y + iH / 2)) {
+				it->move();
+			}
+			else { // не увернулся..
+				std::cout << "############################################" << std::endl;
+				std::cout << "################### ++++ ###################" << std::endl;
+				std::cout << "############################################" << std::endl;
+			}
+		}
+		// прицел
+		renderTexture(cross, renderer, x, y);
+
 		SDL_RenderPresent(renderer);
 #endif
 	}
 
-	SDL_DestroyTexture(image);
+	SDL_DestroyTexture(cross);
+	SDL_DestroyTexture(cr);
+	/*SDL_DestroyTexture(crU);
+	SDL_DestroyTexture(crD);
+	SDL_DestroyTexture(crL);
+	SDL_DestroyTexture(crR);*/
+
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
