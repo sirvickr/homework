@@ -7,22 +7,28 @@ Cockroach::Cockroach()
 {
 }
 
-Cockroach::Cockroach(SDL_Renderer* renderer, SDL_Texture* image, Orient orient, int x, int y, int d)
+Cockroach::Cockroach(SDL_Renderer* renderer, const char* imageName, Orient orient, int x, int y, int d)
 	: _orient(orient), _d(d), _x(x), _y(y)
 {
-	initGraphics(renderer, image);
+	initGraphics(renderer, imageName);
 }
 
 Cockroach::~Cockroach()
 {
+	if (_image) {
+		SDL_DestroyTexture(_image);
+		_image = nullptr;
+	}
 }
 
-bool Cockroach::initGraphics(SDL_Renderer* renderer, SDL_Texture* image) {
+bool Cockroach::initGraphics(SDL_Renderer* renderer, const char* imageName) {
+	if (!renderer || !imageName) {
+		return false;
+	}
 	_renderer = renderer;
-	_image = image;
-	if(_image) {
-		SDL_QueryTexture(_image, nullptr, nullptr, &_w, &_h);
-		return true;
+	_image = IMG_LoadTexture(renderer, imageName);
+	if (_image) {
+		return 0 == SDL_QueryTexture(_image, nullptr, nullptr, &_w, &_h);
 	}
 	return false;
 }

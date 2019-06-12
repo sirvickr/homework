@@ -187,11 +187,9 @@ int main(int argc, char* argv[])
 	SDL_RenderPresent(renderer);
 #endif
 
-	Cockroach::Orient orient = Cockroach::Orient::down;
+	Cockroach::Orient orient = Cockroach::Orient::right;
 	const auto& startPoint = startParams[static_cast<int>(orient)];
-	//SDL_Texture *cr = loadTexture(startPoint.imgName, renderer);
-	SDL_Texture *cr = loadTexture("img/crU.jpg", renderer);
-	beetles.push_back(new Cockroach(renderer, cr, startPoint.imgName, orient, startPoint.pt.x, startPoint.pt.y, startPoint.delta));
+	beetles.push_back(new Cockroach(renderer, startPoint.imgName, orient, startPoint.pt.x, startPoint.pt.y, startPoint.delta));
 
 	const int delta = 10;
 	SDL_Event evt;
@@ -270,7 +268,6 @@ int main(int argc, char* argv[])
 	}
 
 	SDL_DestroyTexture(cross);
-	SDL_DestroyTexture(cr);
 	/*SDL_DestroyTexture(crU);
 	SDL_DestroyTexture(crD);
 	SDL_DestroyTexture(crL);

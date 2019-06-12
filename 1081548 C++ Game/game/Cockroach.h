@@ -12,13 +12,13 @@ public:
 		up, down, left, right
 	};
 	Cockroach();
-	Cockroach(SDL_Renderer* renderer, SDL_Texture* image, Orient orient, int x, int y, int d = 1);
+	Cockroach(SDL_Renderer* renderer, const char* imageName, Orient orient, int x, int y, int d = 1);
 	~Cockroach();
 
 	void move();
 	void draw();
 	bool evade(int x, int y);
-	bool initGraphics(SDL_Renderer* renderer, SDL_Texture* image);
+	bool initGraphics(SDL_Renderer* renderer, const char* imageName);
 	SDL_Renderer* renderer() const {
 		return _renderer;
 	}
