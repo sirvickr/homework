@@ -8,27 +8,28 @@
 
 #include <QDebug>
 #include <QImage>
-//#include <QToolButton>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
 	ui->setupUi(this);
+
     m_calendar = new Calendar();
     m_dateFilter = QDate::currentDate();
-
-    QStringList List;
 
     initActions();
 
     setWindowTitle(tr("Личный календарь"));
     setMinimumSize(500, 350);
+    setMinimumSize(650, 400);
+	showTasks();
 }
 
 MainWindow::~MainWindow()
 {
 	delete ui;
+	delete m_calendar;
 }
 
 // реализация слотов

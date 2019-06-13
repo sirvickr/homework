@@ -1,7 +1,7 @@
 #ifndef CALENDAR_H
 #define CALENDAR_H
 
-#include <QMap>
+#include <QSettings>
 #include <QVector>
 
 class Task;
@@ -9,7 +9,7 @@ class Task;
 class Calendar
 {
 public:
-    Calendar() = default;
+    Calendar();
     ~Calendar();
     Task* task(int index) const;
     bool setTask(int index, Task* task);
@@ -19,6 +19,7 @@ public:
         return m_tasks.size();
     }
 private:
+    QSettings m_settings;
     QVector<Task*> m_tasks;
 };
 
