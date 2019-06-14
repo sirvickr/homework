@@ -3,15 +3,17 @@
 
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <chrono>
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_ttf.h>
 #include <list>
 // для генерации пседвослучайных чисел (ПСЧ)
 #include <random>  
 #include <ctime>
 
-//using namespace std;
+using namespace std;
 
 Game::Game(int scrWidth, int scrHeight)
 :	_active(true), _scrWidth(scrWidth), _scrHeight(scrHeight)
@@ -30,42 +32,49 @@ const char* imgNames[] = {
 	"img/crL.png",
 	"img/crR.png",
 };
-/*
-	StartParams startParams[] = {
-		{ _scrWidth,  _scrWidth / 2,  _scrHeight    , -1, "img/crU.png" },
-		{ _scrWidth,  _scrWidth / 2,  0             ,  1, "img/crD.png" },
-		{ _scrHeight, _scrWidth,      _scrHeight / 2, -1, "img/crL.png" },
-		{ _scrHeight, 0,              _scrHeight / 2,  1, "img/crR.png" },
-	};
-*/
+
+//static const char* fontFileName = "img/sample.ttf";
+static const char* fontFileName = "c:\\windows\\fonts\\arial.ttf";
+static const int fontSize = 32;
+SDL_Color fontColor = { 0, 100, 0, 255 };//255
 
 int Game::run()
 {
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-		logSDLError(std::cout, "SDL_Init");
+		logSDLError(cout, "SDL_Init");
 		return 1;
 	}
 	if ((IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG) != IMG_INIT_PNG) {
-		logSDLError(std::cout, "IMG_Init");
+		logSDLError(cout, "IMG_Init");
+		SDL_Quit();
+		return 1;
+	}
+	if (TTF_Init() != 0) {
+		logSDLError(cout, "TTF_Init");
 		SDL_Quit();
 		return 1;
 	}
 	_window = SDL_CreateWindow("Cockroach hunt", SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED, _scrWidth, _scrHeight, SDL_WINDOW_SHOWN);
 	if (!_window) {
-		logSDLError(std::cout, "SDL_CreateWindow");
+		logSDLError(cout, "SDL_CreateWindow");
 		return 1;
 	}
 	_renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	if (!_renderer) {
-		logSDLError(std::cout, "SDL_CreateRenderer");
-		return 1;
+		logSDLError(cout, "SDL_CreateRenderer");
+		return 2;
 	}
-
+	// создаём шрифт
+	TTF_Font* font = TTF_OpenFont(fontFileName, fontSize);
+	if (font == nullptr) {
+		logSDLError(cout, "TTF_OpenFont");
+		return 3;
+	}
 	SDL_Texture *background = loadTexture("img/background.jpg");
 	SDL_Texture *cross = loadTexture("img/target.png");
 	if (background == nullptr || cross == nullptr) {
-		logSDLError(std::cout, "Loading images");
+		logSDLError(cout, "Loading images");
 		return 4;
 	}
 	int iW, iH;
@@ -73,10 +82,10 @@ int Game::run()
 	int x = _scrWidth / 2 - iW / 2;
 	int y = _scrHeight / 2 - iH / 2;
 	// генераторы ПСЧ
-	std::mt19937 gen;
+	mt19937 gen;
 	gen.seed(static_cast<uint32_t>(time(0)));
-	std::uniform_int_distribution<> uidOrient(0, 3);
-	std::uniform_int_distribution<> uidSpeed(1, 3);
+	uniform_int_distribution<> uidOrient(0, 3);
+	uniform_int_distribution<> uidSpeed(1, 3);
 	// создаём начальный список тараканов
 	size_t initCount = 5;
 	for (size_t i = 0; i < initCount; ++i) {
@@ -104,7 +113,7 @@ int Game::run()
 			break;
 		}
 		SDL_Delay(stepDelay);
-		std::cout << ".";
+		cout << ".";
 		// Обработка событий пользователя
 		bool pressed = false;
 		while (SDL_PollEvent(&evt)) {
@@ -113,7 +122,7 @@ int Game::run()
 				stop();
 				break;
 			case SDL_KEYDOWN:
-				//std::cout << " \nscancode " << evt.key.keysym.scancode << " vk " << evt.key.keysym.sym << std::endl;
+				//cout << " \nscancode " << evt.key.keysym.scancode << " vk " << evt.key.keysym.sym << endl;
 				switch (evt.key.keysym.scancode)
 				{
 				case SDL_SCANCODE_UP:
@@ -138,7 +147,7 @@ int Game::run()
 				}
 				break;
 			case SDL_MOUSEBUTTONDOWN:
-				std::cout << " \nmouse " << evt.button.x << " " << evt.button.y << std::endl;
+				cout << " \nmouse " << evt.button.x << " " << evt.button.y << endl;
 				//stop();
 				break;
 			}
@@ -151,7 +160,7 @@ int Game::run()
 		// заполнение фона
 		renderTexture(background, 0, 0);
 		// обработка и отрисовка тараканов
-		for (auto it = std::begin(beetles); it != std::end(beetles); ) {
+		for (auto it = begin(beetles); it != end(beetles); ) {
 			(*it)->draw();
 			if (!pressed || (*it)->evade(x + iW / 2, y + iH / 2)) { // центр прицела
 				(*it)->move();
@@ -181,20 +190,38 @@ int Game::run()
 		}
 		// прицел
 		renderTexture(cross, x, y);
+#if 1 // text
+		{
+			ostringstream os;
+			os << "Score: " << killCount;
+			SDL_Texture *image = renderText(os.str().c_str(), font, fontColor);
+			if (image) {
+				// Получаем размеры текста, чтобы разместить его на экране
+				int iW, iH;
+				SDL_QueryTexture(image, NULL, NULL, &iW, &iH);
+				renderTexture(image, _scrWidth - iW, _scrHeight - iH);
+			}
+			else {
+				logSDLError(cout, "renderText");
+			}
+		}
+#endif
 		// показ сцены в окне
 		SDL_RenderPresent(_renderer);
 	} // while(active)
-	std::cout << "killCount for " << userName << " = " << killCount << std::endl;
+	cout << "killCount for " << userName << " = " << killCount << endl;
 
 	// Очистка ресурсов
 
 	// удаление списка тараканов
-	for (auto it = std::begin(beetles); it != std::end(beetles); it++) {
+	for (auto it = begin(beetles); it != end(beetles); it++) {
 		delete (*it);
 	}
 	
 	// освобождение ресурсов SDL
 	
+	TTF_CloseFont(font);
+
 	SDL_DestroyTexture(cross);
 	
 	SDL_DestroyRenderer(_renderer);
@@ -220,10 +247,10 @@ void Game::stop()
 	_active = false;
 }
 
-SDL_Texture* Game::loadTexture(const std::string &file) {
+SDL_Texture* Game::loadTexture(const string &file) {
 	SDL_Texture *texture = IMG_LoadTexture(_renderer, file.c_str());
 	if (texture == nullptr) {
-		logSDLError(std::cout, "loadTexture");
+		logSDLError(cout, "loadTexture");
 	}
 	return texture;
 }
@@ -244,6 +271,55 @@ void Game::renderTexture(SDL_Texture *tex, int x, int y) {
 	renderTexture(tex, x, y, w, h);
 }
 
-void Game::logSDLError(std::ostream &os, const std::string &msg) {
-	os << msg << " failed: " << SDL_GetError() << std::endl;
+SDL_Texture* Game::renderText(const string &message, const string &fontFile,
+	SDL_Color color, int fontSize)
+{
+	//Open the font
+	TTF_Font *font = TTF_OpenFont(fontFile.c_str(), fontSize);
+	if (font == nullptr) {
+		logSDLError(cout, "TTF_OpenFont");
+		return nullptr;
+	}
+#if 1
+	SDL_Texture* texture = renderText(message, font, color);
+#else 
+	//We need to first render to a surface as that's what TTF_RenderText
+	//returns, then load that surface into a texture
+	SDL_Surface *surf = TTF_RenderText_Blended(font, message.c_str(), color);
+	if (surf == nullptr) {
+		TTF_CloseFont(font);
+		logSDLError(cout, "TTF_RenderText");
+		return nullptr;
+	}
+	SDL_Texture *texture = SDL_CreateTextureFromSurface(_renderer, surf);
+	if (texture == nullptr) {
+		logSDLError(cout, "CreateTexture");
+	}
+	//Clean up the surface and font
+	SDL_FreeSurface(surf);
+#endif
+	TTF_CloseFont(font);
+	return texture;
+}
+
+SDL_Texture* Game::renderText(const string &message, TTF_Font* font, SDL_Color color)
+{
+	//We need to first render to a surface as that's what TTF_RenderText
+	//returns, then load that surface into a texture
+	SDL_Surface *surf = TTF_RenderText_Blended(font, message.c_str(), color);
+	if (surf == nullptr) {
+		TTF_CloseFont(font);
+		logSDLError(cout, "TTF_RenderText");
+		return nullptr;
+	}
+	SDL_Texture *texture = SDL_CreateTextureFromSurface(_renderer, surf);
+	if (texture == nullptr) {
+		logSDLError(cout, "CreateTexture");
+	}
+	SDL_FreeSurface(surf);
+	return texture;
+}
+
+void Game::logSDLError(ostream &os, const string &msg) {
+	os << msg << " failed: " << SDL_GetError() << endl;
 }

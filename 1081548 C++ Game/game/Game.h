@@ -7,6 +7,8 @@
 struct SDL_Window;
 struct SDL_Renderer;
 struct SDL_Texture;
+struct SDL_Color;
+struct _TTF_Font;
 
 class Cockroach;
 
@@ -54,6 +56,21 @@ private:
 	* @param y The y coordinate to draw to
 	*/
 	void renderTexture(SDL_Texture *tex, int x, int y);
+
+	/**
+	* Render the message we want to display to a texture for drawing
+	* @param message The message we want to display
+	* @param fontFile The font we want to use to render the text
+	* @param color The color we want the text to be
+	* @param fontSize The size we want the font to be
+	* @param renderer The renderer to load the texture in
+	* @return An SDL_Texture containing the rendered message, or nullptr if something went wrong
+	*/
+	SDL_Texture* renderText(const std::string &message, const std::string &fontFile,
+		SDL_Color color, int fontSize);
+
+	SDL_Texture* renderText(const std::string &message, _TTF_Font* font, SDL_Color color);
+
 	/**
 	* Log an SDL error with some error message to the output stream of our choice
 	* @param os The output stream to write the message to
