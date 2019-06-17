@@ -7,17 +7,31 @@ namespace proc
     // Арифметико-логическое устройство (ALU - Arihmetic-Logic Unit)
     class ALU
     {
-        public Command Cmd
+        // Код операции
+        public Command OpCode
         {
             get
             {
-                return _cmd;
+                return _op;
             }
             set
             {
-                _cmd = value;
+                _op = value;
             }
         }
+        // Регистр адреса (содержит адрес очередной операции)
+        public int Addr
+        {
+            get
+            {
+                return _addr;
+            }
+            set
+            {
+                _addr = value;
+            }
+        }
+        // Регистр текущего операнда
         public int Reg
         {
             get
@@ -29,6 +43,7 @@ namespace proc
                 _reg = value;
             }
         }
+        // Регистр сумматора
         public int Sum
         {
             get
@@ -40,9 +55,10 @@ namespace proc
                 _sum = value;
             }
         }
+        // Выполнить текущую операцию
         public void execute()
         {
-            switch (_cmd)
+            switch (_op)
             {
                 case Command.Add:
                     _sum += _reg;
@@ -55,8 +71,10 @@ namespace proc
                     break;
             }
         }
+        // Закрытые члены класса
         int _reg = 0;
         int _sum = 0;
-        Command _cmd = Command.Stop;
+        int _addr = 0;
+        Command _op = Command.Stop;
     }
 }

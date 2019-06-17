@@ -11,61 +11,59 @@ namespace proc
         Stop, // останов
         Add, // сложение
         Sub, // вычитание
-        //Cmp, // сравнение
         Ld, // загрузка
-        //St, // выгрузка
-        //LdA, // загрузка адреса
-        //Jmp, // переход
-        //Jz, // переход по нулю
-        //Jn, // переход по минусу
     }
 
     class Computer
     {
-        //CPU cu = new CPU();
+        // Арифметико-логическое устройство (TODO: часть CPU)
         ALU alu = new ALU();
-        CU cu = new CU();
-
+        // Устройство управления (TODO: часть CPU)
+        CU cu = new CU(); // TODO?
+        // Оперативная память
         RAM ram = new RAM();
+        // Устройство вывода
         Output output = new Output();
+        // Устройство ввода (TODO)
         Input input = new Input();
+        // Выполнение программы
         public void runProgram()
         {
-            /*
-            ram.setByte(0, (char)0x4F);
-            ram.setByte(1, (char)0x3F);
-            ram.setByte(2, (char)0x2F);
-            ram.setByte(3, (char)0x1F);
-            Console.WriteLine("0\t" + ((int)ram.getByte(0)).ToString("X"));
-            Console.WriteLine("1\t" + ((int)ram.getByte(1)).ToString("X"));
-            Console.WriteLine("2\t" + ((int)ram.getByte(2)).ToString("X"));
-            Console.WriteLine("3\t" + ((int)ram.getByte(3)).ToString("X"));
-            Console.WriteLine("W\t" + ((int)ram.getWord(0)).ToString("X2"));
-            Console.WriteLine("W\t" + ((int)ram.getWord(1)).ToString("X2"));
-            Console.WriteLine("DW\t" + ((int)ram.getDword(0)).ToString("X4"));
-            */
+            // Начальная загрузка программы (команд и данных) в память
+            // TODO из файла
+            ram.setDword(256, 2); // записать значение "2"
+            ram.setDword(260, 3); // записать значение "3"
 
-            ram.setByte(0, (char)Command.Stop);
+            ram.setByte(0, (char)Command.Ld);  // записать команду: загрузить операнд [256] в АЛУ
+            ram.setDword(1, 256);
 
-            int cmdAddr = 0;// 8; // Регистр адреса
-            // Загружаем код текущей команды в АЛУ
-            alu.Cmd = (Command)ram.getByte(cmdAddr);
-            while(alu.Cmd != Command.Stop)
+            ram.setByte(5, (char)Command.Add);  // записать команду: прибавить операнд [260]
+            ram.setDword(6, 260);
+
+            ram.setByte(10, (char)Command.Stop);  // записать команду: останов
+
+            // Выполнение программы
+
+            // Загружаем в АЛУ адрес текущей команды
+            alu.Addr = 0;
+            // Загружаем в АЛУ код текущей команды
+            alu.OpCode = (Command)ram.getByte(alu.Addr);
+            while(alu.OpCode != Command.Stop)
             {
                 // Извлекаем адрес операнда текущей команды
-                int addr = ram.getWord(cmdAddr + 1);
+                int addr = ram.getWord(alu.Addr + 1);
                 // Читаем из памяти значение операнда и загружаем его в АЛУ
                 alu.Reg = ram.getDword(addr);
 
-                Console.WriteLine("cmdAddr " + cmdAddr.ToString() + " cmd " + alu.Cmd.ToString() + " addr " + addr.ToString() + " R1 " + alu.Reg.ToString() + " S " + alu.Sum.ToString());
+                output.push("cmdAddr " + alu.Addr.ToString() + " cmd " + alu.OpCode.ToString() + " addr " + addr.ToString() + " R1 " + alu.Reg.ToString() + " S " + alu.Sum.ToString());
                 // Выполняем текущую команду в АЛУ
                 alu.execute();
-                Console.WriteLine("  >> " + alu.Sum.ToString());
+                output.push("  >> " + alu.Sum.ToString());
 
-                //int cmdLen = ram.getByte(cmdAddr + 1);
-                cmdAddr += commandLength(alu.Cmd);
-                // Загружаем код текущей команды в АЛУ
-                alu.Cmd = (Command)ram.getByte(cmdAddr);
+                // Смещаемся на адрес следующей команды
+                alu.Addr += commandLength(alu.OpCode);
+                // Загружаем код следующей команды в АЛУ
+                alu.OpCode = (Command)ram.getByte(alu.Addr);
             }
         }
 
@@ -73,7 +71,7 @@ namespace proc
         {
             if (cmd == Command.Input || cmd == Command.Output || cmd == Command.Stop)
                 return 1;
-            return 4;
+            return 5;
         }
     }
 }

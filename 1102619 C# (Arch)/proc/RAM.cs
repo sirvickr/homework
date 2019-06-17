@@ -4,16 +4,12 @@ using System.Text;
 
 namespace proc
 {
+    // Оперативная память (Random Access Memory)
     class RAM
     {
-        const int size = 32000;
+        const int size = 65536;
         char[] mem = new char[size];
         
-        // Адрес передаётся в байтах, а данные хранятся 
-        // в 4-байтных словах, поэтому для доступа
-        // к нужному блоку памяти адрес делится
-        // на 4 (выбираем 4-байтное слово) и уже 
-        // внутри этого слова берём нужные данные
         public char getByte(int addr)
         {
             return mem[addr];

@@ -4,9 +4,10 @@ using System.Text;
 
 namespace proc
 {
+    // Устройство вывода
     class Output
     {
-        void show(string result)
+        public void push(string result)
         {
             Console.WriteLine(result);
         }
