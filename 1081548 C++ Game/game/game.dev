@@ -11,7 +11,7 @@ ResourceIncludes=
 MakeIncludes=
 Compiler=
 CppCompiler=-std=c++11_@@_
-Linker=-lmingw32 -lSDL2main -lSDL2 -lSDL2_image_@@_
+Linker=-lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf_@@_
 IsCpp=1
 Icon=
 ExeOutput=
@@ -29,7 +29,7 @@ IncludeVersionInfo=0
 SupportXPThemes=0
 CompilerSet=0
 CompilerSettings=0000000000000000000000000
-UnitCount=5
+UnitCount=7
 
 [VersionInfo]
 Major=1
@@ -92,6 +92,26 @@ BuildCmd=
 
 [Unit5]
 FileName=Game.h
+CompileCpp=1
+Folder=
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit6]
+FileName=Menu.cpp
+CompileCpp=1
+Folder=
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit7]
+FileName=Menu.h
 CompileCpp=1
 Folder=
 Compile=1

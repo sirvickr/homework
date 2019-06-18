@@ -1,10 +1,10 @@
 #include "Game.h"
+#include "Menu.h"
 #include "Cockroach.h"
 
 #include <iostream>
 #include <sstream>
 #include <fstream>
-#include <chrono>
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
@@ -24,17 +24,22 @@ Game::Game(int scrWidth, int scrHeight)
 
 Game::~Game()
 {
+	if (_font) {
+		TTF_CloseFont(_font);
+		_font = nullptr;
+	}
 }
 
 const char* imgNames[] = {
-	"img/crU.png",
-	"img/crD.png",
-	"img/crL.png",
-	"img/crR.png",
+	"res/crU.png",
+	"res/crD.png",
+	"res/crL.png",
+	"res/crR.png",
 };
 
-//static const char* fontFileName = "img/sample.ttf";
-static const char* fontFileName = "c:\\windows\\fonts\\arial.ttf";
+//static const char* fontFileName = "res/sample.ttf";
+static const char* fontFileName = "res/arial.ttf";
+//static const char* fontFileName = "c:\\windows\\fonts\\arial.ttf";
 static const int fontSize = 32;
 SDL_Color fontColor = { 0, 100, 0, 255 };//255
 
@@ -66,13 +71,16 @@ int Game::run()
 		return 2;
 	}
 	// создаём шрифт
-	TTF_Font* font = TTF_OpenFont(fontFileName, fontSize);
-	if (font == nullptr) {
+	_font = TTF_OpenFont(fontFileName, fontSize);
+	if (_font == nullptr) {
 		logSDLError(cout, "TTF_OpenFont");
 		return 3;
 	}
-	SDL_Texture *background = loadTexture("img/background.jpg");
-	SDL_Texture *cross = loadTexture("img/target.png");
+#if 1
+	SDL_Texture *background = loadTexture("res/background.jpg");
+#else
+#endif
+	SDL_Texture *cross = loadTexture("res/target.png");
 	if (background == nullptr || cross == nullptr) {
 		logSDLError(cout, "Loading images");
 		return 4;
@@ -108,9 +116,17 @@ int Game::run()
 	constexpr uint32_t stepCount = gameTime / stepDelay;
 	// счётчик шагов
 	uint32_t stepCounter = 0;
+	// пользовательское меню
+	Menu menu(_window, _renderer);
+	// цикл обработки событий
 	while (_active) {
 		if (stepCounter++ == stepCount) {
-			break;
+			if (showScore()) {
+				break;
+			}
+			else {
+				killCount = 0;
+			}
 		}
 		SDL_Delay(stepDelay);
 		cout << ".";
@@ -142,7 +158,12 @@ int Game::run()
 					pressed = true;
 					break;
 				case SDL_SCANCODE_ESCAPE:
-					stop();
+					if (1 == menu.show(SDL_GetWindowSurface(_window), _font, { "Continue", "Exit" })) {
+						stop();
+					}
+					break;
+				case SDL_SCANCODE_SPACE:
+					cout << "\nmenu index = " << menu.show(SDL_GetWindowSurface(_window), _font, { "Continue", "Exit", "Three", "Four" }) << endl;
 					break;
 				}
 				break;
@@ -194,7 +215,7 @@ int Game::run()
 		{
 			ostringstream os;
 			os << "Score: " << killCount;
-			SDL_Texture *image = renderText(os.str().c_str(), font, fontColor);
+			SDL_Texture *image = renderText(os.str().c_str(), _font, fontColor);
 			if (image) {
 				// Получаем размеры текста, чтобы разместить его на экране
 				int iW, iH;
@@ -220,7 +241,8 @@ int Game::run()
 	
 	// освобождение ресурсов SDL
 	
-	TTF_CloseFont(font);
+	TTF_CloseFont(_font);
+	_font = nullptr;
 
 	SDL_DestroyTexture(cross);
 	
@@ -240,6 +262,12 @@ Game::Beetles::iterator Game::replaceCockroach(Beetles::iterator it, int index, 
 	beetles.push_back(new Cockroach(_scrWidth, _scrHeight, _renderer, imgNames[index],
 		static_cast<Cockroach::Orient>(index), speed));
 	return result;
+}
+
+bool Game::showScore()
+{
+	Menu menu(_window, _renderer);
+	return (1 == menu.show(SDL_GetWindowSurface(_window), _font, { "Continue", "Exit" }));
 }
 
 void Game::stop()
@@ -280,24 +308,7 @@ SDL_Texture* Game::renderText(const string &message, const string &fontFile,
 		logSDLError(cout, "TTF_OpenFont");
 		return nullptr;
 	}
-#if 1
 	SDL_Texture* texture = renderText(message, font, color);
-#else 
-	//We need to first render to a surface as that's what TTF_RenderText
-	//returns, then load that surface into a texture
-	SDL_Surface *surf = TTF_RenderText_Blended(font, message.c_str(), color);
-	if (surf == nullptr) {
-		TTF_CloseFont(font);
-		logSDLError(cout, "TTF_RenderText");
-		return nullptr;
-	}
-	SDL_Texture *texture = SDL_CreateTextureFromSurface(_renderer, surf);
-	if (texture == nullptr) {
-		logSDLError(cout, "CreateTexture");
-	}
-	//Clean up the surface and font
-	SDL_FreeSurface(surf);
-#endif
 	TTF_CloseFont(font);
 	return texture;
 }
@@ -306,17 +317,17 @@ SDL_Texture* Game::renderText(const string &message, TTF_Font* font, SDL_Color c
 {
 	//We need to first render to a surface as that's what TTF_RenderText
 	//returns, then load that surface into a texture
-	SDL_Surface *surf = TTF_RenderText_Blended(font, message.c_str(), color);
-	if (surf == nullptr) {
+	SDL_Surface *surface = TTF_RenderText_Blended(font, message.c_str(), color);
+	if (!surface) {
 		TTF_CloseFont(font);
 		logSDLError(cout, "TTF_RenderText");
 		return nullptr;
 	}
-	SDL_Texture *texture = SDL_CreateTextureFromSurface(_renderer, surf);
+	SDL_Texture *texture = SDL_CreateTextureFromSurface(_renderer, surface);
 	if (texture == nullptr) {
 		logSDLError(cout, "CreateTexture");
 	}
-	SDL_FreeSurface(surf);
+	SDL_FreeSurface(surface);
 	return texture;
 }
 

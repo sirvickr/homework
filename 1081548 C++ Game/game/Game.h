@@ -80,6 +80,8 @@ private:
 
 	Beetles::iterator replaceCockroach(Beetles::iterator it, int index, int speed);
 
+	bool showScore();
+
 private:
 	//static StartParams startParams[];
 	bool _active;
@@ -88,6 +90,7 @@ private:
 
 	SDL_Window* _window = nullptr;
 	SDL_Renderer* _renderer = nullptr;
+	_TTF_Font* _font = nullptr;
 
 	std::string userName;
 };
