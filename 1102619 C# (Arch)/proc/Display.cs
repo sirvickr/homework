@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace proc
 {
-    // Устройство вывода
-    class Output
+    class Display
     {
-        public void push(string result)
+        public void print(string result)
         {
             Console.WriteLine(result);
         }

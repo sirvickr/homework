@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace proc
 {
@@ -12,66 +10,204 @@ namespace proc
         Add, // сложение
         Sub, // вычитание
         Ld, // загрузка
+        Mv, // выгрузка в ОП
     }
 
     class Computer
     {
-        // Арифметико-логическое устройство (TODO: часть CPU)
+        // Арифметико-логическое устройство
         ALU alu = new ALU();
-        // Устройство управления (TODO: часть CPU)
-        CU cu = new CU(); // TODO?
+        // Устройство управления
+        CU cu = new CU();
         // Оперативная память
         RAM ram = new RAM();
         // Устройство вывода
-        Output output = new Output();
+        Display display = new Display();
         // Устройство ввода (TODO)
-        Input input = new Input();
+        //Input input = new Input();
         // Выполнение программы
         public void runProgram()
         {
-            // Начальная загрузка программы (команд и данных) в память
-            // TODO из файла
-            ram.setDword(256, 2); // записать значение "2"
-            ram.setDword(260, 3); // записать значение "3"
-
-            ram.setByte(0, (char)Command.Ld);  // записать команду: загрузить операнд [256] в АЛУ
-            ram.setDword(1, 256);
-
-            ram.setByte(5, (char)Command.Add);  // записать команду: прибавить операнд [260]
-            ram.setDword(6, 260);
-
-            ram.setByte(10, (char)Command.Stop);  // записать команду: останов
-
-            // Выполнение программы
-
-            // Загружаем в АЛУ адрес текущей команды
-            alu.Addr = 0;
-            // Загружаем в АЛУ код текущей команды
-            alu.OpCode = (Command)ram.getByte(alu.Addr);
-            while(alu.OpCode != Command.Stop)
+            // Загружаем в УУ адрес текущей команды
+            cu.RA = 0;
+            // Загружаем в УУ код текущей команды
+            cu.RС = (Command)ram.getByte(cu.RA);
+            while(cu.RС != Command.Stop)
             {
-                // Извлекаем адрес операнда текущей команды
-                int addr = ram.getWord(alu.Addr + 1);
-                // Читаем из памяти значение операнда и загружаем его в АЛУ
-                alu.Reg = ram.getDword(addr);
-
-                output.push("cmdAddr " + alu.Addr.ToString() + " cmd " + alu.OpCode.ToString() + " addr " + addr.ToString() + " R1 " + alu.Reg.ToString() + " S " + alu.Sum.ToString());
-                // Выполняем текущую команду в АЛУ
-                alu.execute();
-                output.push("  >> " + alu.Sum.ToString());
+                if(hasOperand(cu.RС))
+                {
+                    // Извлекаем адрес операнда текущей команды
+                    int addr = ram.getWord(cu.RA + 1);
+                    // Читаем из памяти значение операнда и загружаем его в АЛУ
+                    alu.Reg = ram.getDword(addr);
+                    //display.print("RA " + cu.RA.ToString() + " RC " + cu.RС.ToString() + " op addr " + addr.ToString() + " R " + alu.Reg.ToString() + " S " + alu.Sum.ToString());
+                }
+                else
+                {
+                    //display.print("RA " + cu.RA.ToString() + " RC " + cu.RС.ToString());
+                }
+                // Выполняем текущую команду
+                if (cu.RС == Command.Output)
+                {
+                    display.print(alu.Sum.ToString());
+                }
+                else
+                {
+                    alu.execute(cu.RС);
+                }
+                //display.print("  >> " + alu.Sum.ToString());
 
                 // Смещаемся на адрес следующей команды
-                alu.Addr += commandLength(alu.OpCode);
+                cu.RA += commandLength(cu.RС);
                 // Загружаем код следующей команды в АЛУ
-                alu.OpCode = (Command)ram.getByte(alu.Addr);
+                cu.RС = (Command)ram.getByte(cu.RA);
             }
         }
 
+        // Признак наличия операнда у команды
+        bool hasOperand(Command cmd)
+        {
+            if (cmd == Command.Ld || cmd == Command.Add || cmd == Command.Sub)
+                return true;
+            return false;
+        }
+
+        // Полный размер команды
         int commandLength(Command cmd)
         {
             if (cmd == Command.Input || cmd == Command.Output || cmd == Command.Stop)
                 return 1;
             return 5;
+        }
+
+        // Подготовка к рагрузке в память
+        public void prepareLoad()
+        {
+            ram.WriteAddr = 0;
+        }
+
+        // Функция ввода отдельной команды
+        // Возвращаемое значение:
+        // false - продолжаем ввод команд
+        // true - завершаем работу
+        public bool addCommand(string cmd, bool trace)
+        {
+            // Комментарии и пустые строки пропускаем
+            if (cmd.Length == 0 || cmd[0] == '#')
+            {
+                return false;
+            }
+
+            // Выводим исходную команду на консоль
+            // (при вводе с клавиатуры не имеет смысла,
+            // т.к. пользователь уже её сам набрал в консоли)
+            if (trace)
+            {
+                Console.WriteLine(cmd);
+            }
+
+            // Переводим все символы в верхний регистр
+            // (убираем зависимость от регистра)
+            cmd = cmd.Trim().ToUpper();
+
+            // Разбиваем команду на имя команды 
+            // и аргументы (если есть)
+            string[] tokens = cmd.Split(new char[] { ' ' });
+
+            // Первый элемент обязан содержать имя команды
+            if (tokens.Length == 0)
+            {
+                return false;
+            }
+
+            if (tokens[0] == "MV")
+            {
+                /* Задать значение параметра
+                 ожидаем: MV <адрес ОП> <размер> <значение>
+                 примеры
+                 MV 1024 1 16
+                 MV 1025 2 821
+                 MV 1027 4 223501
+                */
+                if (tokens.Length == 4)
+                {
+                    int addr = int.Parse(tokens[1]);
+                    int size = int.Parse(tokens[2]);
+                    int value = int.Parse(tokens[3]);
+                    switch (size)
+                    {
+                        case 1:
+                            ram.setByte(addr, (char)value);
+                            break;
+                        case 2:
+                            ram.setWord(addr, (short)value);
+                            break;
+                        case 4:
+                            ram.setDword(addr, value);
+                            break;
+                    }
+                }
+            }
+            else if (tokens[0] == "LD")
+            {
+                // Загрузить слово из памяти в сумматор АЛУ
+                // ожидаем: LD <адрес ОП>
+                if (tokens.Length == 2)
+                {
+                    int addr = int.Parse(tokens[1]);
+                    ram.setNextByte((char)Command.Ld);
+                    ram.setNextDword(addr);
+                }
+            }
+            else if (tokens[0] == "ADD")
+            {
+                // Загрузить слово из памяти в сумматор АЛУ
+                // ожидаем: ADD <адрес ОП>
+                if (tokens.Length == 2)
+                {
+                    int addr = int.Parse(tokens[1]);
+                    ram.setNextByte((char)Command.Add);
+                    ram.setNextDword(addr);
+                }
+            }
+            else if (tokens[0] == "SUB")
+            {
+                // Загрузить слово из памяти в сумматор АЛУ
+                // ожидаем: ADD <адрес ОП>
+                if (tokens.Length == 2)
+                {
+                    int addr = int.Parse(tokens[1]);
+                    ram.setNextByte((char)Command.Sub);
+                    ram.setNextDword(addr);
+                }
+            }
+            else if (cmd == "OUT")
+            {
+                // Отправляем значение сумматора в устройство вывода
+                ram.setNextByte((char)Command.Output);
+            }
+            else if (tokens[0] == "DUMP")
+            {
+                // Образ памяти для отладки
+                int size = 16;
+                if (tokens.Length > 1)
+                    size = int.Parse(tokens[1]);
+                ram.dump(size);
+            }
+            else if (cmd == "END")
+            {
+                // Записываем команду: останов
+                ram.setNextByte((char)Command.Stop);
+                // Возвращаем признак завершения работы
+                return true;
+            }
+            else
+            {
+                // Сообщаем об ошибке, но не прерываем работу
+                Console.WriteLine("Неизвестная команда: \"" + cmd + "\"");
+            }
+            // Возвращаем признак продолжения работы
+            return false;
         }
     }
 }

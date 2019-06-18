@@ -7,30 +7,6 @@ namespace proc
     // Арифметико-логическое устройство (ALU - Arihmetic-Logic Unit)
     class ALU
     {
-        // Код операции
-        public Command OpCode
-        {
-            get
-            {
-                return _op;
-            }
-            set
-            {
-                _op = value;
-            }
-        }
-        // Регистр адреса (содержит адрес очередной операции)
-        public int Addr
-        {
-            get
-            {
-                return _addr;
-            }
-            set
-            {
-                _addr = value;
-            }
-        }
         // Регистр текущего операнда
         public int Reg
         {
@@ -56,9 +32,9 @@ namespace proc
             }
         }
         // Выполнить текущую операцию
-        public void execute()
+        public void execute(Command op)
         {
-            switch (_op)
+            switch (op)
             {
                 case Command.Add:
                     _sum += _reg;
