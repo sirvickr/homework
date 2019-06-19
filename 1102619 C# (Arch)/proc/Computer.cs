@@ -4,7 +4,6 @@ namespace proc
 {
     public enum Command
     {
-        Input, // ввод
         Output, // вывод
         Stop, // останов
         Add, // сложение
@@ -23,8 +22,7 @@ namespace proc
         RAM ram = new RAM();
         // Устройство вывода
         Display display = new Display();
-        // Устройство ввода (TODO)
-        //Input input = new Input();
+
         // Выполнение программы
         public void runProgram()
         {
@@ -75,7 +73,7 @@ namespace proc
         // Полный размер команды
         int commandLength(Command cmd)
         {
-            if (cmd == Command.Input || cmd == Command.Output || cmd == Command.Stop)
+            if (cmd == Command.Output || cmd == Command.Stop)
                 return 1;
             return 5;
         }

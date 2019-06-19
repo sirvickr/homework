@@ -50,7 +50,5 @@ namespace proc
         // Закрытые члены класса
         int _reg = 0;
         int _sum = 0;
-        int _addr = 0;
-        Command _op = Command.Stop;
     }
 }
