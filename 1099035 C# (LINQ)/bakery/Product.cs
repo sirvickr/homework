@@ -9,6 +9,7 @@ namespace bakery
     class Product
     {
         public int Key { set; get; } = 0;
+        public int FactoryKey { set; get; } = 0;
         public string Name { set; get; }
         public double Weight { set; get; }
         public DateTime ExpiryDate { set; get; }

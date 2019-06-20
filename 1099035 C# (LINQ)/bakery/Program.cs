@@ -13,33 +13,22 @@ namespace bakery
         static List<Product> products = new List<Product>();
         static List<Ingredient> ingredients = new List<Ingredient>();
 
-        static string[] paths = new string[]{ "factories", "products", "ingredients" };
+        static string[] paths = new string[]{
+            "factories",
+            "products",
+            "ingredients"
+        };
 
         static void Main(string[] args)
         {
+            // Загрузить список хлебзаводов
             ReadList(0, 2);
 
-            foreach (var item in factories)
-            {
-                Console.WriteLine(item.Key.ToString() + ": name " + item.Name + " dt " + item.ProdDate.ToString());
-            }
+            // Загрузить список изделий
+            ReadList(1, 6);
 
-            ReadList(1, 5);
-
-            foreach (var item in products)
-            {
-                Console.WriteLine(item.Key.ToString() + ": name " + item.Name + " w " + item.Weight.ToString() + " dt " + item.ExpiryDate.ToString() + " count " + item.Count.ToString() + " price " + item.Price.ToString());
-            }
-
+            // Загрузить список ингредиентов
             ReadList(2, 5);
-
-            foreach (var item in ingredients)
-            {
-                Console.WriteLine(item.Key.ToString() + ": name " + item.Name + " w " + item.Weight.ToString() + " ddt " + item.DeliveryDate.ToString() + " edt " + item.ExpiryDate.ToString());
-            }
-
-            Console.WriteLine("Нажмите Enter");
-            Console.ReadKey(true);
 
             while (true)
             {
@@ -52,7 +41,7 @@ namespace bakery
                 switch(choice)
                 {
                     case '1': // Перечень изделий, выпускаемых хлебозаводом
-                        AllProductsList();
+                        FactoryProductsList();
                         break;
                     case '2': // Суммарная стоимость изделий, выпускаемых хлебозаводом
                         TotalCost();
@@ -84,6 +73,7 @@ namespace bakery
             }
         }
 
+        // Вывод пользовательского меню и запрос выбора
         static char UserChoice()
         {
             Console.Clear();
@@ -98,38 +88,104 @@ namespace bakery
             Console.WriteLine("8 - Удалить изделие, выпускаемое хлебозаводом");
             return Console.ReadKey(true).KeyChar;
         }
-        // Перечень изделий, выпускаемых хлебозаводом
-        static void AllProductsList()
+
+        // Запрос у пользователя номера интересующего его хлебозавода
+        static int RequestFactoryKey()
         {
+            Console.WriteLine("Список заводов:");
+            Console.WriteLine("№\tНазвание");
+            foreach (var item in factories)
+            {
+                Console.WriteLine(item.Key.ToString() + "\t" + item.Name);
+            }
+            Console.Write("Введите № завода: ");
+            return Convert.ToInt32(Console.ReadLine().Trim());
         }
+
+        // Перечень изделий, выпускаемых хлебозаводом
+        static int FactoryProductsList(bool choose = false)
+        {
+            int id = RequestFactoryKey();
+            var result = products.Where(p => p.FactoryKey == id);
+            // аналогичный запрос:
+            //var result = from p in products where p.FactoryKey == id select p;
+            Console.WriteLine("№\tВес\tЦена\tВыпуск\tГоден до\t\tНазвание");
+            foreach (var item in result)
+            {
+                Console.WriteLine(item.Key.ToString() + "\t" + item.Weight.ToString() + "\t" + item.Price.ToString() + "\t" + item.Count.ToString() + "\t" + item.ExpiryDate.ToString() + "\t" + item.Name);
+            }
+            if(choose)
+            {
+                Console.Write("Введите № партии: ");
+                return Convert.ToInt32(Console.ReadLine().Trim());
+            }
+            return 0;
+        }
+
         // Суммарная стоимость изделий, выпускаемых хлебозаводом
         static void TotalCost()
         {
+            int id = RequestFactoryKey();
+            //var result = products.Where(w => w.FactoryKey == id).Sum(;
         }
+
         // Изделия с просроченными ингредиентами
         static void ExpiredProductsList()
         {
         }
+
         // Список хлебозаводов в порядке убывания объёма производства
         static void DescendingFactoriesList()
         {
         }
+
         // Изделие с наибольшим количеством ингредиентов
         static void MaxIngredientsProduct()
         {
         }
+
         // Изделие с наибольшей прибылью при реализации
         static void MaxRevenueProduct()
         {
         }
+
         // Добавить изделие, выпускаемое хлебозаводом
         static void AddProduct()
         {
+            int factoryKey = RequestFactoryKey();
+            int key = products.Count + 1;
+            Console.Write("Введите наименование продукции: ");
+            string name = Console.ReadLine().Trim();
+            Console.Write("Введите вес единицы продукции (кг): ");
+            double weight = Convert.ToDouble(Console.ReadLine().Trim());
+            Console.Write("Введите дату окончания срока годности (ГГГГ-ММ-ДД): ");
+            DateTime date = DateTime.Parse(Console.ReadLine().Trim());
+            Console.Write("Введите объём партии (шт): ");
+            int count = Convert.ToInt32(Console.ReadLine().Trim());
+            Console.Write("Введите цену единицы продукции: ");
+            double price = Convert.ToDouble(Console.ReadLine().Trim());
+            Product product = new Product();
+            product.Key = key;
+            product.FactoryKey = factoryKey;
+            product.Name  = name;
+            product.Weight = weight;
+            product.ExpiryDate =date ;
+            product.Count = count;
+            product.Price = price;
+            products.Add(product);
         }
+
         // Удалить изделие, выпускаемое хлебозаводом
         static void RemoveProduct()
         {
+            int key = FactoryProductsList(true);
+            var item = products.SingleOrDefault(p => p.Key == key);
+            if (item != null)
+            {
+                products.Remove(item);
+            }
         }
+
         // Загрузка списка из файла
         static void ReadList(int index, int fieldCount)
         {
@@ -162,11 +218,12 @@ namespace bakery
                         {
                             Product item = new Product();
                             item.Key = key++;
-                            item.Name = fields[0];
-                            item.Weight = Convert.ToDouble(fields[1]);
-                            item.ExpiryDate = DateTime.Parse(fields[2]);
-                            item.Count = Convert.ToInt32(fields[3]);
-                            item.Price = Convert.ToDouble(fields[4]);
+                            item.FactoryKey = Convert.ToInt32(fields[0]);
+                            item.Name = fields[1];
+                            item.Weight = Convert.ToDouble(fields[2]);
+                            item.ExpiryDate = DateTime.Parse(fields[3]);
+                            item.Count = Convert.ToInt32(fields[4]);
+                            item.Price = Convert.ToDouble(fields[5]);
                             products.Add(item);
                         }
                     }
