@@ -96,7 +96,7 @@ namespace bakery
             Console.WriteLine("№\tНазвание");
             foreach (var item in factories)
             {
-                Console.WriteLine(item.Key.ToString() + "\t" + item.Name);
+                Console.WriteLine("{0}\t{1}", item.Key, item.Name);
             }
             Console.Write("Введите № завода: ");
             return Convert.ToInt32(Console.ReadLine().Trim());
@@ -110,11 +110,12 @@ namespace bakery
             // тот же запрос через операторы LINQ:
             // var result = from p in products where p.FactoryKey == id select p;
             Console.WriteLine("№\tВес\tЦена\tВыпуск\tГоден до\t\tНазвание");
-            foreach (var item in result)
+            foreach (var p in result)
             {
-                Console.WriteLine(item.Key.ToString() + "\t" + item.Weight.ToString() + "\t" + item.Price.ToString() + "\t" + item.Count.ToString() + "\t" + item.ExpiryDate.ToString() + "\t" + item.Name);
+                Console.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}\t{5}",
+                    p.Key, p.Weight, p.Price, p.Count, p.ExpiryDate, p.Name);
             }
-            if(choose)
+            if (choose)
             {
                 Console.Write("Введите № партии: ");
                 return Convert.ToInt32(Console.ReadLine().Trim());
@@ -154,6 +155,22 @@ namespace bakery
         // Список хлебозаводов в порядке убывания объёма производства
         static void DescendingFactoriesList()
         {
+            var result = factories.GroupJoin(
+                products,
+                f => f.Key,
+                p => p.FactoryKey,
+                (fact, prods) => new
+                {
+                    fact.Key,
+                    fact.Name,
+                    Count = prods.Sum(prod => prod.Count)
+                }
+            ).OrderByDescending(f => f.Count);
+            Console.WriteLine("№\tНазвание\tОбъём производства");
+            foreach (var f in result)
+            {
+                Console.WriteLine("{0}\t{1}\t\t{2}", f.Key, f.Name, f.Count);
+            }
         }
 
         // Изделие с наибольшим количеством ингредиентов
