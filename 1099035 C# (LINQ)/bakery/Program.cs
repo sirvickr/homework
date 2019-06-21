@@ -164,6 +164,17 @@ namespace bakery
         // Изделие с наибольшей прибылью при реализации
         static void MaxRevenueProduct()
         {
+            var view = products.Select(p => new {
+                p.Name,
+                Revenue = p.Price * p.Count
+            });
+            var maxVal = view.Max(v => v.Revenue);
+            var result = view.Where(v => v.Revenue == maxVal);
+            Console.WriteLine("Изделия с наибольшей прибылью:");
+            foreach (var item in result)
+            {
+                Console.WriteLine("{0} ({1} руб).", item.Name, item.Revenue);
+            }
         }
 
         // Добавить изделие, выпускаемое хлебозаводом
