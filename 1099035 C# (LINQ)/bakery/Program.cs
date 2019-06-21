@@ -107,8 +107,8 @@ namespace bakery
         {
             int id = RequestFactoryKey();
             var result = products.Where(p => p.FactoryKey == id);
-            // аналогичный запрос:
-            //var result = from p in products where p.FactoryKey == id select p;
+            // тот же запрос через операторы LINQ:
+            // var result = from p in products where p.FactoryKey == id select p;
             Console.WriteLine("№\tВес\tЦена\tВыпуск\tГоден до\t\tНазвание");
             foreach (var item in result)
             {
@@ -126,7 +126,24 @@ namespace bakery
         static void TotalCost()
         {
             int id = RequestFactoryKey();
-            //var result = products.Where(w => w.FactoryKey == id).Sum(;
+            var result = products.Where(p => p.FactoryKey == id)
+                .GroupBy(p => p.FactoryKey)
+                .Select(g => new {
+                    Id = g.Key,
+                    Total = g.Sum(p => p.Price * p.Count)
+                });
+            /* тот же запрос через операторы LINQ:
+            var result = from p in products where p.FactoryKey == id
+                         group p by p.FactoryKey into g
+                         select new { 
+                            Id = g.Key, 
+                            Total = g.Sum(p => p.Price * p.Count) 
+                         };
+            */
+            foreach(var group in result)
+            {
+                Console.WriteLine("Суммарная стоимость выпущенных изделий: {0} руб.", group.Total);
+            }
         }
 
         // Изделия с просроченными ингредиентами
