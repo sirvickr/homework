@@ -12,15 +12,19 @@ namespace bakery
         static List<Factory> factories = new List<Factory>();
         static List<Product> products = new List<Product>();
         static List<Ingredient> ingredients = new List<Ingredient>();
+        static List<Constitution> consists = new List<Constitution>();
 
         static string[] paths = new string[]{
             "factories",
             "products",
-            "ingredients"
+            "ingredients",
+            "consists"
         };
 
         static void Main(string[] args)
         {
+            Console.Title = "Сеть хлебозаводов";
+
             // Загрузить список хлебзаводов
             ReadList(0, 2);
 
@@ -29,6 +33,9 @@ namespace bakery
 
             // Загрузить список ингредиентов
             ReadList(2, 5);
+
+            // Загрузить список, связывающий изделия и ингредиенты
+            ReadList(3, 2);
 
             while (true)
             {
@@ -150,6 +157,40 @@ namespace bakery
         // Изделия с просроченными ингредиентами
         static void ExpiredProductsList()
         {
+            var ingr = consists.Join(
+                 ingredients,
+                 c => c.IngredientKey,
+                 i => i.Key,
+                 (c, i) => new {
+                     c.ProductKey,
+                     c.IngredientKey,
+                     i.Name,
+                     i.Weight,
+                     i.ExpiryDate
+                 }
+             );
+            var view = products.GroupJoin(
+                ingr,
+                p => p.Key,
+                c => c.ProductKey,
+                (prod, cons) => new
+                {
+                    prod.Key,
+                    prod.Name,
+                    Ingredients = cons.Where(w => w.ExpiryDate < DateTime.Now)
+                }
+            );
+            Console.WriteLine("Изделия с просроченным ингредиентами");
+            Console.WriteLine("№\tНазвание");
+            foreach (var p in view.Where(v => v.Ingredients.Count() > 0))
+            {
+                Console.WriteLine("{0}\t{1} (просроченных ингредиентов: {2}):",
+                    p.Key, p.Name, p.Ingredients.Count());
+                foreach (var i in p.Ingredients)
+                {
+                    Console.WriteLine("\t - {0} ({1}) {2}", i.ExpiryDate, i.IngredientKey, i.Name);
+                }
+            }
         }
 
         // Список хлебозаводов в порядке убывания объёма производства
@@ -176,6 +217,39 @@ namespace bakery
         // Изделие с наибольшим количеством ингредиентов
         static void MaxIngredientsProduct()
         {
+            var ingr = consists.Join(
+                ingredients,
+                c => c.IngredientKey,
+                i => i.Key,
+                (c, i) => new {
+                    c.ProductKey,
+                    i.Name
+                }
+            );
+            var view = products.GroupJoin(
+                ingr,
+                p => p.Key,
+                c => c.ProductKey,
+                (prod, cons) => new
+                {
+                    prod.Key,
+                    prod.Name,
+                    IngredCount = cons.Count(),
+                    Ingredients = cons.Select(w => w)
+                }
+            );
+            int maxCount = view.Max(v => v.IngredCount);
+            Console.WriteLine("Изделия с наибольшим числом ингредиентов");
+            Console.WriteLine("№\tНазвание");
+            foreach (var p in view.Where(v => v.IngredCount == maxCount))
+            {
+                Console.WriteLine("{0}\t{1} (ингредиентов: {2}):", 
+                    p.Key, p.Name, p.IngredCount);
+                foreach (var i in p.Ingredients)
+                {
+                    Console.WriteLine("\t - {0}", i.Name);
+                }
+            }
         }
 
         // Изделие с наибольшей прибылью при реализации
@@ -286,6 +360,20 @@ namespace bakery
                             item.DeliveryDate = DateTime.Parse(fields[2]);
                             item.ExpiryDate = DateTime.Parse(fields[3]);
                             ingredients.Add(item);
+                        }
+                    }
+                    break;
+                case 3:
+                    while ((line = stream.ReadLine()) != null)
+                    {
+                        string[] fields = line.Split(';');
+                        if (fields.Length == fieldCount)
+                        {
+                            Constitution item = new Constitution();
+                            item.Key = key++;
+                            item.ProductKey = Convert.ToInt32(fields[0]);
+                            item.IngredientKey = Convert.ToInt32(fields[1]);
+                            consists.Add(item);
                         }
                     }
                     break;
