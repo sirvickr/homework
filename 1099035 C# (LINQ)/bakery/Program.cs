@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using System.Globalization;
 
 namespace bakery
 {
@@ -13,6 +13,7 @@ namespace bakery
         static List<Product> products = new List<Product>();
         static List<Ingredient> ingredients = new List<Ingredient>();
         static List<Constitution> consists = new List<Constitution>();
+        static CultureInfo _cultureInfo = (CultureInfo)CultureInfo.CurrentCulture.Clone();
 
         static string[] paths = new string[]{
             "factories",
@@ -23,17 +24,15 @@ namespace bakery
 
         static void Main(string[] args)
         {
-            Console.Title = "Сеть хлебозаводов";
+            _cultureInfo.NumberFormat.NumberDecimalSeparator = ".";
 
+            Console.Title = "Сеть хлебозаводов";
             // Загрузить список хлебзаводов
             ReadList(0, 2);
-
             // Загрузить список изделий
             ReadList(1, 6);
-
             // Загрузить список ингредиентов
             ReadList(2, 5);
-
             // Загрузить список, связывающий изделия и ингредиенты
             ReadList(3, 2);
 
@@ -276,13 +275,13 @@ namespace bakery
             Console.Write("Введите наименование продукции: ");
             string name = Console.ReadLine().Trim();
             Console.Write("Введите вес единицы продукции (кг): ");
-            double weight = Convert.ToDouble(Console.ReadLine().Trim());
+            double weight = double.Parse(Console.ReadLine().Trim(), _cultureInfo);
             Console.Write("Введите дату окончания срока годности (ГГГГ-ММ-ДД): ");
             DateTime date = DateTime.Parse(Console.ReadLine().Trim());
             Console.Write("Введите объём партии (шт): ");
             int count = Convert.ToInt32(Console.ReadLine().Trim());
             Console.Write("Введите цену единицы продукции: ");
-            double price = Convert.ToDouble(Console.ReadLine().Trim());
+            double price = double.Parse(Console.ReadLine().Trim(), _cultureInfo);
             Product product = new Product();
             product.Key = key;
             product.FactoryKey = factoryKey;
@@ -339,10 +338,10 @@ namespace bakery
                             item.Key = key++;
                             item.FactoryKey = Convert.ToInt32(fields[0]);
                             item.Name = fields[1];
-                            item.Weight = Convert.ToDouble(fields[2]);
+                            item.Weight = double.Parse(fields[2], _cultureInfo);
                             item.ExpiryDate = DateTime.Parse(fields[3]);
                             item.Count = Convert.ToInt32(fields[4]);
-                            item.Price = Convert.ToDouble(fields[5]);
+                            item.Price = double.Parse(fields[5], _cultureInfo);
                             products.Add(item);
                         }
                     }
@@ -356,7 +355,7 @@ namespace bakery
                             Ingredient item = new Ingredient();
                             item.Key = key++;
                             item.Name = fields[0];
-                            item.Weight = Convert.ToDouble(fields[1]);
+                            item.Weight = double.Parse(fields[1], _cultureInfo);
                             item.DeliveryDate = DateTime.Parse(fields[2]);
                             item.ExpiryDate = DateTime.Parse(fields[3]);
                             ingredients.Add(item);
