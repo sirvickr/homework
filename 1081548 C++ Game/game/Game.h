@@ -3,6 +3,7 @@
 #include <ostream>
 #include <string>
 #include <list>
+#include <vector>
 
 struct SDL_Window;
 struct SDL_Renderer;
@@ -14,14 +15,13 @@ class Cockroach;
 
 class Game
 {
-	struct StartParams {
-		int size;
-		int x;
-		int y;
-		int delta;
-		const char* imgName;
+	struct UserResult {
+		bool empty = true;
+		std::string user;
+		int score = 0;
 	};
 	using Beetles = std::list<Cockroach*>;
+	using Results = std::vector<UserResult>;
 
 public:
 	Game(int scrWidth, int scrHeight);
@@ -83,15 +83,23 @@ private:
 	bool showScore();
 
 private:
-	//static StartParams startParams[];
+	// флаг "игра активна"
 	bool _active;
+	// размеры игрового экрана
 	int _scrWidth, _scrHeight;
+	// массив тараканов на экране
 	Beetles beetles;
 
+	// графические объекты
 	SDL_Window* _window = nullptr;
 	SDL_Renderer* _renderer = nullptr;
 	_TTF_Font* _font = nullptr;
 
-	std::string userName;
+	// имя пользователя
+	std::string _userName;
+	// счётчик убитых тараканов
+	size_t _killCount = 0;
+	// результаты последних 10 пользователей
+	Results _results;
 };
 

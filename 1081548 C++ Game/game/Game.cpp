@@ -15,15 +15,104 @@
 
 using namespace std;
 
-Game::Game(int scrWidth, int scrHeight)
-:	_active(true), _scrWidth(scrWidth), _scrHeight(scrHeight)
-{
-	userName = "user1";
-}
+static const char* fileName = "config";
 
+Game::Game(int scrWidth, int scrHeight)
+:	_active(true), _scrWidth(scrWidth), _scrHeight(scrHeight), _results(10)
+{
+	ifstream is(fileName, ifstream::binary);
+	// Загрузка результатов из файла
+	if (is)
+	{
+		// Выясним размер файла
+		is.seekg(0, is.end);
+		size_t length = is.tellg();
+		cout << "length = " << length << endl;
+		// Смещаем указатель чтения в начало файла
+		is.seekg(0, is.beg);
+		char* buffer = new char[length];
+		is.read(buffer, length);
+
+		string user;
+		int score = 0;
+
+		if (is)
+		{
+			for (size_t curr = 0, prev = 0, index = 0; curr < length;)
+			{
+				if ('\0' == buffer[curr])
+				{
+					if (curr < length - sizeof(int))
+					{
+						user = &buffer[prev];
+						score = *(int*)(&buffer[curr + 1]);
+						cout << user << ": score " << score << endl;
+						_results[index].user = user;
+						_results[index].score = score;
+						_results[index].empty = false;
+						if (++index == _results.size())
+							break;
+						curr += (sizeof(int) + 1);
+						prev = curr;
+					}
+				}
+				else
+				{
+					curr++;
+				}
+			}
+		}
+		is.close();
+		delete[] buffer;
+	}
+	_userName = "at";
+}
 
 Game::~Game()
 {
+	// Сохранение результатов в файл
+	ofstream os(fileName, ofstream::binary);
+	if(os) 
+	{
+		Results::iterator it;
+		// ищем текущего пользователя, чтобы обновить
+		for (it = begin(_results); it != end(_results); ++it)
+		{
+			cout << "[" << (it - begin(_results)) << "]" << it->user << ": " << it->score << "(" << boolalpha << it->empty << ")" << endl;
+			if (!it->empty && it->user == _userName)
+			{
+				it->score = _killCount;
+				cout << "updated " << _userName << ": " << _killCount << endl;
+				break;
+			}
+		}
+		if (it == end(_results))
+		{
+			// не нашли, добавляем
+			for (auto& result : _results)
+			{
+				if (result.empty)
+				{
+					result.user = _userName;
+					result.score = _killCount;
+					result.empty = false;
+					cout << "added " << result.user << ": " << result.score << endl;
+					break;
+				}
+			}
+		}
+		for (const auto& result : _results)
+		{
+			if (!result.empty)
+			{
+				cout << "saving " << result.user << ": " << result.score << endl;
+				// сохраняем имя пользователя + символ завершения строки
+				os.write(result.user.c_str(), result.user.size() + 1);
+				// сохраняем результат пользователя
+				os.write((char*)&result.score, sizeof(result.score));
+			}
+		}
+	}
 	if (_font) {
 		TTF_CloseFont(_font);
 		_font = nullptr;
@@ -37,23 +126,24 @@ const char* imgNames[] = {
 	"res/crR.png",
 };
 
-//static const char* fontFileName = "res/sample.ttf";
 static const char* fontFileName = "res/arial.ttf";
-//static const char* fontFileName = "c:\\windows\\fonts\\arial.ttf";
 static const int fontSize = 32;
-SDL_Color fontColor = { 0, 100, 0, 255 };//255
+SDL_Color fontColor = { 0, 100, 0, 255 };
 
 int Game::run()
 {
+	// Инициализация библиотеки SDL
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
 		logSDLError(cout, "SDL_Init");
 		return 1;
 	}
+	// Инициализация библиотеки SDL_image
 	if ((IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG) != IMG_INIT_PNG) {
 		logSDLError(cout, "IMG_Init");
 		SDL_Quit();
 		return 1;
 	}
+	// Инициализация библиотеки SDL_ttf
 	if (TTF_Init() != 0) {
 		logSDLError(cout, "TTF_Init");
 		SDL_Quit();
@@ -102,12 +192,12 @@ int Game::run()
 			static_cast<Cockroach::Orient>(index), uidSpeed(gen)));
 	}
 
+	_killCount = 0;
+
 	// дальность перемещения прицела за 1 шаг
 	const int crossDelta = 15;
 	// событие SDL
 	SDL_Event evt;
-	// счётчик убитых тараканов
-	size_t killCount = 0;
 	// время игры - 1 мин
 	constexpr uint32_t gameTime = 60000; // ms
 	// время одного шага - 50 мс
@@ -125,7 +215,7 @@ int Game::run()
 				break;
 			}
 			else {
-				killCount = 0;
+				_killCount = 0;
 			}
 		}
 		SDL_Delay(stepDelay);
@@ -188,11 +278,6 @@ int Game::run()
 				if ((*it)->away()) {
 					// убежал - создать нового таракана, взамен сбежавшего
 					it = replaceCockroach(it, uidOrient(gen), uidSpeed(gen));
-					/*delete (*it);
-					it = beetles.erase(it);
-					auto index = uidOrient(gen);
-					beetles.push_back(new Cockroach(_scrWidth, _scrHeight, _renderer, imgNames[index],
-						static_cast<Cockroach::Orient>(index), uidSpeed(gen)));*/
 				}
 				else {
 					it++;
@@ -201,20 +286,15 @@ int Game::run()
 			else {
 				// не увернулся.. создать нового таракана, взамен убитого
 				it = replaceCockroach(it, uidOrient(gen), uidSpeed(gen));
-				/*delete (*it);
-				it = beetles.erase(it);
-				auto index = uidOrient(gen);
-				beetles.push_back(new Cockroach(_scrWidth, _scrHeight, _renderer, imgNames[index],
-					static_cast<Cockroach::Orient>(index), uidSpeed(gen)));*/
-				killCount++;
+				_killCount++;
 			}
 		}
 		// прицел
 		renderTexture(cross, x, y);
-#if 1 // text
+#if 1	// текст - количество очков
 		{
 			ostringstream os;
-			os << "Score: " << killCount;
+			os << "Score: " << _killCount;
 			SDL_Texture *image = renderText(os.str().c_str(), _font, fontColor);
 			if (image) {
 				// Получаем размеры текста, чтобы разместить его на экране
@@ -230,7 +310,7 @@ int Game::run()
 		// показ сцены в окне
 		SDL_RenderPresent(_renderer);
 	} // while(active)
-	cout << "killCount for " << userName << " = " << killCount << endl;
+	cout << _userName << ": " << _killCount << endl;
 
 	// Очистка ресурсов
 
@@ -315,8 +395,8 @@ SDL_Texture* Game::renderText(const string &message, const string &fontFile,
 
 SDL_Texture* Game::renderText(const string &message, TTF_Font* font, SDL_Color color)
 {
-	//We need to first render to a surface as that's what TTF_RenderText
-	//returns, then load that surface into a texture
+	// We need to first render to a surface as that's what TTF_RenderText
+	// returns, then load that surface into a texture
 	SDL_Surface *surface = TTF_RenderText_Blended(font, message.c_str(), color);
 	if (!surface) {
 		TTF_CloseFont(font);
