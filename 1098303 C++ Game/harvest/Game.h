@@ -1,8 +1,8 @@
 #pragma once
 
-#include <ostream>
 #include <string>
 #include <list>
+#include <map>
 
 struct SDL_Window;
 struct SDL_Renderer;
@@ -10,23 +10,15 @@ struct SDL_Texture;
 struct SDL_Color;
 struct _TTF_Font;
 
-class Cockroach;
 class Fruit;
 
 class Game
 {
-	struct StartParams {
-		int size;
-		int x;
-		int y;
-		int delta;
-		const char* imgName;
-	};
-	using Beetles = std::list<Cockroach*>;
 	typedef std::list<Fruit*> Fruits;
+	typedef std::map<std::string, int> Stats;
 
 public:
-	Game(int scrWidth, int scrHeight);
+	Game(const std::string& name);
 	~Game();
 	int run();
 	void stop();
@@ -73,21 +65,24 @@ private:
 	*/
 	void logSDLError(std::ostream &os, const std::string &msg);
 
-	Beetles::iterator replaceCockroach(Beetles::iterator it, int index, int speed);
 	Fruits::iterator newFruit(Fruits::iterator it);
 
+	// Сохранение статистики
+	void saveStats();
+	// Загрузка статистики
+	void loadStats();
+	// Отображение статистики
 	bool showScore();
 
 private:
-	//static StartParams startParams[];
-	bool _active;
-	Beetles beetles;
+	bool m_run;
 	Fruits fruits;
 
-	SDL_Window* _window = nullptr;
-	SDL_Renderer* _renderer = nullptr;
-	_TTF_Font* _font = nullptr;
+	SDL_Window* m_window = nullptr;
+	SDL_Renderer* m_renderer = nullptr;
+	_TTF_Font* m_font = nullptr;
 
-	std::string userName;
+	std::string m_user;
+	Stats m_stats;
 };
 

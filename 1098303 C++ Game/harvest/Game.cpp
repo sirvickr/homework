@@ -1,6 +1,5 @@
 #include "Game.h"
 #include "Menu.h"
-#include "Cockroach.h"
 #include "Fruit.h"
 
 #include <iostream>
@@ -10,7 +9,6 @@
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 #include <list>
-// для генерации пседвослучайных чисел (ПСЧ)
 #include <random>  
 #include <ctime>
 
@@ -19,33 +17,18 @@ using namespace std;
 extern int ScreenWidth;
 extern int ScreenHeight;
 
-Game::Game(int scrWidth, int scrHeight)
-:	_active(true)
+Game::Game(const std::string& name)
+: m_user(name), m_run(true)
 {
-	userName = "user1";
 }
-
 
 Game::~Game()
 {
-	if (_font) {
-		TTF_CloseFont(_font);
-		_font = nullptr;
+	if (m_font) {
+		TTF_CloseFont(m_font);
+		m_font = nullptr;
 	}
 }
-
-const char* imgNames[] = {
-	"img/apple-ripe.png",
-	"img/apple-sick.png",
-	"img/pear-ripe.png",
-	"img/pear-sick.png",
-};
-
-//static const char* fontFileName = "res/sample.ttf";
-static const char* fontFileName = "res/arial.ttf";
-//static const char* fontFileName = "c:\\windows\\fonts\\arial.ttf";
-static const int fontSize = 32;
-SDL_Color fontColor = { 0, 100, 0, 255 };//255
 
 int Game::run()
 {
@@ -64,84 +47,74 @@ int Game::run()
 		SDL_Quit();
 		return 1;
 	}
-	_window = SDL_CreateWindow("Cockroach hunt", SDL_WINDOWPOS_CENTERED,
+	m_window = SDL_CreateWindow("Harverst", SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED, ScreenWidth, ScreenHeight, SDL_WINDOW_SHOWN);
-	if (!_window) {
+	if (!m_window) {
 		logSDLError(cout, "SDL_CreateWindow");
 		return 1;
 	}
-	_renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-	if (!_renderer) {
+	m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	if (!m_renderer) {
 		logSDLError(cout, "SDL_CreateRenderer");
 		return 2;
 	}
 	// Создаём шрифт
-	_font = TTF_OpenFont(fontFileName, fontSize);
-	if (_font == nullptr) {
+	m_font = TTF_OpenFont("fonts\\calibri.ttf", 28);
+	if (m_font == nullptr) {
 		logSDLError(cout, "TTF_OpenFont");
 		return 3;
 	}
-	SDL_Texture *background = IMG_LoadTexture(_renderer, "img/background.jpg");
-	SDL_Texture *basket = IMG_LoadTexture(_renderer, "img/basket.png");
+	SDL_Texture *background = IMG_LoadTexture(m_renderer, "img/background.jpg");
+	SDL_Texture *basket = IMG_LoadTexture(m_renderer, "img/basket.png");
 	if (background == nullptr || basket == nullptr) {
 		logSDLError(cout, "Loading images");
 		return 4;
 	}
+
+	loadStats();
+
 	int basketWidth, basketHeight;
 	SDL_QueryTexture(basket, nullptr, nullptr, &basketWidth, &basketHeight);
 	int basketX = ScreenWidth / 2 - basketWidth / 2;
 	int basketY = ScreenHeight - basketWidth;
-	// генераторы ПСЧ
-	mt19937 gen;
-	gen.seed(static_cast<uint32_t>(time(0)));
-	uniform_int_distribution<> uidOrient(0, 3);
-	uniform_int_distribution<> uidSpeed(1, 3);
-	// создаём начальный список тараканов
+	// Создаём начальный список объектов
 	size_t initCount = 5;
 	for (size_t i = 0; i < initCount; ++i) {
-		auto index = uidOrient(gen);
-		beetles.push_back(new Cockroach(ScreenWidth, ScreenHeight, _renderer, imgNames[index],
-			static_cast<Cockroach::Orient>(index), uidSpeed(gen)));
-		fruits.push_back(Fruit::generateFruit(_renderer));
+		fruits.push_back(Fruit::generateFruit(m_renderer));
 	}
-	cout << "fruit count = " << fruits.size() << endl;
 
 	// Дальность перемещения корзины за 1 шаг
 	const int crossDelta = 15;
 	// Событие SDL
 	SDL_Event evt;
-	// счётчик убитых тараканов
-	size_t killCount = 0;
-	// время игры - 1 мин
-	constexpr uint32_t gameTime = 60000; // ms
-	// время одного шага - 50 мс
-	constexpr uint32_t stepDelay = 50; // ms
-	// время игры в шагах
-	constexpr uint32_t stepCount = gameTime / stepDelay;
-	// счётчик шагов
-	uint32_t stepCounter = 0;
-	// пользовательское меню
-	Menu menu(_window, _renderer);
-	// цикл обработки событий
-	while (_active) {
-		if (stepCounter++ == stepCount) {
+	// Начельное оличество жизней
+	size_t initLifeCount = 5;
+	// Текущее количество жизней
+	size_t lifeCount = initLifeCount;
+	// Текущее количество очков
+	int score = 0;
+	// Задержка шага игры - 20 мс
+	const uint32_t stepDelay = 50; // ms
+	// Меню пользователя
+	Menu menu(m_window, m_renderer);
+	// Цикл обработки событий
+	while (m_run) {
+		if (0 == lifeCount) {
 			if (showScore()) {
 				break;
 			}
 			else {
-				killCount = 0;
+				lifeCount = initLifeCount;
 			}
 		}
 		SDL_Delay(stepDelay);
-		cout << ".";
 		// Обработка событий пользователя
 		while (SDL_PollEvent(&evt)) {
 			switch (evt.type) {
 			case SDL_QUIT:
-				stop();
+				m_run = false;
 				break;
 			case SDL_KEYDOWN:
-				//cout << " \nscancode " << evt.key.keysym.scancode << " vk " << evt.key.keysym.sym << endl;
 				switch (evt.key.keysym.scancode)
 				{
 				case SDL_SCANCODE_LEFT:
@@ -151,18 +124,11 @@ int Game::run()
 					basketX += crossDelta;
 					break;
 				case SDL_SCANCODE_ESCAPE:
-					if (1 == menu.show(SDL_GetWindowSurface(_window), _font, { "Continue", "Exit" })) {
-						stop();
+					if (1 == menu.show(SDL_GetWindowSurface(m_window), m_font, { "Continue", "Exit" })) {
+						m_run = false;
 					}
 					break;
-				case SDL_SCANCODE_SPACE:
-					cout << "\nmenu index = " << menu.show(SDL_GetWindowSurface(_window), _font, { "Continue", "Exit", "Three", "Four" }) << endl;
-					break;
 				}
-				break;
-			case SDL_MOUSEBUTTONDOWN:
-				cout << " \nmouse " << evt.button.x << " " << evt.button.y << endl;
-				//stop();
 				break;
 			}
 		}
@@ -170,106 +136,61 @@ int Game::run()
 		// Отрисовка сцены
 
 		// Очистка экрана
-		SDL_RenderClear(_renderer);
+		SDL_RenderClear(m_renderer);
 		// Фон
 		renderTexture(background, 0, 0);
 		// Корзина
 		renderTexture(basket, basketX, basketY);
-#if 0
-		// обработка и отрисовка тараканов
-		for (auto it = begin(beetles); it != end(beetles); ) {
-			(*it)->draw();
-			if (!pressed || (*it)->evade(basketX + basketWidth / 2, basketY + basketHeight / 2)) { // центр прицела
-				(*it)->move();
-				if ((*it)->away()) {
-					// убежал - создать нового таракана, взамен сбежавшего
-					it = replaceCockroach(it, uidOrient(gen), uidSpeed(gen));
-					/*delete (*it);
-					it = beetles.erase(it);
-					auto index = uidOrient(gen);
-					beetles.push_back(new Cockroach(ScreenWidth, ScreenHeight, _renderer, imgNames[index],
-						static_cast<Cockroach::Orient>(index), uidSpeed(gen)));*/
-				}
-				else {
-					it++;
-				}
-			}
-			else {
-				// не увернулся.. создать нового таракана, взамен убитого
-				it = replaceCockroach(it, uidOrient(gen), uidSpeed(gen));
-				/*delete (*it);
-				it = beetles.erase(it);
-				auto index = uidOrient(gen);
-				beetles.push_back(new Cockroach(ScreenWidth, ScreenHeight, _renderer, imgNames[index],
-					static_cast<Cockroach::Orient>(index), uidSpeed(gen)));*/
-				killCount++;
-			}
-		}
-#else
 		// Обработка и прорисовка фруктов
-		//int udx = 0;
 		for (auto it = begin(fruits); it != end(fruits);) {
 			(*it)->draw();
-			(*it)->move();
-			if ((*it)->fell()) {
-				// Упал, заменяем фрукт
-				it = newFruit(it);
-				/*delete (*it);
-				it = beetles.erase(it);
-				auto index = uidOrient(gen);
-				beetles.push_back(new Cockroach(ScreenWidth, ScreenHeight, _renderer, imgNames[index],
-					static_cast<Cockroach::Orient>(index), uidSpeed(gen)));*/
-			}
-			else {
-				it++;
-			}
-			//cout << "draw fruit " << udx++ << endl;
-
-			/*if (!pressed || (*it)->evade(basketX + basketWidth / 2, basketY + basketHeightbasket
-			/ 2)) { // центр прицела
+			if (!(*it)->caught(basketX + basketWidth / 2, basketY + basketHeight / 2)) { // центр корзины
 				(*it)->move();
-				if ((*it)->away()) {
-					// убежал - создать нового таракана, взамен сбежавшего
-					it = replaceCockroach(it, uidOrient(gen), uidSpeed(gen));
+				if ((*it)->fell()) {
+					// Упал, заменяем фрукт
+					it = newFruit(it);
 				}
 				else {
 					it++;
 				}
 			}
 			else {
-				// не увернулся.. создать нового таракана, взамен убитого
-				it = replaceCockroach(it, uidOrient(gen), uidSpeed(gen));
-				killCount++;
-			}*/
+				// Поймали фрукт, создаём новый и подсчитываем очки
+				int delta = (*it)->score();
+				score += delta;
+				if (-2 == delta)
+					lifeCount--;
+				it = newFruit(it);
+			}
 		}
-		//cout << "drawn fruits" << endl;
-#endif
 		// Количество жизней
 		{
 			ostringstream os;
-			os << "Score: " << killCount;
-			SDL_Texture *image = renderText(os.str().c_str(), _font, fontColor);
+			os << "Lives: " << lifeCount << " Score: " << score;
+			SDL_Texture *image = renderText(os.str().c_str(), m_font, { 150, 100, 0, 255 });
 			if (image) {
 				// Получаем размеры текста, чтобы разместить его на экране
 				int w, h;
 				SDL_QueryTexture(image, NULL, NULL, &w, &h);
-				renderTexture(image, ScreenWidth - w, ScreenHeight - h);
+				renderTexture(image, 20, 20);
 			}
 			else {
 				logSDLError(cout, "renderText");
 			}
 		}
 		// Отобразить сцену
-		SDL_RenderPresent(_renderer);
+		SDL_RenderPresent(m_renderer);
 	} // while(active)
-	cout << "killCount for " << userName << " = " << killCount << endl;
+	
+	m_stats[m_user] = score;
+	cout << "lifeCount for " << m_user << " = " << lifeCount << endl;
+
+	// Запись достижений в файл
+	saveStats();
 
 	// Очистка ресурсов
 
-	// удаление списка тараканов
-	for (auto it = begin(beetles); it != end(beetles); it++) {
-		delete (*it);
-	}
+	cout << "del objects" << endl;
 	// Удаление фруктов
 	for (auto it = begin(fruits); it != end(fruits); it++) {
 		delete (*it);
@@ -277,45 +198,98 @@ int Game::run()
 
 	// освобождение ресурсов SDL
 	
-	TTF_CloseFont(_font);
-	_font = nullptr;
+	cout << "del font" << endl;
+	TTF_CloseFont(m_font);
 
+	cout << "del basket" << endl;
 	SDL_DestroyTexture(basket);
 	
-	SDL_DestroyRenderer(_renderer);
-	SDL_DestroyWindow(_window);
+	cout << "del renderer" << endl;
+	SDL_DestroyRenderer(m_renderer);
+	cout << "del wnd" << endl;
+	SDL_DestroyWindow(m_window);
+	cout << "quit" << endl;
 	SDL_Quit();
 
-	_window = nullptr;
-	_renderer = nullptr;
-
 	return 0;
-}
-
-Game::Beetles::iterator Game::replaceCockroach(Beetles::iterator it, int index, int speed) {
-	delete *it;
-	Beetles::iterator result = beetles.erase(it);
-	beetles.push_back(new Cockroach(ScreenWidth, ScreenHeight, _renderer, imgNames[index],
-		static_cast<Cockroach::Orient>(index), speed));
-	return result;
 }
 
 Game::Fruits::iterator Game::newFruit(Fruits::iterator fruit) {
 	delete *fruit;
 	auto result = fruits.erase(fruit);
-	fruits.push_back(Fruit::generateFruit(_renderer));
+	fruits.push_back(Fruit::generateFruit(m_renderer));
 	return result;
+}
+
+void Game::saveStats()
+{
+	ofstream file("stats.bin", ios::binary);
+	if (file)
+	{
+		cout << "STATISTICS:" << endl;
+		for (const auto& item : m_stats) {
+			cout << item.first << ": " << item.second << endl;
+			file.write(item.first.c_str(), item.first.size() + 1);
+			file.write((char*)(&item.second), sizeof(item.second));
+		}
+		file.close();
+	}
+}
+
+void Game::loadStats()
+{
+	ifstream file("stats.bin", ios::binary);
+	if (file)
+	{
+		// Смещаем указатель чтения в конец файла
+		file.seekg(0, file.end);
+		// Узнаём размер файла
+		size_t size = file.tellg();
+		cout << "length = " << size << endl;
+		// Смещаем указатель чтения в начало файла
+		file.seekg(0, file.beg);
+		char* buffer = new char[size];
+		file.read(buffer, size);
+		if (file) {
+			for (size_t i = 0, j = 0, userCount = 0; i < size;)
+			{
+				if ('\0' == buffer[i])
+				{
+					if (i < size - sizeof(Stats::mapped_type))
+					{
+						string name = &buffer[j];
+						Stats::mapped_type score = *(Stats::mapped_type*)(&buffer[i + 1]);
+						cout << name << ": score " << score << endl;
+						m_stats[name] = score;
+						if (++userCount == 10) // до 10 пользователей
+							break;
+						i += (sizeof(Stats::mapped_type) + 1);
+						j = i;
+					}
+				}
+				else
+				{
+					i++;
+				}
+			}
+		}
+		delete[] buffer;
+		file.close();
+	}
+	else {
+		cout << "failed to open file" << endl;
+	}
 }
 
 bool Game::showScore()
 {
-	Menu menu(_window, _renderer);
-	return (1 == menu.show(SDL_GetWindowSurface(_window), _font, { "Continue", "Exit" }));
+	Menu menu(m_window, m_renderer);
+	return (1 == menu.show(SDL_GetWindowSurface(m_window), m_font, { "Continue", "Exit" }));
 }
 
 void Game::stop()
 {
-	_active = false;
+	m_run = false;
 }
 
 void Game::renderTexture(SDL_Texture *tex, int x, int y, int w, int h) {
@@ -325,7 +299,7 @@ void Game::renderTexture(SDL_Texture *tex, int x, int y, int w, int h) {
 	dst.y = y;
 	dst.w = w;
 	dst.h = h;
-	SDL_RenderCopy(_renderer, tex, nullptr, &dst);
+	SDL_RenderCopy(m_renderer, tex, nullptr, &dst);
 }
 
 void Game::renderTexture(SDL_Texture *tex, int x, int y) {
@@ -358,7 +332,7 @@ SDL_Texture* Game::renderText(const string &message, TTF_Font* font, SDL_Color c
 		logSDLError(cout, "TTF_RenderText");
 		return nullptr;
 	}
-	SDL_Texture *texture = SDL_CreateTextureFromSurface(_renderer, surface);
+	SDL_Texture *texture = SDL_CreateTextureFromSurface(m_renderer, surface);
 	if (texture == nullptr) {
 		logSDLError(cout, "CreateTexture");
 	}

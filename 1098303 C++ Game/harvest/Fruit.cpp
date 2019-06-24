@@ -1,8 +1,12 @@
 #include "Fruit.h"
+#include "Geometry.h"
 
 #include <SDL.h>
 #include <SDL_image.h>
+#include <vector>
 #include <cstdlib>
+
+using namespace std;
 
 extern int ScreenWidth;
 extern int ScreenHeight;
@@ -20,7 +24,7 @@ const char* Fruit::PictureNames[] = {
 
 Fruit* Fruit::generateFruit(SDL_Renderer* renderer)
 {
-	int type = (rand() % 2) * 3;
+	int type = (rand() % 2) * pear;
 	int state = rand() % 4;
 	return new Fruit(renderer, static_cast<Type>(type), static_cast<State>(state));
 }
@@ -40,6 +44,10 @@ Fruit::Fruit(SDL_Renderer* renderer, Type type, State state)
 
 Fruit::~Fruit()
 {
+	if (m_image) {
+		SDL_DestroyTexture(m_image);
+		m_image = nullptr;
+	}
 }
 
 void Fruit::move()
@@ -60,4 +68,30 @@ void Fruit::draw()
 bool Fruit::fell() const
 {
 	return m_y + m_height > ScreenHeight;
+}
+
+bool Fruit::caught(int x, int y) const
+{
+	vector<Geometry::point> polygon {
+		{ double(m_x),           double(m_y) },
+		{ double(m_x + m_width), double(m_y) },
+		{ double(m_x + m_width), double(m_y + m_height) },
+		{ double(m_x),           double(m_y + m_height) }
+	};
+	return Geometry::point_in_polygon(Geometry::point(x, y), polygon);
+}
+
+int Fruit::score() const
+{
+	switch (m_state) {
+	case ripe:
+		return 2;
+	case unripe:
+		return 1;
+	case sick:
+		return -1;
+	case dead:
+		return -2;
+	}
+	return 0;
 }

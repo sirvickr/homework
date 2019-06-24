@@ -8,7 +8,7 @@ class Fruit
 public:
 	enum Type {
 		apple = 0,
-		pear = 3,
+		pear = 4,
 	};
 	enum State {
 		ripe,
@@ -33,7 +33,11 @@ public:
 	void draw();
 	// Фрукт упал?
 	bool fell() const;
-	//
+	// Фрукт пойман?
+	bool caught(int x, int y) const;
+	// Количество очков за поимку
+	int score() const;
+	// Создаёт объекты фруктов
 	static Fruit* generateFruit(SDL_Renderer* renderer);
 
 private:
