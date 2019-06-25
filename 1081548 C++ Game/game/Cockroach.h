@@ -3,7 +3,7 @@
 #include <string>
 
 struct SDL_Renderer;
-struct SDL_Texture;
+struct SDL_Surface;
 
 class Cockroach
 {
@@ -11,10 +11,10 @@ public:
 	enum class Orient : int {
 		up, down, left, right
 	};
-	Cockroach(int fieldW, int fieldH, SDL_Renderer* renderer, const char* imageName, Orient orient, int d = 1);
+	Cockroach(int fieldW, int fieldH, SDL_Surface* renderer, const char* imageName, Orient orient, int d = 1);
 	~Cockroach();
 
-	bool initGraphics(SDL_Renderer* renderer, const char* imageName);
+	bool initGraphics(SDL_Surface* renderer, const char* imageName);
 	// сделать следующий шаг (смена координат)
 	void move();
 	// нарисовать себя на экране
@@ -23,10 +23,10 @@ public:
 	bool away() const;
 	// увернулся от тапка?
 	bool evade(int x, int y) const;
-	SDL_Renderer* renderer() const {
-		return _renderer;
+	SDL_Surface* screen() const {
+		return _screen;
 	}
-	SDL_Texture* image() const {
+	SDL_Surface* image() const {
 		return _image;
 	}
 	Orient orient() const {
@@ -69,6 +69,6 @@ private:
 	int _h = 0;
 	int _fieldW = 0;
 	int _fieldH = 0;
-	SDL_Renderer* _renderer = nullptr;
-	SDL_Texture* _image = nullptr;
+	SDL_Surface* _screen = nullptr;
+	SDL_Surface* _image = nullptr;
 };

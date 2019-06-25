@@ -6,27 +6,29 @@
 #include <random>  
 #include <ctime>
 
-Cockroach::Cockroach(int fieldW, int fieldH, SDL_Renderer* renderer, const char* imageName, Orient orient, /*int x, int y,*/ int d)
+Cockroach::Cockroach(int fieldW, int fieldH, SDL_Surface* screen, const char* imageName, Orient orient, /*int x, int y,*/ int d)
 	: _orient(orient), _d(d), /*_x(x), _y(y),*/ _fieldW(fieldW), _fieldH(fieldH)
 {
-	initGraphics(renderer, imageName);
+	initGraphics(screen, imageName);
 }
 
 Cockroach::~Cockroach()
 {
 	if (_image) {
-		SDL_DestroyTexture(_image);
+		SDL_FreeSurface(_image);
 		_image = nullptr;
 	}
 }
 
-bool Cockroach::initGraphics(SDL_Renderer* renderer, const char* imageName) {
-	if (!renderer || !imageName) {
+bool Cockroach::initGraphics(SDL_Surface* screen, const char* imageName) {
+	if (!screen || !imageName) {
 		return false;
 	}
-	_renderer = renderer;
-	_image = IMG_LoadTexture(renderer, imageName);
-	if (_image && 0 == SDL_QueryTexture(_image, nullptr, nullptr, &_w, &_h)) {
+	_screen = screen;
+	_image = IMG_Load(imageName);
+	if (_image) {
+		_w = _image->clip_rect.w;
+		_h = _image->clip_rect.h;
 		std::mt19937 gen;
 		gen.seed(static_cast<uint32_t>(time(0)));
 		//std::uniform_int_distribution<> uidSpeed(1, 3);
@@ -37,8 +39,6 @@ bool Cockroach::initGraphics(SDL_Renderer* renderer, const char* imageName) {
 				_x = uidLoc(gen);
 				_y = _fieldH; //  startPoint.y;
 				_d = -_d;
-				//cr = new Cockroach(_renderer, startPoint.imgName, orient,
-				//	x, y, startPoint.delta * uidSpeed(gen));
 
 				_x -= _w / 2;
 			}
@@ -48,8 +48,6 @@ bool Cockroach::initGraphics(SDL_Renderer* renderer, const char* imageName) {
 				std::uniform_int_distribution<> uidLoc(4, _fieldW - 5);
 				_x = uidLoc(gen);
 				_y = -_h; //  startPoint.y;
-				//cr = new Cockroach(_renderer, startPoint.imgName, orient,
-				//	x, y, startPoint.delta * uidSpeed(gen));
 
 				_x -= _w / 2;
 			}
@@ -60,8 +58,6 @@ bool Cockroach::initGraphics(SDL_Renderer* renderer, const char* imageName) {
 				_x = _fieldW; // startPoint.x;
 				_y = uidLoc(gen);
 				_d = -_d;
-				//cr = new Cockroach(_renderer, startPoint.imgName, orient,
-				//	x, y, startPoint.delta * uidSpeed(gen));
 
 				_y -= _h / 2;
 			}
@@ -71,8 +67,6 @@ bool Cockroach::initGraphics(SDL_Renderer* renderer, const char* imageName) {
 				std::uniform_int_distribution<> uidLoc(4, _fieldH - 5);
 				_x = -_w; //  startPoint.x;
 				_y = uidLoc(gen);
-				//cr = new Cockroach(_renderer, startPoint.imgName, orient,
-				//	x, y, startPoint.delta * uidSpeed(gen));
 
 				_y -= _h / 2;
 				break;
@@ -135,7 +129,7 @@ bool Cockroach::away() const
 
 bool Cockroach::evade(int x, int y) const
 {
-	int x0 = _x +10;
+	int x0 = _x + 10;
 	int y0 = _y + 10;
 	int x1 = _x + _w - 10;
 	int y1 = _y + _h - 10;
@@ -150,8 +144,7 @@ void Cockroach::draw()
 	dst.y = _y;
 	dst.w = _w;
 	dst.h = _h;
-	//std::cout << "\ndraw: R " << _renderer << " I " << _renderer << ": " << dst.x << " " << dst.y << "      " << " w " << dst.w << " h " << dst.h << std::endl;
-	SDL_RenderCopy(_renderer, _image, nullptr, &dst);
+	SDL_BlitSurface(_image, NULL, _screen, &dst);
 }
 
 #if 0

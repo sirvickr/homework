@@ -131,6 +131,7 @@ int Game::run()
 		logSDLError(cout, "SDL_CreateWindow");
 		return 1;
 	}
+	_screen = SDL_GetWindowSurface(_window);
 	_renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	if (!_renderer) {
 		logSDLError(cout, "SDL_CreateRenderer");
@@ -143,22 +144,24 @@ int Game::run()
 		logSDLError(cout, "TTF_OpenFont");
 		return 3;
 	}
-	SDL_Texture *txtScore = nullptr;
-	SDL_Texture *txtTips = nullptr;
+	SDL_Surface *txtScore = nullptr;
+	SDL_Surface *txtTips = nullptr;
 	// загружаем фон
-	SDL_Texture *background = loadTexture("res/background.jpg");
+	SDL_Surface *background = IMG_Load("res/background.jpg");
 	// загружаем прицел
-	SDL_Texture *cross = loadTexture("res/target.png");
+	SDL_Surface *cross = IMG_Load("res/target.png");
 	// провер€ем результат
 	if (background == nullptr || cross == nullptr) {
 		logSDLError(cout, "Loading images");
 		return 4;
 	}
 	// размеры картинки с прицелом
-	int xW, xH;
-	SDL_QueryTexture(cross, nullptr, nullptr, &xW, &xH);
-	int x = _scrWidth / 2 - xW / 2;
-	int y = _scrHeight / 2 - xH / 2;
+	SDL_Rect crossRect = {
+		_scrWidth / 2 - cross->clip_rect.w / 2,
+		_scrHeight / 2 - cross->clip_rect.h / 2,
+		cross->clip_rect.w,
+		cross->clip_rect.h
+	};
 	// генераторы ѕ—„
 	mt19937 gen;
 	gen.seed(static_cast<uint32_t>(time(0)));
@@ -211,19 +214,19 @@ int Game::run()
 				switch (evt.key.keysym.scancode)
 				{
 				case SDL_SCANCODE_UP:
-					y -= crossDelta;
+					crossRect.y -= crossDelta;
 					pressed = true;
 					break;
 				case SDL_SCANCODE_DOWN:
-					y += crossDelta;
+					crossRect.y += crossDelta;
 					pressed = true;
 					break;
 				case SDL_SCANCODE_LEFT:
-					x -= crossDelta;
+					crossRect.x -= crossDelta;
 					pressed = true;
 					break;
 				case SDL_SCANCODE_RIGHT:
-					x += crossDelta;
+					crossRect.x += crossDelta;
 					pressed = true;
 					break;
 				case SDL_SCANCODE_ESCAPE:
@@ -248,11 +251,12 @@ int Game::run()
 		// очистка экрана
 		SDL_RenderClear(_renderer);
 		// заполнение фона
-		renderTexture(background, 0, 0);
+		SDL_BlitSurface(background, NULL, _screen, &_screen->clip_rect);
 		// обработка и отрисовка тараканов
 		for (auto it = begin(beetles); it != end(beetles); ) {
 			(*it)->draw();
-			if (!pressed || (*it)->evade(x + xW / 2, y + xH / 2)) { // центр прицела
+			// увернулс€ от центра прицела?
+			if (!pressed || (*it)->evade(crossRect.x + crossRect.w / 2, crossRect.y + crossRect.h / 2)) {
 				(*it)->move();
 				if ((*it)->away()) {
 					// убежал - создать нового таракана, взамен сбежавшего
@@ -269,7 +273,7 @@ int Game::run()
 			}
 		}
 		// прицел
-		renderTexture(cross, x, y);
+		SDL_BlitSurface(cross, NULL, _screen, &crossRect);
 		// текст - количество очков
 		{
 			ostringstream os;
@@ -279,7 +283,7 @@ int Game::run()
 		// текст - подсказки по управлению
 		showText("Use 'Left', 'Right', 'Up' and 'Down' arrows to move the target, Esc to show user menu", 10, _scrHeight + 10, txtTips, _tipsFont, { 50, 150, 0, 255 });
 		// показ сцены в окне
-		SDL_RenderPresent(_renderer);
+		SDL_UpdateWindowSurface(_window);
 	} // while(active)
 	cout << _userName << ": " << _killCount << endl;
 
@@ -291,28 +295,32 @@ int Game::run()
 	}
 	
 	// освобождение ресурсов SDL
-	
+
+	SDL_FreeSurface(cross);
+	cross = nullptr;
+	SDL_FreeSurface(background);
+	background = nullptr;
+	SDL_FreeSurface(txtScore);
+	txtScore = nullptr;
+	SDL_FreeSurface(txtTips);
+	txtTips = nullptr;
+
+	SDL_DestroyRenderer(_renderer);
+	_renderer = nullptr;
+	SDL_DestroyWindow(_window);
+	_window = nullptr;
+
 	TTF_CloseFont(_scoreFont);
 	_scoreFont = nullptr;
 	TTF_CloseFont(_tipsFont);
 	_tipsFont = nullptr;
-
-	SDL_DestroyTexture(cross);
-	SDL_DestroyTexture(background);
-	SDL_DestroyTexture(txtScore);
-
-	SDL_DestroyRenderer(_renderer);
-	SDL_DestroyWindow(_window);
-
-	_window = nullptr;
-	_renderer = nullptr;
 
 	return 0;
 }
 
 void Game::spawnCockroach(int index, int speed)
 {
-	beetles.push_back(new Cockroach(_scrWidth, _scrHeight, _renderer, imgNames[index],
+	beetles.push_back(new Cockroach(_scrWidth, _scrHeight, _screen, imgNames[index],
 		static_cast<Cockroach::Orient>(index), speed));
 }
 
@@ -334,23 +342,21 @@ void Game::stop()
 	_active = false;
 }
 
-void Game::showText(const string& text, int x, int y, SDL_Texture* texture, _TTF_Font* font, const SDL_Color& color)
+void Game::showText(const string& text, int x, int y, SDL_Surface* surface, _TTF_Font* font, const SDL_Color& color)
 {
-	if (texture)
-		SDL_DestroyTexture(texture);
-	texture = renderText(text.c_str(), font, color);
-	if (texture)
-	{
-		// ѕолучаем размеры текста, чтобы разместить его на экране
-		//int w, h;
-		//SDL_QueryTexture(texture, NULL, NULL, &w, &h);
-		renderTexture(texture, x, y);
+	if (surface) {
+		SDL_FreeSurface(surface);
+	}
+	surface = TTF_RenderText_Blended(font, text.c_str(), color);
+	if (surface) {
+		SDL_Rect dest = { x, y, surface->clip_rect.w, surface->clip_rect.h };
+		SDL_BlitSurface(surface, NULL, _screen, &dest);
 	}
 	else {
 		logSDLError(cout, "renderText");
 	}
 }
-
+#if 0
 SDL_Texture* Game::loadTexture(const string &file) {
 	SDL_Texture *texture = IMG_LoadTexture(_renderer, file.c_str());
 	if (texture == nullptr) {
@@ -405,7 +411,7 @@ SDL_Texture* Game::renderText(const string &message, TTF_Font* font, SDL_Color c
 	SDL_FreeSurface(surface);
 	return texture;
 }
-
+#endif
 void Game::logSDLError(ostream &os, const string &msg) {
 	os << msg << " failed: " << SDL_GetError() << endl;
 }

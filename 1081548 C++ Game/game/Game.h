@@ -7,7 +7,7 @@
 
 struct SDL_Window;
 struct SDL_Renderer;
-struct SDL_Texture;
+struct SDL_Surface;
 struct SDL_Color;
 struct _TTF_Font;
 
@@ -35,7 +35,7 @@ private:
 	* @param file The image file to load
 	* @return the loaded texture, or nullptr if something went wrong.
 	*/
-	SDL_Texture* loadTexture(const std::string &file);
+	//SDL_Texture* loadTexture(const std::string &file);
 
 	/**
 	* Draw an SDL_Texture to an SDL_Renderer at position x, y, with some desired
@@ -46,7 +46,7 @@ private:
 	* @param w The width of the texture to draw
 	* @param h The height of the texture to draw
 	*/
-	void renderTexture(SDL_Texture *tex, int x, int y, int w, int h);
+	//void renderTexture(SDL_Texture *tex, int x, int y, int w, int h);
 
 	/**
 	* Draw an SDL_Texture to an SDL_Renderer at position x, y, preserving
@@ -55,7 +55,7 @@ private:
 	* @param x The x coordinate to draw to
 	* @param y The y coordinate to draw to
 	*/
-	void renderTexture(SDL_Texture *tex, int x, int y);
+	//void renderTexture(SDL_Texture *tex, int x, int y);
 
 	/**
 	* Render the message we want to display to a texture for drawing
@@ -66,10 +66,10 @@ private:
 	* @param renderer The renderer to load the texture in
 	* @return An SDL_Texture containing the rendered message, or nullptr if something went wrong
 	*/
-	SDL_Texture* renderText(const std::string &message, const std::string &fontFile,
-		SDL_Color color, int fontSize);
+	//SDL_Texture* renderText(const std::string &message, const std::string &fontFile,
+	//	SDL_Color color, int fontSize);
 
-	SDL_Texture* renderText(const std::string &message, _TTF_Font* font, SDL_Color color);
+	//SDL_Texture* renderText(const std::string &message, _TTF_Font* font, SDL_Color color);
 
 	/**
 	* Log an SDL error with some error message to the output stream of our choice
@@ -84,11 +84,12 @@ private:
 
 	bool showScore();
 
-	void showText(const std::string& text, int x, int y, SDL_Texture* texture, _TTF_Font* font, const SDL_Color& color);
+	void showText(const std::string& text, int x, int y, SDL_Surface* texture, _TTF_Font* font, const SDL_Color& color);
 
 private:
 	// графические объекты
 	SDL_Window* _window = nullptr;
+	SDL_Surface* _screen =  nullptr;
 	SDL_Renderer* _renderer = nullptr;
 	_TTF_Font* _scoreFont = nullptr;
 	_TTF_Font* _tipsFont = nullptr;
