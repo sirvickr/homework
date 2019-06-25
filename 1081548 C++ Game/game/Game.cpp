@@ -125,23 +125,6 @@ Game::~Game()
 
 int Game::run()
 {
-	// Инициализация библиотеки SDL
-	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-		logSDLError(cout, "SDL_Init");
-		return 1;
-	}
-	// Инициализация библиотеки SDL_image
-	if ((IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG) != IMG_INIT_PNG) {
-		logSDLError(cout, "IMG_Init");
-		SDL_Quit();
-		return 1;
-	}
-	// Инициализация библиотеки SDL_ttf
-	if (TTF_Init() != 0) {
-		logSDLError(cout, "TTF_Init");
-		SDL_Quit();
-		return 1;
-	}
 	_window = SDL_CreateWindow("Cockroach hunt", SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED, _scrWidth, _scrHeight + 50, SDL_WINDOW_SHOWN);
 	if (!_window) {
@@ -320,7 +303,6 @@ int Game::run()
 
 	SDL_DestroyRenderer(_renderer);
 	SDL_DestroyWindow(_window);
-	SDL_Quit();
 
 	_window = nullptr;
 	_renderer = nullptr;
