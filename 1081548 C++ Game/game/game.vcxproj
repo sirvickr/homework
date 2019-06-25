@@ -169,18 +169,18 @@
   <ItemGroup>
     <ClInclude Include="Cockroach.h" />
     <ClInclude Include="Game.h" />
-    <ClInclude Include="Image.h" />
     <ClInclude Include="Menu.h" />
     <ClInclude Include="MenuItem.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="StartScreen.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Cockroach.cpp" />
     <ClCompile Include="Game.cpp" />
-    <ClCompile Include="Image.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Menu.cpp" />
     <ClCompile Include="MenuItem.cpp" />
+    <ClCompile Include="StartScreen.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -25,7 +25,7 @@ class Game
 
 public:
 	Game(int scrWidth, int scrHeight);
-	~Game();
+	virtual ~Game();
 	int run();
 	void stop();
 
@@ -78,22 +78,27 @@ private:
 	*/
 	void logSDLError(std::ostream &os, const std::string &msg);
 
+	void spawnCockroach(int index, int speed);
+	
 	Beetles::iterator replaceCockroach(Beetles::iterator it, int index, int speed);
 
 	bool showScore();
 
-private:
-	// флаг "игра активна"
-	bool _active;
-	// размеры игрового экрана
-	int _scrWidth, _scrHeight;
-	// массив тараканов на экране
-	Beetles beetles;
+	void showText(const std::string& text, int x, int y, SDL_Texture* texture, _TTF_Font* font, const SDL_Color& color);
 
+private:
 	// графические объекты
 	SDL_Window* _window = nullptr;
 	SDL_Renderer* _renderer = nullptr;
-	_TTF_Font* _font = nullptr;
+	_TTF_Font* _scoreFont = nullptr;
+	_TTF_Font* _tipsFont = nullptr;
+
+	// флаг активности цикла обрабтки событий
+	bool _active;
+	// размеры окна
+	int _scrWidth, _scrHeight;
+	// массив тараканов на экране
+	Beetles beetles;
 
 	// имя пользователя
 	std::string _userName;

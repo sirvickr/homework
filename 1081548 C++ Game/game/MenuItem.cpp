@@ -2,7 +2,6 @@
 
 #include <SDL.h>
 #include <SDL_ttf.h>
-#include <SDL_image.h>
 
 MenuItem::MenuItem(const std::string& label)
 : _label(label), _selected(false), _surface(nullptr)
