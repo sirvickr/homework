@@ -7,14 +7,21 @@ using System.Globalization;
 
 namespace bakery
 {
+    // Основной класс приложения
     class Program
     {
+        // список хлебозаводов
         static List<Factory> factories = new List<Factory>();
+        // список изделий
         static List<Product> products = new List<Product>();
+        // список ингредиентов
         static List<Ingredient> ingredients = new List<Ingredient>();
+        // список связей изделий с ингредиентами
         static List<Constitution> consists = new List<Constitution>();
+        // настройки локализации
         static CultureInfo _cultureInfo = (CultureInfo)CultureInfo.CurrentCulture.Clone();
 
+        // имена файлов с данными
         static string[] paths = new string[]{
             "factories",
             "products",
@@ -22,26 +29,31 @@ namespace bakery
             "consists"
         };
 
+        // основная функция - точка входа приложения
         static void Main(string[] args)
         {
+            // дробная часть в файлах отделена точкой, а не запятой
             _cultureInfo.NumberFormat.NumberDecimalSeparator = ".";
 
             Console.Title = "Сеть хлебозаводов";
-            // Загрузить список хлебзаводов
+            // загрузить список хлебзаводов
             ReadList(0, 2);
-            // Загрузить список изделий
+            // загрузить список изделий
             ReadList(1, 6);
-            // Загрузить список ингредиентов
+            // загрузить список ингредиентов
             ReadList(2, 5);
-            // Загрузить список, связывающий изделия и ингредиенты
+            // загрузить список, связывающий изделия и ингредиенты
             ReadList(3, 2);
 
+            // цикл взаимодействия с пользователем
             while (true)
             {
+                // напечатать меню и запросить выбор пользователя
                 char choice = UserChoice();
                 Console.WriteLine("Вы выбрали действие: " + choice);
                 if (choice == '0')
                 {
+                    // 0 - завершаем работу
                     break;
                 }
                 switch(choice)
@@ -109,12 +121,16 @@ namespace bakery
         }
 
         // Перечень изделий, выпускаемых хлебозаводом
+        // choose - запросить номер у пользователя
+        // если false, то просто выводим список изделий
         static int FactoryProductsList(bool choose = false)
         {
+            // выводим список всех хлебозаводов
+            // и запрашиваем у пользователя номер
             int id = RequestFactoryKey();
+            // фильтруем все изделий по номеру выбранного хлебозавода
             var result = products.Where(p => p.FactoryKey == id);
-            // тот же запрос через операторы LINQ:
-            // var result = from p in products where p.FactoryKey == id select p;
+            // выводим список всех изделий в этой проекции
             Console.WriteLine("№\tВес\tЦена\tВыпуск\tГоден до\t\tНазвание");
             foreach (var p in result)
             {
@@ -123,6 +139,7 @@ namespace bakery
             }
             if (choose)
             {
+                // запрашиваем у пользователя номер хлебозавода
                 Console.Write("Введите № партии: ");
                 return Convert.ToInt32(Console.ReadLine().Trim());
             }
@@ -132,22 +149,19 @@ namespace bakery
         // Суммарная стоимость изделий, выпускаемых хлебозаводом
         static void TotalCost()
         {
+            // запросить у пользователя номер хлебозавода
             int id = RequestFactoryKey();
+            // фильтруем изделия по выбранному номеру хлебозавода
             var result = products.Where(p => p.FactoryKey == id)
+                // группируем изделия по номеру хлебозавода
                 .GroupBy(p => p.FactoryKey)
+                // суммируем стоимость партии в каждой группе
                 .Select(g => new {
                     Id = g.Key,
                     Total = g.Sum(p => p.Price * p.Count)
                 });
-            /* тот же запрос через операторы LINQ:
-            var result = from p in products where p.FactoryKey == id
-                         group p by p.FactoryKey into g
-                         select new { 
-                            Id = g.Key, 
-                            Total = g.Sum(p => p.Price * p.Count) 
-                         };
-            */
-            foreach(var group in result)
+            // вывод результата
+            foreach (var group in result)
             {
                 Console.WriteLine("Суммарная стоимость выпущенных изделий: {0} руб.", group.Total);
             }
@@ -156,6 +170,10 @@ namespace bakery
         // Изделия с просроченными ингредиентами
         static void ExpiredProductsList()
         {
+            // сперва получаем объединение по внешнему ключу 
+            // таблицы consists и таблицы ингредиентов ingredients, 
+            // включая в результат запроса как значения связующих 
+            // ключей, так и информационные поля
             var ingr = consists.Join(
                  ingredients,
                  c => c.IngredientKey,
@@ -167,7 +185,10 @@ namespace bakery
                      i.Weight,
                      i.ExpiryDate
                  }
-             );
+            );
+            // затем объединяем таблицу изделий products и полученную 
+            // на предыдущем шаге проекцию, группируя результат по изделиям 
+            // и собирая для каждого из них список просроченных ингредиентов
             var view = products.GroupJoin(
                 ingr,
                 p => p.Key,
@@ -181,6 +202,7 @@ namespace bakery
             );
             Console.WriteLine("Изделия с просроченным ингредиентами");
             Console.WriteLine("№\tНазвание");
+            // вывод результата (только позиции с просроченными ингредиентами)
             foreach (var p in view.Where(v => v.Ingredients.Count() > 0))
             {
                 Console.WriteLine("{0}\t{1} (просроченных ингредиентов: {2}):",
@@ -195,6 +217,10 @@ namespace bakery
         // Список хлебозаводов в порядке убывания объёма производства
         static void DescendingFactoriesList()
         {
+            // объединяем по внешнему ключу FactoryKey таблицы 
+            // хлебозаводов и изделий и группируем результат, 
+            // подсчитывая для каждого хлебозавода объем выпущенной продукции. 
+            // В конце сортируем результат по этому полю.
             var result = factories.GroupJoin(
                 products,
                 f => f.Key,
@@ -206,6 +232,7 @@ namespace bakery
                     Count = prods.Sum(prod => prod.Count)
                 }
             ).OrderByDescending(f => f.Count);
+            // вывод результата
             Console.WriteLine("№\tНазвание\tОбъём производства");
             foreach (var f in result)
             {
@@ -216,6 +243,9 @@ namespace bakery
         // Изделие с наибольшим количеством ингредиентов
         static void MaxIngredientsProduct()
         {
+            // сперва получаем объединение по внешнему ключу таблицы consists 
+            // и таблицы ингредиентов ingredients, включая в результат запроса 
+            // значение ключа и наименование ингредиента
             var ingr = consists.Join(
                 ingredients,
                 c => c.IngredientKey,
@@ -225,6 +255,9 @@ namespace bakery
                     i.Name
                 }
             );
+            // затем объединяем таблицу изделий products и полученную 
+            // на предыдущем шаге проекцию, группируя результат по изделиям 
+            // и собирая для каждого из них список ингредиентов
             var view = products.GroupJoin(
                 ingr,
                 p => p.Key,
@@ -237,7 +270,10 @@ namespace bakery
                     Ingredients = cons.Select(w => w)
                 }
             );
+            // в получившейся проекции вычисляем максимальное 
+            // количество ингредиентов среди всех изделий
             int maxCount = view.Max(v => v.IngredCount);
+            // вывод результата (только позиции с наибольшим числом ингредиентов)
             Console.WriteLine("Изделия с наибольшим числом ингредиентов");
             Console.WriteLine("№\tНазвание");
             foreach (var p in view.Where(v => v.IngredCount == maxCount))
@@ -254,12 +290,19 @@ namespace bakery
         // Изделие с наибольшей прибылью при реализации
         static void MaxRevenueProduct()
         {
+            // делаем проекцию таблицы изделий, выбирая из неё 
+            // наименование и вычисляя прибыль как произведение 
+            // цены за единицу изделия на объём выпуска
             var view = products.Select(p => new {
                 p.Name,
                 Revenue = p.Price * p.Count
             });
+            // вычисляем максимальное значение прибыли среди всех изделий
             var maxVal = view.Max(v => v.Revenue);
+            // фильтруем эту проекцию, оставляя только те изделия, 
+            // у которых прибыль равна максимальному значению
             var result = view.Where(v => v.Revenue == maxVal);
+            // вывод результата
             Console.WriteLine("Изделия с наибольшей прибылью:");
             foreach (var item in result)
             {
@@ -270,8 +313,12 @@ namespace bakery
         // Добавить изделие, выпускаемое хлебозаводом
         static void AddProduct()
         {
+            // выводим на экран список заводов хлебозаводов
+            // и запрашиваем у пользователя номер
             int factoryKey = RequestFactoryKey();
+            // формируем ключ
             int key = products.Count + 1;
+            // запрашиваем у пользователя остальные поля
             Console.Write("Введите наименование продукции: ");
             string name = Console.ReadLine().Trim();
             Console.Write("Введите вес единицы продукции (кг): ");
@@ -282,6 +329,7 @@ namespace bakery
             int count = Convert.ToInt32(Console.ReadLine().Trim());
             Console.Write("Введите цену единицы продукции: ");
             double price = double.Parse(Console.ReadLine().Trim(), _cultureInfo);
+            // создаём объект и добавляем в таблицу
             Product product = new Product();
             product.Key = key;
             product.FactoryKey = factoryKey;
@@ -296,8 +344,12 @@ namespace bakery
         // Удалить изделие, выпускаемое хлебозаводом
         static void RemoveProduct()
         {
+            // выводим на экран список заводов изделий
+            // и запрашиваем у пользователя номер
             int key = FactoryProductsList(true);
+            // находим изделие с таким номером (ключом)
             var item = products.SingleOrDefault(p => p.Key == key);
+            // если нашли - удаляем
             if (item != null)
             {
                 products.Remove(item);
@@ -309,13 +361,15 @@ namespace bakery
         {
             if(index >= paths.Length)
                 return;
+            // открываем файл на чтение
             StreamReader stream = new StreamReader(paths[index], Encoding.Default);
             string line;
             int key = 1;
             switch(index)
             {
                 case 0:
-                    while((line = stream.ReadLine()) != null)
+                    // читаем построчно файл со списком хлебозаводов
+                    while ((line = stream.ReadLine()) != null)
                     {
                         string[] fields = line.Split(';');
                         if(fields.Length == fieldCount)
@@ -329,6 +383,7 @@ namespace bakery
                     }
                     break;
                 case 1:
+                    // читаем построчно файл со списком изделий
                     while ((line = stream.ReadLine()) != null)
                     {
                         string[] fields = line.Split(';');
@@ -347,6 +402,7 @@ namespace bakery
                     }
                     break;
                 case 2:
+                    // читаем построчно файл со списком иигредиентов
                     while ((line = stream.ReadLine()) != null)
                     {
                         string[] fields = line.Split(';');
@@ -363,6 +419,7 @@ namespace bakery
                     }
                     break;
                 case 3:
+                    // читаем построчно файл со списком связей
                     while ((line = stream.ReadLine()) != null)
                     {
                         string[] fields = line.Split(';');
