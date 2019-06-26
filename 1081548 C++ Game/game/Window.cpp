@@ -1,5 +1,5 @@
 #include "Window.h"
-#include "Graphics.h"
+#include "Utils.h"
 
 #include <SDL.h>
 #include <SDL_image.h>
@@ -10,12 +10,12 @@
 using namespace std;
 
 Window::Window(int width, int height, const string& title)
-	: _active(true)
+	: _active(true), _title(title)
 {
 	_scrWidth = width;
 	_scrHeight = height;
 	_window = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED,
-		SDL_WINDOWPOS_CENTERED, _scrWidth, _scrHeight + 50, SDL_WINDOW_SHOWN);
+		SDL_WINDOWPOS_CENTERED, _scrWidth, _scrHeight, SDL_WINDOW_SHOWN);
 	if (_window) {
 		_screen = SDL_GetWindowSurface(_window);
 	}
@@ -44,6 +44,6 @@ void Window::showText(const std::string& text, int x, int y, SDL_Surface* surfac
 		SDL_BlitSurface(surface, NULL, _screen, &dest);
 	}
 	else {
-		Graphics::logSDLError(cout, "renderText");
+		logSDLError(cout, "renderText");
 	}
 }

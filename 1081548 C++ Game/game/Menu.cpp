@@ -7,8 +7,8 @@
 #include <SDL.h>
 #include <SDL_ttf.h>
 
-Menu::Menu(SDL_Window* window, SDL_Renderer* renderer)
-:	_window(window), _renderer(renderer)
+Menu::Menu(SDL_Window* window)
+:	_window(window)
 {
 }
 

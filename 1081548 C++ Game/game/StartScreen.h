@@ -1,7 +1,5 @@
 #pragma once
 
-#include <ostream>
-
 #include "Window.h"
 
 struct SDL_Window;
@@ -13,8 +11,8 @@ class StartScreen : public Window
 {
 public:
 	StartScreen(int width, int height, const std::string& title);
-	virtual ~StartScreen();
-	int show(const std::string& title) override;
+	~StartScreen() = default;
+	int show() override;
 
 private:
 	// графические объекты

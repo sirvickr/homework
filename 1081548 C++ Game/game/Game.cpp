@@ -1,4 +1,5 @@
 #include "Game.h"
+#include "Utils.h"
 #include "Menu.h"
 #include "Cockroach.h"
 
@@ -25,8 +26,8 @@ const char* imgNames[] = {
 	"res/crR.png",
 };
 
-Game::Game(int scrWidth, int scrHeight)
-:	_active(true), _scrWidth(scrWidth), _scrHeight(scrHeight), _results(10)
+Game::Game(int width, int height, const string& title, const std::string& userName)
+:	Window(width, height, title), _userName(userName), _results(10)
 {
 	// Загрузка результатов из файла
 	ifstream is(fileName, ifstream::binary);
@@ -73,7 +74,6 @@ Game::Game(int scrWidth, int scrHeight)
 		is.close();
 		delete[] buffer;
 	}
-	_userName = "at";
 }
 
 Game::~Game()
@@ -123,20 +123,8 @@ Game::~Game()
 	}
 }
 
-int Game::run()
+int Game::show()
 {
-	_window = SDL_CreateWindow("Cockroach hunt", SDL_WINDOWPOS_CENTERED,
-		SDL_WINDOWPOS_CENTERED, _scrWidth, _scrHeight + 50, SDL_WINDOW_SHOWN);
-	if (!_window) {
-		logSDLError(cout, "SDL_CreateWindow");
-		return 1;
-	}
-	_screen = SDL_GetWindowSurface(_window);
-	_renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-	if (!_renderer) {
-		logSDLError(cout, "SDL_CreateRenderer");
-		return 2;
-	}
 	// создаём шрифты
 	_scoreFont = TTF_OpenFont("res/arial.ttf", 32);
 	_tipsFont = TTF_OpenFont("res/arial.ttf", 18);
@@ -189,7 +177,7 @@ int Game::run()
 	// счётчик шагов
 	uint32_t stepCounter = 0;
 	// пользовательское меню
-	Menu menu(_window, _renderer);
+	Menu menu(_window);
 	// цикл обработки событий
 	while (_active) {
 		if (stepCounter++ == stepCount) {
@@ -248,8 +236,6 @@ int Game::run()
 
 		// Отрисовка сцены
 
-		// очистка экрана
-		SDL_RenderClear(_renderer);
 		// заполнение фона
 		SDL_BlitSurface(background, NULL, _screen, &_screen->clip_rect);
 		// обработка и отрисовка тараканов
@@ -281,7 +267,7 @@ int Game::run()
 			showText(os.str(), 10, 10, txtScore, _scoreFont, { 0, 100, 0, 255 });
 		}
 		// текст - подсказки по управлению
-		showText("Use 'Left', 'Right', 'Up' and 'Down' arrows to move the target, Esc to show user menu", 10, _scrHeight + 10, txtTips, _tipsFont, { 50, 150, 0, 255 });
+		showText("Use 'Left', 'Right', 'Up' and 'Down' arrows to move the target, Esc to show user menu", 10, _scrHeight - 30, txtTips, _tipsFont, { 50, 150, 0, 255 });
 		// показ сцены в окне
 		SDL_UpdateWindowSurface(_window);
 	} // while(active)
@@ -304,11 +290,6 @@ int Game::run()
 	txtScore = nullptr;
 	SDL_FreeSurface(txtTips);
 	txtTips = nullptr;
-
-	SDL_DestroyRenderer(_renderer);
-	_renderer = nullptr;
-	SDL_DestroyWindow(_window);
-	_window = nullptr;
 
 	TTF_CloseFont(_scoreFont);
 	_scoreFont = nullptr;
@@ -333,85 +314,6 @@ Game::Beetles::iterator Game::replaceCockroach(Beetles::iterator it, int index, 
 
 bool Game::showScore()
 {
-	Menu menu(_window, _renderer);
+	Menu menu(_window);
 	return (1 == menu.show(SDL_GetWindowSurface(_window), _scoreFont, { "Continue", "Exit" }));
-}
-
-void Game::stop()
-{
-	_active = false;
-}
-
-void Game::showText(const string& text, int x, int y, SDL_Surface* surface, _TTF_Font* font, const SDL_Color& color)
-{
-	if (surface) {
-		SDL_FreeSurface(surface);
-	}
-	surface = TTF_RenderText_Blended(font, text.c_str(), color);
-	if (surface) {
-		SDL_Rect dest = { x, y, surface->clip_rect.w, surface->clip_rect.h };
-		SDL_BlitSurface(surface, NULL, _screen, &dest);
-	}
-	else {
-		logSDLError(cout, "renderText");
-	}
-}
-#if 0
-SDL_Texture* Game::loadTexture(const string &file) {
-	SDL_Texture *texture = IMG_LoadTexture(_renderer, file.c_str());
-	if (texture == nullptr) {
-		logSDLError(cout, "loadTexture");
-	}
-	return texture;
-}
-
-void Game::renderTexture(SDL_Texture *tex, int x, int y, int w, int h) {
-	//Setup the destination rectangle to be at the position we want
-	SDL_Rect dst;
-	dst.x = x;
-	dst.y = y;
-	dst.w = w;
-	dst.h = h;
-	SDL_RenderCopy(_renderer, tex, nullptr, &dst);
-}
-
-void Game::renderTexture(SDL_Texture *tex, int x, int y) {
-	int w, h;
-	SDL_QueryTexture(tex, nullptr, nullptr, &w, &h);
-	renderTexture(tex, x, y, w, h);
-}
-
-SDL_Texture* Game::renderText(const string &message, const string &fontFile,
-	SDL_Color color, int fontSize)
-{
-	//Open the font
-	TTF_Font *font = TTF_OpenFont(fontFile.c_str(), fontSize);
-	if (font == nullptr) {
-		logSDLError(cout, "TTF_OpenFont");
-		return nullptr;
-	}
-	SDL_Texture* texture = renderText(message, font, color);
-	TTF_CloseFont(font);
-	return texture;
-}
-
-SDL_Texture* Game::renderText(const string &message, TTF_Font* font, SDL_Color color)
-{
-	// Сперва рисуем текст на поверхности
-	SDL_Surface *surface = TTF_RenderText_Blended(font, message.c_str(), color);
-	if (!surface) {
-		logSDLError(cout, "TTF_RenderText_Blended");
-		return nullptr;
-	}
-	// Затем загружаем поверхность в текстуру
-	SDL_Texture *texture = SDL_CreateTextureFromSurface(_renderer, surface);
-	if (texture == nullptr) {
-		logSDLError(cout, "CreateTexture");
-	}
-	SDL_FreeSurface(surface);
-	return texture;
-}
-#endif
-void Game::logSDLError(ostream &os, const string &msg) {
-	os << msg << " failed: " << SDL_GetError() << endl;
 }

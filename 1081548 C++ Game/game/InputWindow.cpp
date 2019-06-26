@@ -1,4 +1,4 @@
-#include "StartScreen.h"
+#include "InputWindow.h"
 #include "Utils.h"
 
 #include <SDL.h>
@@ -7,30 +7,29 @@
 
 #include <iostream>
 
-StartScreen::StartScreen(int width, int height, const std::string& title)
-:	Window(width, height, title)
+InputWindow::InputWindow(int width, int height, const std::string& title)
+	: Window(width, height, title)
 {
 }
 
-int StartScreen::show()
+int InputWindow::show()
 {
-	// создаём шрифты
-	_mainFont = TTF_OpenFont("res/arial.ttf", 50);
-	_credFont = TTF_OpenFont("res/arial.ttf", 18);
-	if (!_mainFont || !_credFont) {
+	SDL_FillRect(_screen, &_screen->clip_rect, SDL_MapRGB(_screen->format, 50, 50, 50));
+	// создаём шрифт
+	_mainFont = TTF_OpenFont("res/arial.ttf", 18);
+	if (!_mainFont) {
 		logSDLError(std::cout, "TTF_OpenFont");
 		return 3;
 	}
-	// текстовые объекты
+	// текстовый объект
 	SDL_Surface *txtMain = nullptr;
-	SDL_Surface *txtCred = nullptr;
 	// загружаем фон
-	SDL_Surface *background = IMG_Load("res/init.jpg");
+	//SDL_Surface *background = IMG_Load("res/init.jpg");
 	// проверяем результат
-	if (!background) {
-		logSDLError(std::cout, "Loading images");
-		return 4;
-	}
+	//if (!background) {
+	//	logSDLError(std::cout, "Loading images");
+	//	return 4;
+	//}
 	// событие SDL
 	SDL_Event evt;
 	// время одного шага - 50 мс
@@ -42,11 +41,20 @@ int StartScreen::show()
 		while (SDL_PollEvent(&evt)) {
 			switch (evt.type) {
 			case SDL_QUIT:
+				std::cout << "SDL_QUIT" << std::endl;
 				stop();
+				break;
+			case SDL_TEXTINPUT:
+				_input += evt.text.text;
 				break;
 			case SDL_KEYDOWN:
 				switch (evt.key.keysym.scancode) {
 				case SDL_SCANCODE_ESCAPE:
+					_confirmed = false;
+					stop();
+					break;
+				case SDL_SCANCODE_RETURN:
+					_confirmed = true;
 					stop();
 					break;
 				}
@@ -60,11 +68,9 @@ int StartScreen::show()
 		// Отрисовка сцены
 
 		// заполнение фона
-		SDL_BlitSurface(background, NULL, _screen, &_screen->clip_rect);
+		//SDL_BlitSurface(background, NULL, _screen, &_screen->clip_rect);
 		// Текст 
-		showText(_title, 20, _scrHeight / 3 + 10, txtMain, _mainFont, { 50, 50, 200, 255 });
-		// Текст 
-		showText("Author: ________ Group: ___________", 20, _scrHeight / 2 + 10, txtCred, _credFont, { 30, 30, 200, 255 });
+		showText("User name: " + _input, 20, _scrHeight / 3 + 10, txtMain, _mainFont, { 25, 150, 150, 255 });
 		// показ сцены в окне
 		SDL_UpdateWindowSurface(_window);
 	} // while(active)
@@ -75,11 +81,9 @@ int StartScreen::show()
 
 	TTF_CloseFont(_mainFont);
 	_mainFont = nullptr;
-	TTF_CloseFont(_credFont);
-	_credFont = nullptr;
 
 	SDL_FreeSurface(txtMain);
-	SDL_FreeSurface(background);
+	//SDL_FreeSurface(background);
 
 	return 0;
 }

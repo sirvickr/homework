@@ -16,7 +16,7 @@ public:
 	void stop();
 
 protected:
-	virtual int show(const std::string& title) = 0;
+	virtual int show() = 0;
 	void showText(const std::string& text, int x, int y, SDL_Surface* surface, _TTF_Font* font, const SDL_Color& color);
 
 protected:
@@ -31,6 +31,9 @@ protected:
 
 	// флаг активности цикла обрабтки событий
 	bool _active;
+
+	// заголовок окна
+	const std::string _title;
 private:
 };
 

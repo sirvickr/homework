@@ -7,7 +7,7 @@
 bool initializeGraphics()
 {
 	// Инициализация библиотеки SDL
-	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
+	if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
 
 		printf("SDL Initialization Error: %s\n", SDL_GetError());
 		return false;
