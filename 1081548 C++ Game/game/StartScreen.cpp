@@ -1,5 +1,7 @@
 #include "StartScreen.h"
 #include "Utils.h"
+#include "Image.h"
+#include "Text.h"
 
 #include <SDL.h>
 #include <SDL_image.h>
@@ -14,23 +16,21 @@ StartScreen::StartScreen(int width, int height, const std::string& title)
 
 int StartScreen::show()
 {
-	// создаём шрифты
-	_mainFont = TTF_OpenFont("res/arial.ttf", 50);
-	_credFont = TTF_OpenFont("res/arial.ttf", 18);
-	if (!_mainFont || !_credFont) {
-		logSDLError(std::cout, "TTF_OpenFont");
+	// текстовые объекты
+	Text *txtMain = new Text(_screen, "res/arial.ttf", 40, { 50, 50, 200, 255 });
+	Text *txtAuthor = new Text(_screen, "res/arial.ttf", 18, { 30, 30, 200, 255 });
+	if (!txtMain || !txtAuthor) {
 		return 3;
 	}
-	// текстовые объекты
-	SDL_Surface *txtMain = nullptr;
-	SDL_Surface *txtCred = nullptr;
+	txtMain->locate(20, _scrHeight / 3 + 10);
+	txtMain->text(_title);
+
+	txtAuthor->locate(20, _scrHeight / 2 + 10);
+	txtAuthor->text("Author: ________ Group: ___________");
 	// загружаем фон
-	SDL_Surface *background = IMG_Load("res/init.jpg");
-	// проверяем результат
-	if (!background) {
-		logSDLError(std::cout, "Loading images");
-		return 4;
-	}
+	objects.push_back(new Image(_screen, "res/init.jpg"));
+	objects.push_back(txtMain);
+	objects.push_back(txtAuthor);
 	// событие SDL
 	SDL_Event evt;
 	// время одного шага - 50 мс
@@ -58,28 +58,18 @@ int StartScreen::show()
 		} // while
 
 		// Отрисовка сцены
-
-		// заполнение фона
-		SDL_BlitSurface(background, NULL, _screen, &_screen->clip_rect);
-		// Текст 
-		showText(_title, 20, _scrHeight / 3 + 10, txtMain, _mainFont, { 50, 50, 200, 255 });
-		// Текст 
-		showText("Author: ________ Group: ___________", 20, _scrHeight / 2 + 10, txtCred, _credFont, { 30, 30, 200, 255 });
+		for (auto it = begin(objects); it != end(objects); it++) {
+			(*it)->draw();
+		}
 		// показ сцены в окне
 		SDL_UpdateWindowSurface(_window);
 	} // while(active)
 
 	// Очистка ресурсов
 
-	// освобождение ресурсов SDL
-
-	TTF_CloseFont(_mainFont);
-	_mainFont = nullptr;
-	TTF_CloseFont(_credFont);
-	_credFont = nullptr;
-
-	SDL_FreeSurface(txtMain);
-	SDL_FreeSurface(background);
+	for (auto it = begin(objects); it != end(objects); it++) {
+		delete (*it);
+	}
 
 	return 0;
 }

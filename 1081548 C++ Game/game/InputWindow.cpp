@@ -1,5 +1,6 @@
 #include "InputWindow.h"
 #include "Utils.h"
+#include "Text.h"
 
 #include <SDL.h>
 #include <SDL_image.h>
@@ -15,21 +16,12 @@ InputWindow::InputWindow(int width, int height, const std::string& title)
 int InputWindow::show()
 {
 	SDL_FillRect(_screen, &_screen->clip_rect, SDL_MapRGB(_screen->format, 50, 50, 50));
-	// создаём шрифт
-	_mainFont = TTF_OpenFont("res/arial.ttf", 18);
-	if (!_mainFont) {
-		logSDLError(std::cout, "TTF_OpenFont");
+	Text *txtMain = new Text(_screen, "res/arial.ttf", 20, { 25, 150, 150, 255 });
+	if (!txtMain) {
 		return 3;
 	}
-	// текстовый объект
-	SDL_Surface *txtMain = nullptr;
-	// загружаем фон
-	//SDL_Surface *background = IMG_Load("res/init.jpg");
-	// проверяем результат
-	//if (!background) {
-	//	logSDLError(std::cout, "Loading images");
-	//	return 4;
-	//}
+	txtMain->locate(20, _scrHeight / 3 + 10);
+	objects.push_back(txtMain);
 	// событие SDL
 	SDL_Event evt;
 	// время одного шага - 50 мс
@@ -65,25 +57,21 @@ int InputWindow::show()
 			} // case
 		} // while
 
-		// Отрисовка сцены
-
-		// заполнение фона
-		//SDL_BlitSurface(background, NULL, _screen, &_screen->clip_rect);
 		// Текст 
-		showText("User name: " + _input, 20, _scrHeight / 3 + 10, txtMain, _mainFont, { 25, 150, 150, 255 });
+		txtMain->text("User name: " + _input);
+		// Отрисовка сцены
+		for (auto it = begin(objects); it != end(objects); it++) {
+			(*it)->draw();
+		}
 		// показ сцены в окне
 		SDL_UpdateWindowSurface(_window);
 	} // while(active)
 
 	// Очистка ресурсов
 
-	// освобождение ресурсов SDL
-
-	TTF_CloseFont(_mainFont);
-	_mainFont = nullptr;
-
-	SDL_FreeSurface(txtMain);
-	//SDL_FreeSurface(background);
+	for (auto it = begin(objects); it != end(objects); it++) {
+		delete (*it);
+	}
 
 	return 0;
 }

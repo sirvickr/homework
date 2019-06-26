@@ -173,7 +173,6 @@
     <ClInclude Include="InputWindow.h" />
     <ClInclude Include="Menu.h" />
     <ClInclude Include="MenuItem.h" />
-    <ClInclude Include="pch.h" />
     <ClInclude Include="ScreenObject.h" />
     <ClInclude Include="StartScreen.h" />
     <ClInclude Include="Text.h" />

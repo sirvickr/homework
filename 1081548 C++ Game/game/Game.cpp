@@ -41,24 +41,39 @@ Game::~Game()
 
 int Game::show()
 {
-	// создаём шрифты
-	_menuFont = TTF_OpenFont("res/arial.ttf", 32);
-	Text* txtScore = new Text(_screen, "res/arial.ttf", 32);
-	Text* txtTips = new Text(_screen, "res/arial.ttf", 18);
-	if (!txtScore || !txtTips) {
-		return 3;
-	}
 	// загружаем фон
 	Image *background = new Image(_screen, "res/background.jpg");
-	objects.push_back(background);
+
 	// загружаем прицел
 	Image *cross = new Image(_screen, "res/target.png");
-	objects.push_back(cross);
+
 	// проверяем результат
 	if (background == nullptr || cross == nullptr) {
 		logSDLError(cout, "Loading images");
 		return 4;
 	}
+
+	// текстовые объекты
+	Text* txtScore = new Text(_screen, "res/arial.ttf", 32, { 0, 100, 0, 255 });
+	Text* txtTips = new Text(_screen, "res/arial.ttf", 18, { 50, 150, 0, 255 });
+	_menuFont = TTF_OpenFont("res/arial.ttf", 32);
+
+	// проверяем результат
+	if (!txtScore || !txtTips || !_menuFont) {
+		return 3;
+	}
+
+	// настраиваем объекты
+	txtScore->locate(10, 10);
+	txtTips->locate(10, _scrHeight - 30);
+	txtTips->text("Use 'Left', 'Right', 'Up' and 'Down' arrows to move the target, Esc to show user menu");
+
+	// добавляем объекты в список в порядке отображения
+	objects.push_back(background);
+	objects.push_back(cross);
+	objects.push_back(txtScore);
+	objects.push_back(txtTips);
+
 	cross->locate(_scrWidth / 2 - cross->w() / 2, _scrHeight / 2 - cross->h() / 2);
 	// генераторы ПСЧ
 	mt19937 gen;
@@ -145,6 +160,12 @@ int Game::show()
 
 		// Отрисовка сцены
 
+		// текст - количество очков
+		{
+			ostringstream os;
+			os << "Score: " << _killCount;
+			txtScore->text(os.str());
+		}
 		// отрисовка объектов на экране
 		for (auto it = begin(objects); it != end(objects); ) {
 			(*it)->draw();
@@ -172,14 +193,6 @@ int Game::show()
 				it++;
 			}
 		}
-		// текст - количество очков
-		{
-			ostringstream os;
-			os << "Score: " << _killCount;
-			txtScore->print(10, 10, os.str(), { 0, 100, 0, 255 });
-		}
-		// текст - подсказки по управлению
-		txtTips->print(10, _scrHeight - 30, "Use 'Left', 'Right', 'Up' and 'Down' arrows to move the target, Esc to show user menu", { 50, 150, 0, 255 });
 		// показ сцены в окне
 		SDL_UpdateWindowSurface(_window);
 	} // while(active)
@@ -187,18 +200,12 @@ int Game::show()
 
 	// Очистка ресурсов
 
-	// удаление списка тараканов
+	// удаление списка объектов
 	for (auto it = begin(objects); it != end(objects); it++) {
 		delete (*it);
 	}
 	
-	// освобождение ресурсов SDL
-
-	delete txtScore;
-	txtScore = nullptr;
-	delete txtTips;
-	txtTips = nullptr;
-
+	// закрываем шрифт
 	TTF_CloseFont(_menuFont);
 	_menuFont = nullptr;
 

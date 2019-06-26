@@ -5,7 +5,6 @@
 struct SDL_Window;
 struct SDL_Surface;
 struct SDL_Color;
-struct _TTF_Font;
 
 class InputWindow: public Window
 {
@@ -21,8 +20,6 @@ public:
 	}
 
 private:
-	// графические объекты
-	_TTF_Font* _mainFont = nullptr;
 	// признак подтверждения
 	bool _confirmed = false;
 	// введённая строка

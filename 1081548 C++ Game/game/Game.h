@@ -21,7 +21,6 @@ class Game : public Window
 		std::string user;
 		int score = 0;
 	};
-	using Beetles = std::list<Cockroach*>;
 	using Objects = std::list<ScreenObject*>;
 	using Results = std::vector<UserResult>;
 
@@ -47,8 +46,6 @@ private:
 	_TTF_Font* _menuFont = nullptr;
 	// список тараканов на экране
 	//Beetles beetles;
-	// список объектов на экране
-	Objects objects;
 
 	// имя пользователя
 	std::string _userName;

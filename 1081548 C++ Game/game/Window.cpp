@@ -1,5 +1,6 @@
 #include "Window.h"
 #include "Utils.h"
+#include "ScreenObject.h"
 
 #include <SDL.h>
 #include <SDL_image.h>
@@ -31,19 +32,4 @@ Window::~Window()
 void Window::stop()
 {
 	_active = false;
-}
-
-void Window::showText(const std::string& text, int x, int y, SDL_Surface* surface, _TTF_Font* font, const SDL_Color& color)
-{
-	if (surface) {
-		SDL_FreeSurface(surface);
-	}
-	surface = TTF_RenderText_Blended(font, text.c_str(), color);
-	if (surface) {
-		SDL_Rect dest = { x, y, surface->clip_rect.w, surface->clip_rect.h };
-		SDL_BlitSurface(surface, NULL, _screen, &dest);
-	}
-	else {
-		logSDLError(cout, "renderText");
-	}
 }

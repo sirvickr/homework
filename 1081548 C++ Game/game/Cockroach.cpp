@@ -6,7 +6,7 @@
 #include <random>  
 #include <ctime>
 
-Cockroach::Cockroach(int fieldW, int fieldH, SDL_Surface* screen, const char* imageName, Orient orient, /*int x, int y,*/ int d)
+Cockroach::Cockroach(int fieldW, int fieldH, SDL_Surface* screen, const char* imageName, Orient orient, int d)
 	: ScreenObject(screen), _orient(orient), _d(d), _fieldW(fieldW), _fieldH(fieldH)
 {
 	initGraphics(imageName);
@@ -22,13 +22,12 @@ bool Cockroach::initGraphics(const char* imageName) {
 		_pos.h = _surface->clip_rect.h;
 		std::mt19937 gen;
 		gen.seed(static_cast<uint32_t>(time(0)));
-		//std::uniform_int_distribution<> uidSpeed(1, 3);
 		switch (_orient) {
 		case Orient::up:
 			{
 				std::uniform_int_distribution<> uidLoc(4, _fieldW - 5);
 				_pos.x = uidLoc(gen);
-				_pos.y = _fieldH; //  startPoint.y;
+				_pos.y = _fieldH;
 				_d = -_d;
 
 				_pos.x -= _pos.w / 2;
@@ -38,7 +37,7 @@ bool Cockroach::initGraphics(const char* imageName) {
 			{
 				std::uniform_int_distribution<> uidLoc(4, _fieldW - 5);
 				_pos.x = uidLoc(gen);
-				_pos.y = -_pos.h; //  startPoint.y;
+				_pos.y = -_pos.h;
 
 				_pos.x -= _pos.w / 2;
 			}
@@ -46,7 +45,7 @@ bool Cockroach::initGraphics(const char* imageName) {
 		case Orient::left:
 			{
 				std::uniform_int_distribution<> uidLoc(4, _fieldH - 5);
-				_pos.x = _fieldW; // startPoint.x;
+				_pos.x = _fieldW;
 				_pos.y = uidLoc(gen);
 				_d = -_d;
 
@@ -56,7 +55,7 @@ bool Cockroach::initGraphics(const char* imageName) {
 		case Orient::right:
 			{
 				std::uniform_int_distribution<> uidLoc(4, _fieldH - 5);
-				_pos.x = -_pos.w; //  startPoint.x;
+				_pos.x = -_pos.w;
 				_pos.y = uidLoc(gen);
 
 				_pos.y -= _pos.h / 2;
@@ -70,37 +69,8 @@ bool Cockroach::initGraphics(const char* imageName) {
 
 void Cockroach::move()
 {
-#if 1
 	int& pos = (Orient::up == _orient || Orient::down == _orient) ? _pos.y : _pos.x;
 	pos += _d;
-#else
-	switch (_orient) {
-	case Orient::up:
-		_pos.y += _d;
-		if (_pos.y < 0) {
-			_pos.y = _fieldH;
-		}
-		break;
-	case Orient::down:
-		_pos.y += _d;
-		if (_pos.y > _fieldH) {
-			_pos.y = -_pos.h;
-		}
-		break;
-	case Orient::left:
-		_pos.x += _d;
-		if (_pos.x < 0) {
-			_pos.x = _fieldW;
-		}
-		break;
-	case Orient::right:
-		_pos.x += _d;
-		if (_pos.x > _fieldW) {
-			_pos.x = _pos.w;
-		}
-		break;
-	}
-#endif
 }
 
 bool Cockroach::away() const
@@ -124,6 +94,5 @@ bool Cockroach::evade(int x, int y) const
 	int y0 = _pos.y + 10;
 	int x1 = _pos.x + _pos.w - 10;
 	int y1 = _pos.y + _pos.h - 10;
-	//std::cout << "evade(" << x << " " << y << "): " << " x0 " << x0 << " y0 " << y0 << " x1 " << x1 << " y1 " << y1 << " = " << std::boolalpha << (x > x0 && y > y0 && x < x1 && y < y1) << std::endl;
 	return !(x > x0 && y > y0 && x < x1 && y < y1);
 }

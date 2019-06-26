@@ -6,8 +6,8 @@
 
 #include <iostream>
 
-Text::Text(SDL_Surface* screen, const char* fileName, int size)
-	: ScreenObject(screen), _fileName(fileName)
+Text::Text(SDL_Surface* screen, const char* fileName, int size, const SDL_Color& color)
+	: ScreenObject(screen), _fileName(fileName), _color(color)
 {
 	_font = TTF_OpenFont(fileName, size);
 	if(!_font) {
@@ -22,14 +22,7 @@ Text::~Text()
 	}
 }
 
-void Text::print(int x, int y, const std::string& text, const SDL_Color& color, SDL_Rect* dest)
-{
-	surface(TTF_RenderText_Blended(_font, text.c_str(), color));
-	if (surface()) {
-		locate(x, y);
-		draw();
-	}
-	else {
-		logSDLError(std::cerr, "renderText");
-	}
+void Text::text(const std::string& value) {
+	_text = value;
+	surface(TTF_RenderText_Blended(_font, _text.c_str(), _color));
 }
