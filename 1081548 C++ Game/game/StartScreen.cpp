@@ -17,16 +17,16 @@ StartScreen::StartScreen(int width, int height, const std::string& title)
 int StartScreen::show()
 {
 	// текстовые объекты
-	Text *txtMain = new Text(_screen, "res/arial.ttf", 40, { 50, 50, 200, 255 });
-	Text *txtAuthor = new Text(_screen, "res/arial.ttf", 18, { 30, 30, 200, 255 });
+	Text *txtMain = new Text(_screen, { 50, 50, 200, 255 }, 
+		"res/arial.ttf", 40, _title);
+	Text *txtAuthor = new Text(_screen, { 30, 30, 200, 255 }, 
+		"res/arial.ttf", 18, "Author: ________ Group: ___________");
 	if (!txtMain || !txtAuthor) {
 		return 3;
 	}
 	txtMain->locate(20, _scrHeight / 3 + 10);
-	txtMain->text(_title);
 
 	txtAuthor->locate(20, _scrHeight / 2 + 10);
-	txtAuthor->text("Author: ________ Group: ___________");
 	// загружаем фон
 	objects.push_back(new Image(_screen, "res/init.jpg"));
 	objects.push_back(txtMain);

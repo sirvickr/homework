@@ -16,7 +16,7 @@ InputWindow::InputWindow(int width, int height, const std::string& title)
 int InputWindow::show()
 {
 	SDL_FillRect(_screen, &_screen->clip_rect, SDL_MapRGB(_screen->format, 50, 50, 50));
-	Text *txtMain = new Text(_screen, "res/arial.ttf", 20, { 25, 150, 150, 255 });
+	Text *txtMain = new Text(_screen, { 25, 150, 150, 255 }, "res/arial.ttf", 20);
 	if (!txtMain) {
 		return 3;
 	}
@@ -50,9 +50,6 @@ int InputWindow::show()
 					stop();
 					break;
 				}
-				break;
-			case SDL_MOUSEBUTTONDOWN:
-				stop();
 				break;
 			} // case
 		} // while

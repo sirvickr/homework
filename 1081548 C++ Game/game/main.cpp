@@ -13,10 +13,10 @@ int main(int argc, char* argv[])
 		std::cerr << "Failed to initialize graphics" << std::endl;
 		return 1;
 	}
-
-	StartScreen screen(600, 400, gameName);
-	screen.show();
-
+	{
+		StartScreen screen(600, 400, gameName);
+		screen.show();
+	}
 	std::string userName = "";
 	bool requestUserName = true;
 	while (requestUserName) {

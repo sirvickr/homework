@@ -9,29 +9,26 @@ struct _TTF_Font;
 class Text : public ScreenObject
 {
 public:
-	Text(SDL_Surface* screen, const char* fileName, int size, const SDL_Color& color);
+	Text(SDL_Surface* screen, const SDL_Color& color, const char* fileName, int size, const std::string& txt = "");
+	Text(SDL_Surface* screen, const SDL_Color& color, _TTF_Font* font, const std::string& txt = "");
 	~Text();
-	std::string fileName() const {
-		return _fileName;
-	}
 	SDL_Color color() const {
 		return _color;
 	}
-	void color(const SDL_Color& value) {
-		_color = value;
-	}
+	void color(const SDL_Color& value);
+	void text(const std::string& value);
 	std::string text() const {
 		return _text;
 	}
-	void text(const std::string& value);
 
 private:
+	// признак владения шрифтом
+	bool _ownsFont;
 	// объект шрифта
 	_TTF_Font* _font = nullptr;
-	// имя файла с шрифтом
-	std::string _fileName;
 	// цвет шрифта
 	SDL_Color _color;
+	// строка текста
 	std::string _text;
 };
 

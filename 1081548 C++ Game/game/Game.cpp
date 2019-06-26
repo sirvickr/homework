@@ -28,6 +28,8 @@ const char* imgNames[] = {
 	"res/crR.png",
 };
 
+const char* strTips = "Use 'Left', 'Right', 'Up' and 'Down' arrows to move the target, Esc to show user menu";
+
 Game::Game(int width, int height, const string& title, const std::string& userName)
 :	Window(width, height, title), _userName(userName), _results(10)
 {
@@ -54,8 +56,8 @@ int Game::show()
 	}
 
 	// текстовые объекты
-	Text* txtScore = new Text(_screen, "res/arial.ttf", 32, { 0, 100, 0, 255 });
-	Text* txtTips = new Text(_screen, "res/arial.ttf", 18, { 50, 150, 0, 255 });
+	Text* txtScore = new Text(_screen, { 0, 100, 0, 255 }, "res/arial.ttf", 32);
+	Text* txtTips = new Text(_screen, { 50, 150, 0, 255 }, "res/arial.ttf", 18, strTips);
 	_menuFont = TTF_OpenFont("res/arial.ttf", 32);
 
 	// проверяем результат
@@ -66,7 +68,6 @@ int Game::show()
 	// настраиваем объекты
 	txtScore->locate(10, 10);
 	txtTips->locate(10, _scrHeight - 30);
-	txtTips->text("Use 'Left', 'Right', 'Up' and 'Down' arrows to move the target, Esc to show user menu");
 
 	// добавляем объекты в список в порядке отображения
 	objects.push_back(background);
