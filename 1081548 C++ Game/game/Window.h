@@ -23,8 +23,6 @@ protected:
 	// графические объекты
 	SDL_Window* _window = nullptr;
 	SDL_Surface* _screen = nullptr;
-	_TTF_Font* _scoreFont = nullptr;
-	_TTF_Font* _tipsFont = nullptr;
 
 	// размеры окна
 	int _scrWidth, _scrHeight;

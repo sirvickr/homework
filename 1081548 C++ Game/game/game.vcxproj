@@ -169,22 +169,28 @@
   <ItemGroup>
     <ClInclude Include="Cockroach.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="Image.h" />
     <ClInclude Include="InputWindow.h" />
     <ClInclude Include="Menu.h" />
     <ClInclude Include="MenuItem.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="ScreenObject.h" />
     <ClInclude Include="StartScreen.h" />
+    <ClInclude Include="Text.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Cockroach.cpp" />
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="Image.cpp" />
     <ClCompile Include="InputWindow.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Menu.cpp" />
     <ClCompile Include="MenuItem.cpp" />
+    <ClCompile Include="ScreenObject.cpp" />
     <ClCompile Include="StartScreen.cpp" />
+    <ClCompile Include="Text.cpp" />
     <ClCompile Include="Utils.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>

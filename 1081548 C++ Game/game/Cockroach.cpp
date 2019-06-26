@@ -7,28 +7,19 @@
 #include <ctime>
 
 Cockroach::Cockroach(int fieldW, int fieldH, SDL_Surface* screen, const char* imageName, Orient orient, /*int x, int y,*/ int d)
-	: _orient(orient), _d(d), /*_x(x), _y(y),*/ _fieldW(fieldW), _fieldH(fieldH)
+	: ScreenObject(screen), _orient(orient), _d(d), _fieldW(fieldW), _fieldH(fieldH)
 {
-	initGraphics(screen, imageName);
+	initGraphics(imageName);
 }
 
-Cockroach::~Cockroach()
-{
-	if (_image) {
-		SDL_FreeSurface(_image);
-		_image = nullptr;
-	}
-}
-
-bool Cockroach::initGraphics(SDL_Surface* screen, const char* imageName) {
-	if (!screen || !imageName) {
+bool Cockroach::initGraphics(const char* imageName) {
+	if (!_screen || !imageName) {
 		return false;
 	}
-	_screen = screen;
-	_image = IMG_Load(imageName);
-	if (_image) {
-		_w = _image->clip_rect.w;
-		_h = _image->clip_rect.h;
+	_surface = IMG_Load(imageName);
+	if (_surface) {
+		_pos.w = _surface->clip_rect.w;
+		_pos.h = _surface->clip_rect.h;
 		std::mt19937 gen;
 		gen.seed(static_cast<uint32_t>(time(0)));
 		//std::uniform_int_distribution<> uidSpeed(1, 3);
@@ -36,39 +27,39 @@ bool Cockroach::initGraphics(SDL_Surface* screen, const char* imageName) {
 		case Orient::up:
 			{
 				std::uniform_int_distribution<> uidLoc(4, _fieldW - 5);
-				_x = uidLoc(gen);
-				_y = _fieldH; //  startPoint.y;
+				_pos.x = uidLoc(gen);
+				_pos.y = _fieldH; //  startPoint.y;
 				_d = -_d;
 
-				_x -= _w / 2;
+				_pos.x -= _pos.w / 2;
 			}
 			break;
 		case Orient::down:
 			{
 				std::uniform_int_distribution<> uidLoc(4, _fieldW - 5);
-				_x = uidLoc(gen);
-				_y = -_h; //  startPoint.y;
+				_pos.x = uidLoc(gen);
+				_pos.y = -_pos.h; //  startPoint.y;
 
-				_x -= _w / 2;
+				_pos.x -= _pos.w / 2;
 			}
 			break;
 		case Orient::left:
 			{
 				std::uniform_int_distribution<> uidLoc(4, _fieldH - 5);
-				_x = _fieldW; // startPoint.x;
-				_y = uidLoc(gen);
+				_pos.x = _fieldW; // startPoint.x;
+				_pos.y = uidLoc(gen);
 				_d = -_d;
 
-				_y -= _h / 2;
+				_pos.y -= _pos.h / 2;
 			}
 			break;
 		case Orient::right:
 			{
 				std::uniform_int_distribution<> uidLoc(4, _fieldH - 5);
-				_x = -_w; //  startPoint.x;
-				_y = uidLoc(gen);
+				_pos.x = -_pos.w; //  startPoint.x;
+				_pos.y = uidLoc(gen);
 
-				_y -= _h / 2;
+				_pos.y -= _pos.h / 2;
 				break;
 			}
 		}
@@ -80,32 +71,32 @@ bool Cockroach::initGraphics(SDL_Surface* screen, const char* imageName) {
 void Cockroach::move()
 {
 #if 1
-	int& pos = (Orient::up == _orient || Orient::down == _orient) ? _y : _x;
+	int& pos = (Orient::up == _orient || Orient::down == _orient) ? _pos.y : _pos.x;
 	pos += _d;
 #else
 	switch (_orient) {
 	case Orient::up:
-		_y += _d;
-		if (_y < 0) {
-			_y = _fieldH;
+		_pos.y += _d;
+		if (_pos.y < 0) {
+			_pos.y = _fieldH;
 		}
 		break;
 	case Orient::down:
-		_y += _d;
-		if (_y > _fieldH) {
-			_y = -_h;
+		_pos.y += _d;
+		if (_pos.y > _fieldH) {
+			_pos.y = -_pos.h;
 		}
 		break;
 	case Orient::left:
-		_x += _d;
-		if (_x < 0) {
-			_x = _fieldW;
+		_pos.x += _d;
+		if (_pos.x < 0) {
+			_pos.x = _fieldW;
 		}
 		break;
 	case Orient::right:
-		_x += _d;
-		if (_x > _fieldW) {
-			_x = _w;
+		_pos.x += _d;
+		if (_pos.x > _fieldW) {
+			_pos.x = _pos.w;
 		}
 		break;
 	}
@@ -116,69 +107,23 @@ bool Cockroach::away() const
 {
 	switch (_orient) {
 	case Orient::up:
-		return (_y < 0);
+		return (_pos.y < 0);
 	case Orient::down:
-		return (_y > _fieldH);
+		return (_pos.y > _fieldH);
 	case Orient::left:
-		return (_x < 0);
+		return (_pos.x < 0);
 	case Orient::right:
-		return (_x > _fieldW);
+		return (_pos.x > _fieldW);
 	}
 	return false;
 }
 
 bool Cockroach::evade(int x, int y) const
 {
-	int x0 = _x + 10;
-	int y0 = _y + 10;
-	int x1 = _x + _w - 10;
-	int y1 = _y + _h - 10;
+	int x0 = _pos.x + 10;
+	int y0 = _pos.y + 10;
+	int x1 = _pos.x + _pos.w - 10;
+	int y1 = _pos.y + _pos.h - 10;
 	//std::cout << "evade(" << x << " " << y << "): " << " x0 " << x0 << " y0 " << y0 << " x1 " << x1 << " y1 " << y1 << " = " << std::boolalpha << (x > x0 && y > y0 && x < x1 && y < y1) << std::endl;
 	return !(x > x0 && y > y0 && x < x1 && y < y1);
 }
-
-void Cockroach::draw()
-{
-	SDL_Rect dst;
-	dst.x = _x;
-	dst.y = _y;
-	dst.w = _w;
-	dst.h = _h;
-	SDL_BlitSurface(_image, NULL, _screen, &dst);
-}
-
-#if 0
-/**
-* Draw an SDL_Texture to an SDL_Renderer at position x, y, with some desired
-* width and height
-* @param tex The source texture we want to draw
-* @param ren The renderer we want to draw to
-* @param x The x coordinate to draw to
-* @param y The y coordinate to draw to
-* @param w The width of the texture to draw
-* @param h The height of the texture to draw
-*/
-void renderTexture(SDL_Texture *tex, SDL_Renderer *ren, int x, int y, int w, int h) {
-	//Setup the destination rectangle to be at the position we want
-	SDL_Rect dst;
-	dst.x = x;
-	dst.y = y;
-	dst.w = w;
-	dst.h = h;
-	SDL_RenderCopy(ren, tex, nullptr, &dst);
-}
-
-/**
-* Draw an SDL_Texture to an SDL_Renderer at position x, y, preserving
-* the texture's width and height
-* @param tex The source texture we want to draw
-* @param ren The renderer we want to draw to
-* @param x The x coordinate to draw to
-* @param y The y coordinate to draw to
-*/
-void renderTexture(SDL_Texture *tex, SDL_Renderer *ren, int x, int y) {
-	int w, h;
-	SDL_QueryTexture(tex, nullptr, nullptr, &w, &h);
-	renderTexture(tex, ren, x, y, w, h);
-}
-#endif

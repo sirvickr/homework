@@ -2,6 +2,8 @@
 #include "Utils.h"
 #include "Menu.h"
 #include "Cockroach.h"
+#include "Image.h"
+#include "Text.h"
 
 #include <SDL.h>
 #include <SDL_image.h>
@@ -29,7 +31,182 @@ const char* imgNames[] = {
 Game::Game(int width, int height, const string& title, const std::string& userName)
 :	Window(width, height, title), _userName(userName), _results(10)
 {
-	// Загрузка результатов из файла
+	loadResults();
+}
+
+Game::~Game()
+{
+	saveResults();
+}
+
+int Game::show()
+{
+	// создаём шрифты
+	_menuFont = TTF_OpenFont("res/arial.ttf", 32);
+	Text* txtScore = new Text(_screen, "res/arial.ttf", 32);
+	Text* txtTips = new Text(_screen, "res/arial.ttf", 18);
+	if (!txtScore || !txtTips) {
+		return 3;
+	}
+	// загружаем фон
+	Image *background = new Image(_screen, "res/background.jpg");
+	objects.push_back(background);
+	// загружаем прицел
+	Image *cross = new Image(_screen, "res/target.png");
+	objects.push_back(cross);
+	// проверяем результат
+	if (background == nullptr || cross == nullptr) {
+		logSDLError(cout, "Loading images");
+		return 4;
+	}
+	cross->locate(_scrWidth / 2 - cross->w() / 2, _scrHeight / 2 - cross->h() / 2);
+	// генераторы ПСЧ
+	mt19937 gen;
+	gen.seed(static_cast<uint32_t>(time(0)));
+	uniform_int_distribution<> uidOrient(0, 3);
+	uniform_int_distribution<> uidSpeed(1, 3);
+	// создаём начальный список тараканов
+	size_t initCount = 5;
+	for (size_t i = 0; i < initCount; ++i) {
+		auto index = uidOrient(gen);
+		spawnCockroach(index, uidSpeed(gen));
+	}
+
+	_killCount = 0;
+
+	// дальность перемещения прицела за 1 шаг
+	const int crossDelta = 15;
+	// событие SDL
+	SDL_Event evt;
+	// время игры - 1 мин
+	constexpr uint32_t gameTime = 60000; // ms
+	// время одного шага - 50 мс
+	constexpr uint32_t stepDelay = 50; // ms
+	// время игры в шагах
+	constexpr uint32_t stepCount = gameTime / stepDelay;
+	// счётчик шагов
+	uint32_t stepCounter = 0;
+	// пользовательское меню
+	Menu menu(_window);
+	// цикл обработки событий
+	while (_active) {
+		if (stepCounter++ == stepCount) {
+			if (showScore()) {
+				break;
+			}
+			else {
+				_killCount = 0;
+			}
+		}
+		SDL_Delay(stepDelay);
+		// Обработка событий пользователя
+		bool pressed = false;
+		while (SDL_PollEvent(&evt)) {
+			switch (evt.type) {
+			case SDL_QUIT:
+				stop();
+				break;
+			case SDL_KEYDOWN:
+				//cout << " \nscancode " << evt.key.keysym.scancode << " vk " << evt.key.keysym.sym << endl;
+				switch (evt.key.keysym.scancode)
+				{
+				case SDL_SCANCODE_UP:
+					cross->moveY(-crossDelta);
+					pressed = true;
+					break;
+				case SDL_SCANCODE_DOWN:
+					cross->moveY(crossDelta);
+					pressed = true;
+					break;
+				case SDL_SCANCODE_LEFT:
+					cross->moveX(-crossDelta);
+					pressed = true;
+					break;
+				case SDL_SCANCODE_RIGHT:
+					cross->moveX(crossDelta);
+					pressed = true;
+					break;
+				case SDL_SCANCODE_ESCAPE:
+					if (1 == menu.show(SDL_GetWindowSurface(_window), _menuFont, { "Continue", "Exit" })) {
+						stop();
+					}
+					break;
+				case SDL_SCANCODE_SPACE:
+					cout << "\nmenu index = " << menu.show(SDL_GetWindowSurface(_window), _menuFont, { "Continue", "Exit", "Three", "Four" }) << endl;
+					break;
+				}
+				break;
+			case SDL_MOUSEBUTTONDOWN:
+				cout << " \nmouse " << evt.button.x << " " << evt.button.y << endl;
+				//stop();
+				break;
+			}
+		}
+
+		// Отрисовка сцены
+
+		// отрисовка объектов на экране
+		for (auto it = begin(objects); it != end(objects); ) {
+			(*it)->draw();
+			// обработка объектов-тараканов
+			Cockroach* cockroach = dynamic_cast<Cockroach*>((*it));
+			if (cockroach) {
+				// увернулся от центра прицела?
+				if (!pressed || cockroach->evade(cross->x() + cross->w() / 2, cross->y() + cross->h() / 2)) {
+					cockroach->move();
+					if (cockroach->away()) {
+						// убежал - создать нового таракана, взамен сбежавшего
+						it = replaceCockroach(it, uidOrient(gen), uidSpeed(gen));
+					}
+					else {
+						it++;
+					}
+				}
+				else {
+					// не увернулся.. создать нового таракана, взамен убитого
+					it = replaceCockroach(it, uidOrient(gen), uidSpeed(gen));
+					_killCount++;
+				}
+			}
+			else {
+				it++;
+			}
+		}
+		// текст - количество очков
+		{
+			ostringstream os;
+			os << "Score: " << _killCount;
+			txtScore->print(10, 10, os.str(), { 0, 100, 0, 255 });
+		}
+		// текст - подсказки по управлению
+		txtTips->print(10, _scrHeight - 30, "Use 'Left', 'Right', 'Up' and 'Down' arrows to move the target, Esc to show user menu", { 50, 150, 0, 255 });
+		// показ сцены в окне
+		SDL_UpdateWindowSurface(_window);
+	} // while(active)
+	cout << _userName << ": " << _killCount << endl;
+
+	// Очистка ресурсов
+
+	// удаление списка тараканов
+	for (auto it = begin(objects); it != end(objects); it++) {
+		delete (*it);
+	}
+	
+	// освобождение ресурсов SDL
+
+	delete txtScore;
+	txtScore = nullptr;
+	delete txtTips;
+	txtTips = nullptr;
+
+	TTF_CloseFont(_menuFont);
+	_menuFont = nullptr;
+
+	return 0;
+}
+
+void Game::loadResults()
+{
 	ifstream is(fileName, ifstream::binary);
 	if (is)
 	{
@@ -76,11 +253,10 @@ Game::Game(int width, int height, const string& title, const std::string& userNa
 	}
 }
 
-Game::~Game()
+void Game::saveResults()
 {
-	// Сохранение результатов в файл
 	ofstream os(fileName, ofstream::binary);
-	if(os) 
+	if (os)
 	{
 		Results::iterator it;
 		// ищем текущего пользователя, чтобы обновить
@@ -123,191 +299,15 @@ Game::~Game()
 	}
 }
 
-int Game::show()
-{
-	// создаём шрифты
-	_scoreFont = TTF_OpenFont("res/arial.ttf", 32);
-	_tipsFont = TTF_OpenFont("res/arial.ttf", 18);
-	if (!_scoreFont || !_tipsFont) {
-		logSDLError(cout, "TTF_OpenFont");
-		return 3;
-	}
-	SDL_Surface *txtScore = nullptr;
-	SDL_Surface *txtTips = nullptr;
-	// загружаем фон
-	SDL_Surface *background = IMG_Load("res/background.jpg");
-	// загружаем прицел
-	SDL_Surface *cross = IMG_Load("res/target.png");
-	// проверяем результат
-	if (background == nullptr || cross == nullptr) {
-		logSDLError(cout, "Loading images");
-		return 4;
-	}
-	// размеры картинки с прицелом
-	SDL_Rect crossRect = {
-		_scrWidth / 2 - cross->clip_rect.w / 2,
-		_scrHeight / 2 - cross->clip_rect.h / 2,
-		cross->clip_rect.w,
-		cross->clip_rect.h
-	};
-	// генераторы ПСЧ
-	mt19937 gen;
-	gen.seed(static_cast<uint32_t>(time(0)));
-	uniform_int_distribution<> uidOrient(0, 3);
-	uniform_int_distribution<> uidSpeed(1, 3);
-	// создаём начальный список тараканов
-	size_t initCount = 5;
-	for (size_t i = 0; i < initCount; ++i) {
-		auto index = uidOrient(gen);
-		spawnCockroach(index, uidSpeed(gen));
-	}
-
-	_killCount = 0;
-
-	// дальность перемещения прицела за 1 шаг
-	const int crossDelta = 15;
-	// событие SDL
-	SDL_Event evt;
-	// время игры - 1 мин
-	constexpr uint32_t gameTime = 60000; // ms
-	// время одного шага - 50 мс
-	constexpr uint32_t stepDelay = 50; // ms
-	// время игры в шагах
-	constexpr uint32_t stepCount = gameTime / stepDelay;
-	// счётчик шагов
-	uint32_t stepCounter = 0;
-	// пользовательское меню
-	Menu menu(_window);
-	// цикл обработки событий
-	while (_active) {
-		if (stepCounter++ == stepCount) {
-			if (showScore()) {
-				break;
-			}
-			else {
-				_killCount = 0;
-			}
-		}
-		SDL_Delay(stepDelay);
-		cout << ".";
-		// Обработка событий пользователя
-		bool pressed = false;
-		while (SDL_PollEvent(&evt)) {
-			switch (evt.type) {
-			case SDL_QUIT:
-				stop();
-				break;
-			case SDL_KEYDOWN:
-				//cout << " \nscancode " << evt.key.keysym.scancode << " vk " << evt.key.keysym.sym << endl;
-				switch (evt.key.keysym.scancode)
-				{
-				case SDL_SCANCODE_UP:
-					crossRect.y -= crossDelta;
-					pressed = true;
-					break;
-				case SDL_SCANCODE_DOWN:
-					crossRect.y += crossDelta;
-					pressed = true;
-					break;
-				case SDL_SCANCODE_LEFT:
-					crossRect.x -= crossDelta;
-					pressed = true;
-					break;
-				case SDL_SCANCODE_RIGHT:
-					crossRect.x += crossDelta;
-					pressed = true;
-					break;
-				case SDL_SCANCODE_ESCAPE:
-					if (1 == menu.show(SDL_GetWindowSurface(_window), _scoreFont, { "Continue", "Exit" })) {
-						stop();
-					}
-					break;
-				case SDL_SCANCODE_SPACE:
-					cout << "\nmenu index = " << menu.show(SDL_GetWindowSurface(_window), _scoreFont, { "Continue", "Exit", "Three", "Four" }) << endl;
-					break;
-				}
-				break;
-			case SDL_MOUSEBUTTONDOWN:
-				cout << " \nmouse " << evt.button.x << " " << evt.button.y << endl;
-				//stop();
-				break;
-			}
-		}
-
-		// Отрисовка сцены
-
-		// заполнение фона
-		SDL_BlitSurface(background, NULL, _screen, &_screen->clip_rect);
-		// обработка и отрисовка тараканов
-		for (auto it = begin(beetles); it != end(beetles); ) {
-			(*it)->draw();
-			// увернулся от центра прицела?
-			if (!pressed || (*it)->evade(crossRect.x + crossRect.w / 2, crossRect.y + crossRect.h / 2)) {
-				(*it)->move();
-				if ((*it)->away()) {
-					// убежал - создать нового таракана, взамен сбежавшего
-					it = replaceCockroach(it, uidOrient(gen), uidSpeed(gen));
-				}
-				else {
-					it++;
-				}
-			}
-			else {
-				// не увернулся.. создать нового таракана, взамен убитого
-				it = replaceCockroach(it, uidOrient(gen), uidSpeed(gen));
-				_killCount++;
-			}
-		}
-		// прицел
-		SDL_BlitSurface(cross, NULL, _screen, &crossRect);
-		// текст - количество очков
-		{
-			ostringstream os;
-			os << "Score: " << _killCount;
-			showText(os.str(), 10, 10, txtScore, _scoreFont, { 0, 100, 0, 255 });
-		}
-		// текст - подсказки по управлению
-		showText("Use 'Left', 'Right', 'Up' and 'Down' arrows to move the target, Esc to show user menu", 10, _scrHeight - 30, txtTips, _tipsFont, { 50, 150, 0, 255 });
-		// показ сцены в окне
-		SDL_UpdateWindowSurface(_window);
-	} // while(active)
-	cout << _userName << ": " << _killCount << endl;
-
-	// Очистка ресурсов
-
-	// удаление списка тараканов
-	for (auto it = begin(beetles); it != end(beetles); it++) {
-		delete (*it);
-	}
-	
-	// освобождение ресурсов SDL
-
-	SDL_FreeSurface(cross);
-	cross = nullptr;
-	SDL_FreeSurface(background);
-	background = nullptr;
-	SDL_FreeSurface(txtScore);
-	txtScore = nullptr;
-	SDL_FreeSurface(txtTips);
-	txtTips = nullptr;
-
-	TTF_CloseFont(_scoreFont);
-	_scoreFont = nullptr;
-	TTF_CloseFont(_tipsFont);
-	_tipsFont = nullptr;
-
-	return 0;
-}
-
 void Game::spawnCockroach(int index, int speed)
 {
-	beetles.push_back(new Cockroach(_scrWidth, _scrHeight, _screen, imgNames[index],
+	objects.push_back(new Cockroach(_scrWidth, _scrHeight, _screen, imgNames[index],
 		static_cast<Cockroach::Orient>(index), speed));
 }
 
-Game::Beetles::iterator Game::replaceCockroach(Beetles::iterator it, int index, int speed) {
+Game::Objects::iterator Game::replaceCockroach(Objects::iterator it, int index, int speed) {
 	delete *it;
-	Beetles::iterator result = beetles.erase(it);
+	auto result = objects.erase(it);
 	spawnCockroach(index, speed);
 	return result;
 }
@@ -315,5 +315,5 @@ Game::Beetles::iterator Game::replaceCockroach(Beetles::iterator it, int index, 
 bool Game::showScore()
 {
 	Menu menu(_window);
-	return (1 == menu.show(SDL_GetWindowSurface(_window), _scoreFont, { "Continue", "Exit" }));
+	return (1 == menu.show(SDL_GetWindowSurface(_window), _menuFont, { "Continue", "Exit" }));
 }

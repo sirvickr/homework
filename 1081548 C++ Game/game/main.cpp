@@ -5,7 +5,7 @@
 #include "InputWindow.h"
 #include "Utils.h"
 
-static const char* gameName = "Cockroach hunt";
+static const char* gameName = "Cockroach race";
 
 int main(int argc, char* argv[])
 {

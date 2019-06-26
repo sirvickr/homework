@@ -24,7 +24,7 @@ int Menu::show(SDL_Surface* screen, _TTF_Font* font, const Labels& labels)
 	}
 	items.reserve(labels.size());
 	for (const auto& label : labels) {
-		items.push_back(new MenuItem(label));
+		items.push_back(new MenuItem(screen, label));
 	}
 	items[0]->select(true);
 	// normal, selected
@@ -77,7 +77,7 @@ int Menu::show(SDL_Surface* screen, _TTF_Font* font, const Labels& labels)
 			}
 		}
 		for (int i = 0; i < items.size(); ++i) {
-			items[i]->blit(screen);
+			items[i]->draw();
 		}
 		SDL_UpdateWindowSurface(_window);
 		//SDL_Flip(screen);
