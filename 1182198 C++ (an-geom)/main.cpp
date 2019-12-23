@@ -2,9 +2,10 @@
 Даны N точек на плоскости. Найти среди них точки, являющиеся вершинами фигуры, содержащей максимальное число заданных точек.
 */
 
+#include <cmath>
 #include <iostream>
 #include <iomanip>
-#include <cmath>
+#include <algorithm>
 
 using namespace std;
 
@@ -15,7 +16,7 @@ struct point {
 
 const size_t pointCount = 12;
 
-const size_t paramCount = 12;
+const size_t paramCount = 10;
 /* параметры фигуры:
 x содержит соотношение длин векторов,
 y содержит значение косинуса угла между векторами
@@ -65,14 +66,15 @@ point points[pointCount] = {
 };
 #endif
 
+bool compare(double a, double b) {
+	const double eps = 1e-5;
+//	cout << "compare(" << a << ", " << b << "): " << fabs(a - b) << ";";
+	return fabs(a - b) < eps;
+}
+
 int main(int argc, char* argv[])
 {
-	/*if(argc != 2) {
-		cout << "usage: " << argv[0] << " number" << endl;
-		cout << "e.g. " << argv[0] << " 0x01020304" << endl;
-		cout << "or   " << argv[0] << " 65535" << endl;
-		return 0;
-	}*/
+	//for(size_t i = 0; i < pointCount; ++i)
 	size_t i = 0;
 	
 	point v1 = { points[1].x - points[0].x, points[1].y - points[0].y };
@@ -81,14 +83,21 @@ int main(int argc, char* argv[])
 	for(size_t j = 2; j < pointCount; ++j) {
 		point v2 = { points[j].x - points[i].x, points[j].y - points[i].y };
 		double len2 = sqrt(v2.x * v2.x + v2.y * v2.y);
-		double c = (v1.x * v2.x + v1.y * v2.y) / (len1 * len2);
 		double r = len2 / len1;
+		double c = (v1.x * v2.x + v1.y * v2.y) / (len1 * len2);
+		bool found = false;
+		for(size_t k = 0; k < paramCount; ++k) {
+			if (compare(r, params[k].x) && compare(c, params[k].y)) {
+				found = true;
+				break;
+			}
+		}
 		cout << setw(2) << j << ") " << setw(7) << points[j].x << " " << setw(7) << points[j].y 
 			<< "\tv:" << setw(7) << v2.x << setw(7) << v2.y << "\tlen:" << setw(9) << len2 
 			<< " ratio " << setw(9) << r 
-			<< "\tc: " << setw(9) << c 
+			<< "\tc: " << setw(9) << c << " found " << found
 		<< endl;
 	}
-	
+
 	return 0;
 }
