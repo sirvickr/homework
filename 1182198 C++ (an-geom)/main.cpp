@@ -10,6 +10,8 @@
 
 using namespace std;
 
+//#define TRACE_ON
+
 struct point_t {
 	double x;
 	double y;
@@ -44,20 +46,22 @@ const size_t vertexCount = 12;
 const size_t paramCount = vertexCount - 2;
 
 /*
-Параметры фигуры (за базовый вектор, с которым сравниваются осталтные вектора (AC, ... AN, ...), принят вектор AB):
+"Шаблон" фигуры (за базовый вектор, с которым сравниваются остальные вектора (AC, ... AN, ...), принят вектор AB):
 'x' содержит соотношение длин векторов, 'y' содержит значение косинуса угла между векторами
 */
 const point_t params[paramCount] = {
-	{ 2.23607,  0.447214 }, // [0] AC to AB
-	{       2,         0 }, // [1] AD to AB (D, как и A, является опорной точкой внутреннего квадрата)
-	{       3,         0 }, // [2] AE to AB
-	{ 3.60555,   -0.5547 }, // [3] AF to AB
-	{ 2.82843, -0.707107 }, // [4] AG to AB (G, как и A, является опорной точкой внутреннего квадрата)
-	{ 3.60555,  -0.83205 }, // [5] AH to AB
- 	{       3,        -1 }, // [6] AI to AB
- 	{       2,        -1 }, // [7] AJ to AB (J, как и A, является опорной точкой внутреннего квадрата)
-	{ 2.23607, -0.894427 }, // [8] AK to AB
-	{       1,        -0 }  // [9] AL to AB
+//соотношение |  косинус
+//       длин |     угла
+	{ 2.23607,  0.447214 }, // [0] как AC относится к AB
+	{       2,         0 }, // [1] как AD относится к AB (D, как и A, является опорной точкой внутреннего квадрата)
+	{       3,         0 }, // [2] как AE относится к AB
+	{ 3.60555,   -0.5547 }, // [3] как AF относится к AB
+	{ 2.82843, -0.707107 }, // [4] как AG относится к AB (G, как и A, является опорной точкой внутреннего квадрата)
+	{ 3.60555,  -0.83205 }, // [5] как AH относится к AB
+ 	{       3,        -1 }, // [6] как AI относится к AB
+ 	{       2,        -1 }, // [7] как AJ относится к AB (J, как и A, является опорной точкой внутреннего квадрата)
+	{ 2.23607, -0.894427 }, // [8] как AK относится к AB
+	{       1,        -0 }  // [9] как AL относится к AB
 };
 
 // набор тестовых данных (две фигуры и дополнительные точки)
@@ -109,30 +113,38 @@ size_t vectorIsAppropriate(const point_t& param) {
 }
 
 int main(int argc, char* argv[]) {
+	// каждый из десяти бит маски - это логический флаг, означающий удобвлетворение соответствующему элменту "шаблона" фигуры
+	const size_t paramMask = (1 << paramCount) - 1;
 	figures_t figures;
 	size_t pointCount = points.size();
-//	size_t i = 1; // A;
+	// внешний цикл [i] - перебираем все точки и рассматриваем их как основание базового вектора
 	for(size_t i = 0; i < pointCount; ++i) {
+		#ifdef TRACE_ON
 		cout << "#### " << i << " ############################################################" << endl; 
+		#endif
 		if(!points[i].exludeBase) {
 	
-			//size_t j = 1;
+			// для каждой из точек, интерпретируя её как основание базового вектора,
 			for(size_t j = 0; j < pointCount; ++j) {
-
+				// перебираем все остальные точки, рассматривая их как вершину базового вектора
 				point_t v1 = { points[j].x - points[i].x, points[j].y - points[i].y };
 				double len1 = sqrt(v1.x * v1.x + v1.y * v1.y);
 				
 				if(j != i && !points[j].exludeTop && len1 > 0) {
+					#ifdef TRACE_ON
 					cout << "\t(" << j << ")" << endl; 
-
+					#endif
 					size_t mask = 0;
 					size_t vertexIndex = 2;
-					vector<size_t> vertexes(vertexCount);
-					vector<size_t> vBaseExcludes;
+					// запоминаем вершины:
+					vector<size_t> vertexes(vertexCount); // все
+					vector<size_t> vBaseExcludes; // вершины внутреннего квадрата фигуры
 					vBaseExcludes.reserve(3);
-					vector<size_t> vTopExcludes;
+					vector<size_t> vTopExcludes; // вершины базовых векторов, которые будем исключать в случае успеха
 					vTopExcludes.reserve(3);
-
+					// для каждого базового вектора (т.е. вектора c i-м основанием и j-й вершиной),
+					// ищем "вокруг него" фигуру, основываясь заранее просчитанном на образце params,
+					// который содержит угловые смещения и пропорции всех вершин относительно базового вектора 
 					for(size_t k = 0; k < pointCount; ++k) {
 
 						if(k != i && k != j) {
@@ -140,28 +152,31 @@ int main(int argc, char* argv[]) {
 							point_t v2 = { points[k].x - points[i].x, points[k].y - points[i].y };
 							
 							double len2 = sqrt(v2.x * v2.x + v2.y * v2.y);
-							double ratio = len2 / len1;
-							double denominator = len1 * len2;
+							// отношение длины текущего проверяемого вектора (c i-м основанием и k-й вершиной) к текущему базовому (c i-м основанием и j-й вершиной)
+							double ratio = len2 / len1; 
 							if(len2 > 0.0) {
-								double cosin = (v1.x * v2.x + v1.y * v2.y) / denominator;
+								double cosin = (v1.x * v2.x + v1.y * v2.y) / (len1 * len2); // косинус угла между этими векторами
 
-								const size_t paramMask = (1 << paramCount) - 1;
 								size_t index = vectorIsAppropriate( { ratio, cosin } );
 								if(index < paramCount) {
 									// эти точки принадлежат внутреннему квадрату фигуры,
 									// и если фигура относительно точки[i] будет завершена, их можно исключить,
 									// во избежание лишних итераций (к тому же фигура полностью находится относительно любой из них)
 									if(1 == index || 4 == index || 7 == index) {
+										#ifdef TRACE_ON
 										cout << "{" << k << "}";
+										#endif
 										vBaseExcludes.push_back(k);
 									} else if(paramCount - 1 == index) {
+										#ifdef TRACE_ON
 										cout << "<" << k << ">";
+										#endif
 										vTopExcludes.push_back(k);
 									}
 									mask |= (1 << index);
 									vertexes[vertexIndex++] = k;
 								}
-								#if 1
+								#ifdef TRACE_ON
 								cout << "\t" << setw(2) << k << ") "// << setw(7) << points[k].x << " " << setw(7) << points[k].y 
 								//	<< "\tv:" << setw(7) << v2.x << setw(7) << v2.y << "\tlen:" << setw(9) << len2 
 									<< " ratio " << setw(9) << ratio 
@@ -171,21 +186,39 @@ int main(int argc, char* argv[]) {
 									cout << " FIGURE DETECTED";
 									auto it = figures.find(points[i]);
 									if(it == figures.end()) {
-										cout << " new:";
-										for(auto index : vBaseExcludes)
-											points[index].exludeBase = true;
-										for(auto index : vTopExcludes)
-											points[index].exludeTop = true;
+										cout << " its vertexes:";
 										vertexes[0] = i;
 										vertexes[1] = j;
 										for(auto item : vertexes)
 											cout << " " << item;
+										cout << " base:";
+										for(auto index : vBaseExcludes) {
+											//points[index].exludeBase = true;
+											for(size_t x = 0; x < pointCount; ++x) {
+												if(points[x] == points[index]) { // сравниваем по координатам, поскольку разные точки могут "лежать" одна на другой 
+													cout << " " << x;
+													points[x].exludeBase = true;
+												}
+											}
+										}
+										cout << " top:";
+										for(auto index : vTopExcludes) {
+											//points[index].exludeTop = true;
+											for(size_t x = 0; x < pointCount; ++x) {
+												if(points[x] == points[index]) { // сравниваем по координатам, поскольку разные точки могут "лежать" одна на другой
+													cout << " " << x;
+													points[x].exludeTop = true;
+												}
+											}
+										}
 										figures[points[i]] = vertexes;
 									}
 									cout << endl;
 									break;
 								}
+								#ifdef TRACE_ON
 								cout << endl;
+								#endif
 							} // if(denominator > 0)
 
 						} // for(k)
