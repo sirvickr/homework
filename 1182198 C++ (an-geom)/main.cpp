@@ -175,9 +175,9 @@ figures_t findFigures(points_t& points) {
 	size_t pointCount = points.size();
 	// внешний цикл [i] - перебираем все точки и рассматриваем их как основание базового вектора
 	for(size_t i = 0; i < pointCount; ++i) {
-		#ifdef TRACE_ON
+		//#ifdef TRACE_ON
 		cout << "#### " << i << " ############################################################" << endl; 
-		#endif
+		//#endif
 		if(!points[i].exludeBase) {
 	
 			// для каждой из точек, интерпретируя её как основание базового вектора,
@@ -229,8 +229,11 @@ figures_t findFigures(points_t& points) {
 										#endif
 										vTopExcludes.push_back(k);
 									}
+									if(vertexIndex < vertexes.size())
+										vertexes[vertexIndex++] = k;
+									else
+										cerr << "!!!!!!!! vertexes[ " << vertexIndex << " ]: " << vertexes.size() << " !!!!!!!!";
 									mask |= (1 << index);
-									vertexes[vertexIndex++] = k;
 								}
 								#ifdef TRACE_ON
 								cout << "\t" << setw(2) << k << ") "// << setw(7) << points[k].x << " " << setw(7) << points[k].y 
@@ -301,6 +304,7 @@ figures_t findFigures(points_t& points) {
 }
 
 void writeResult(const figures_t& figures, const points_t& points) {
+	cout << "found figures: " << figures.size() << endl;
 	for(const auto& figure : figures) {
 		cout << "figure with vertexes\n";
 		const auto& vertexes = figure.second;
