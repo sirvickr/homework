@@ -3,8 +3,11 @@
 */
 
 #include <cmath>
+#include <fstream>
+#include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <string>
 #include <map>
 #include <vector>
 
@@ -64,10 +67,11 @@ const point_t params[paramCount] = {
 	{       1,        -0 }  // [9] как AL относится к AB
 };
 
+using points_t = vector<point_t>;
 // набор тестовых данных (две фигуры и дополнительные точки)
 // точки A,B,C,D,E,F,G,H,I,J,K,L являются вершинами большого "креста"
 // точки A1,B1,C1,D1,E1,F1,G1,H1,I1,J1,K1,L1 являются вершинами маленького "креста"
-vector<point_t> points = {
+const points_t testPoints = {
 	{  2.0,  6.0, false, false }, //[0]  S
 
 	{  5.0,  4.0, false, false }, //[1]  A *
@@ -105,6 +109,58 @@ vector<point_t> points = {
 	{ 12.0, 11.0, false, false }, //[29] R
 };
 
+// чтение точек из файла
+points_t readData(const string& filename);
+// вектор удовлетворяет одному из элементов шаблона фигуры
+size_t vectorIsAppropriate(const point_t& param);
+// обработка точек, поиск фигур
+figures_t findFigures(points_t& points);
+// вывод результата
+void writeResult(const figures_t& figures, const points_t& points);
+
+int main(int argc, char* argv[]) {
+	points_t points;
+	if(argc > 1) {
+		points = readData(argv[1]);
+	}
+	#ifdef TRACE_ON
+	cout << "input from file:\n";
+	for(const auto& point : points)
+		cout << "\t" << point.x << "\t" << point.y << endl;
+	#endif
+	if(points.empty())
+		points = testPoints;
+	figures_t figures = findFigures(points);
+	writeResult(figures, points);
+
+	return 0;
+}
+
+points_t readData(const string& filename) {
+	points_t result;
+	cout << "reading input from file \"" << filename << "\"..." << endl;
+	ifstream infile(filename);
+	if(infile) {
+		string line;
+		uint32_t n = 1;
+		while(getline(infile, line)) {
+			//cout << n << "\t\"" << line << "\"";
+			istringstream iss(line);
+			double x, y;
+			if(!(iss >> x) || !(iss >> y)) {
+				cerr << "input data error on line " << n << ": \"" << line << "\"..." << endl;
+				break;
+			}
+			result.push_back({x, y, false, false});
+			//cout << "\t>>\t" << x << "\t" << y << endl;
+			n++;	
+		}
+	} else {
+		cerr << "failed to open file \"" << filename << "\"..." << endl;
+	}
+	return result;
+}
+
 size_t vectorIsAppropriate(const point_t& param) {
 	for(size_t k = 0; k < paramCount; ++k) 
 		if (param == params[k]) 
@@ -112,7 +168,7 @@ size_t vectorIsAppropriate(const point_t& param) {
 	return paramCount;
 }
 
-int main(int argc, char* argv[]) {
+figures_t findFigures(points_t& points) {
 	// каждый из десяти бит маски - это логический флаг, означающий удобвлетворение соответствующему элменту "шаблона" фигуры
 	const size_t paramMask = (1 << paramCount) - 1;
 	figures_t figures;
@@ -183,30 +239,40 @@ int main(int argc, char* argv[]) {
 									<< "\tcosin: " << setw(9) << cosin << " " << boolalpha << (index < paramCount) << " (" << index << ") " << hex << mask << "/" << paramMask << dec;
 								#endif
 								if(paramMask == mask) {
+									#ifdef TRACE_ON
 									cout << " FIGURE DETECTED";
+									#endif
 									auto it = figures.find(points[i]);
 									if(it == figures.end()) {
-										cout << " its vertexes:";
 										vertexes[0] = i;
 										vertexes[1] = j;
+										#ifdef TRACE_ON
+										cout << " its vertexes:";
 										for(auto item : vertexes)
 											cout << " " << item;
 										cout << " base:";
+										#endif
 										for(auto index : vBaseExcludes) {
 											//points[index].exludeBase = true;
 											for(size_t x = 0; x < pointCount; ++x) {
 												if(points[x] == points[index]) { // сравниваем по координатам, поскольку разные точки могут "лежать" одна на другой 
+													#ifdef TRACE_ON
 													cout << " " << x;
+													#endif
 													points[x].exludeBase = true;
 												}
 											}
 										}
+										#ifdef TRACE_ON
 										cout << " top:";
+										#endif
 										for(auto index : vTopExcludes) {
 											//points[index].exludeTop = true;
 											for(size_t x = 0; x < pointCount; ++x) {
 												if(points[x] == points[index]) { // сравниваем по координатам, поскольку разные точки могут "лежать" одна на другой
+													#ifdef TRACE_ON
 													cout << " " << x;
+													#endif
 													points[x].exludeTop = true;
 												}
 											}
@@ -231,6 +297,24 @@ int main(int argc, char* argv[]) {
 		}
 
 	} // for(i)
+	return figures;
+}
 
-	return 0;
+void writeResult(const figures_t& figures, const points_t& points) {
+	for(const auto& figure : figures) {
+		cout << "figure with vertexes\n";
+		const auto& vertexes = figure.second;
+		for(auto item : vertexes)
+			cout << " " << points[item].x << " " << points[item].y << endl;
+		cout << "contains points\n";
+		for(const auto& point : points) {
+			// для каждой из имеющихся точек проверям, совпадают ли её координаты с какой-либоб из вершин фигуры
+			for(auto item : vertexes) {
+				if(point == points[item]) {
+					cout << " " << point.x << " " << point.y << endl;
+					break;
+				}
+			}
+		}
+	}
 }
