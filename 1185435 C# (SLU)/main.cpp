@@ -38,29 +38,6 @@ double Discriminant( const double matrix[], const int dim ) {
   return D;
 }
 
-// Вычисляет матрицу, обратную матрице matrix[] и возвращает 1. Если её не существует, возвращает 0.
-int ReciprocalMatrix( const int dim, const double matrix[], double result[] ) {
-    // Буфер для хранения промежуточных миноров
-    double m[( dim - 1 ) * ( dim - 1 )];
-    // Определитель исходной матрицы
-    double D = Discriminant( matrix, dim );
-    if( fabs(D) < DBL_EPSILON )
-      return 0;
-    // В цикле вычисляем алгебраические дополнения и результирующие элементы
-    for( int i = 0; i < dim; ++i ) {
-      for( int j = 0; j < dim; ++j ) {
-        // вычисляем минор очередного элемента
-        Minor( dim, i, j, m, matrix );
-        // минор превращается в алгебраическое дополнение установкой знака в зависимости от позиции
-        int sign = ( 1 - ( ( i & 1 ) << 1 ) ) * ( 1 - ( ( j & 1 ) << 1 ) );
-        // ставим знак и сразу делим каждый элемент на определитель исходной матрицы
-        result[ j * dim + i ] = Discriminant( m, dim - 1 ) * sign / D;
-        // транспонирование достигается за счёт обратной индексации (j * dim + i)
-      }
-    }
-    return 1;
-}
-
 // Находит решение СЛУ по методу Крамера и возвращает 1. Если решения не существует, возвращает 0.
 int Kramer( const int dim, const double matrix[], double result[] ) {
     // Определитель исходной матрицы
@@ -79,13 +56,6 @@ int Kramer( const int dim, const double matrix[], double result[] ) {
       }
       for( int i = 0; i < dim; ++i ) {
         m[ i * dim + col ] = B[ i ];
-      }
-      cout << ">matrix[ " << col << " ]:\n";
-      for( int i = 0; i < dim; ++i ) {
-        for( int j = 0; j < dim; ++j ) {
-          printf(" %.0f", m[ i * dim + j ]);
-        }
-        printf("\n");
       }
       double d = Discriminant( m, dim );
       result[ col ] = d / D;
