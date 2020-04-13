@@ -95,7 +95,7 @@ int main( int argc, char* argv[] ) {
   printf( "matrix\n" );
   for( int i = 0; i < dim; ++i ) {
     for( int j = 0; j < dim; ++j ) {
-      printf(" %.0f", matrix[ j * dim + i ]);
+      printf(" %.0f", matrix[ i * dim + j ]);
     }
     printf("\n");
   }
