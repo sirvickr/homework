@@ -5,6 +5,41 @@
  */
 package net.codejava.swing;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.GridLayout;
+import java.awt.Panel;
+import java.awt.Point;
+import java.awt.Polygon;
+import java.awt.Rectangle;
+import java.awt.TextArea;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.ListIterator;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.TreeSet;
+import static java.util.UUID.randomUUID;
+import java.util.Vector;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JRadioButton;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+
 /**
  *
  * @author User
@@ -16,6 +51,7 @@ public class Ants extends javax.swing.JFrame {
      */
     public Ants() {
         initComponents();
+        Init();
     }
 
     /**
@@ -33,15 +69,631 @@ public class Ants extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGap(0, 1001, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGap(0, 682, Short.MAX_VALUE)
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+    
+    private static int m_Width = 1000, m_Height = 600;
+    private Timer m_timer = new Timer(true);
+    private Habitat m_habitat = null;
+    //private Updater m_updater = null;
+    private boolean m_ShowTime = true;   
+    private boolean m_Active = false;   
+    private boolean m_ActiveAI = true;   
+    private long m_time = 0;
+    private long m_startTime = 0;
+    private Panel m_View;
+    private JButton btnStart;
+    private JButton btnStop;
+    private JButton btnStartAI;
+    private JButton btnStopAI;
+    private JCheckBox chkShowInfo;
+    private JRadioButton optShow;
+    private JRadioButton optHide;
+    private JTextField m_txtWorkersN1; // период генерации рабочих (N1)
+    private JComboBox m_lstWorkersP1; // вероятность генерации рабочих (P1)
+    private JTextField m_txtWorkersT1; // время жизни рабочих (T1)
+    private JTextField m_txtWarriorsN2; // период генерации воинов (N2)
+    private JList m_lstWarriorsP2; // вероятность генерации воинов (P2)
+    private JTextField m_txtWarriorsT2; // время жизни воинов (T2)
+    Vector<String> m_dataP2 = new Vector<String>();
+    private String m_ResultMessage;
+    
+    private void Init() {
+        //m_updater = new Updater(this);
+        this.setLayout(new BorderLayout());
+        
+        chkShowInfo = new JCheckBox("Показывать итоги", true);
+        
+        optShow = new JRadioButton("Показывать время симуляции", m_ShowTime);
+        optShow.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                m_ShowTime = true;
+            }
+        });
+        optHide = new JRadioButton("Скрывать время симуляции", !m_ShowTime);
+        optHide.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                m_ShowTime = false;
+            }
+        });
+
+        ButtonGroup buttons = new ButtonGroup();
+        buttons.add(optShow);
+        buttons.add(optHide);
+
+        btnStart = new JButton("Старт");
+        ActionListener startPressed = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                StartAction();
+            }
+        };
+        btnStart.addActionListener(startPressed);
+        //btnStart.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_B, 0), "StartPressed");
+        //btnStart.getActionMap().put("StartPressed", (Action)startPressed);
+        btnStop = new JButton("Стоп");
+        btnStop.setEnabled(false);
+        btnStop.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                StopAction();
+            }
+        });
+        
+        m_txtWorkersN1 = new JTextField("8"); // период генерации рабочих (N1)
+        m_lstWorkersP1 = new JComboBox(); // вероятность генерации рабочих (P1)
+        m_lstWorkersP1.addItem("1.0");
+        m_lstWorkersP1.addItem("0.9");
+        m_lstWorkersP1.addItem("0.8");
+        m_lstWorkersP1.addItem("0.7");
+        m_lstWorkersP1.addItem("0.6");
+        m_lstWorkersP1.addItem("0.5");
+        m_lstWorkersP1.addItem("0.4");
+        m_lstWorkersP1.addItem("0.3");
+        m_lstWorkersP1.addItem("0.2");
+        m_lstWorkersP1.addItem("0.1");
+        m_txtWorkersT1 = new JTextField("35"); // время жизни рабочих (T1)
+        m_txtWarriorsN2 = new JTextField("5"); // период генерации воинов (N2)
+        m_lstWarriorsP2 = new JList(); // вероятность генерации воинов (P2)
+        m_lstWarriorsP2.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        m_dataP2.add("1.0");
+        m_dataP2.add("0.9");
+        m_dataP2.add("0.8");
+        m_dataP2.add("0.7");
+        m_dataP2.add("0.6");
+        m_dataP2.add("0.5");
+        m_dataP2.add("0.4");
+        m_dataP2.add("0.3");
+        m_dataP2.add("0.2");
+        m_dataP2.add("0.1");
+        m_lstWarriorsP2.setListData(m_dataP2);
+        m_lstWarriorsP2.setSelectedIndex(0);
+        m_txtWarriorsT2 = new JTextField("25"); // время жизни воинов (T2)
+        
+        Panel ctrlPanel = new Panel();
+        ctrlPanel.setLayout(new GridLayout(7, 1));
+        Panel workerPanel = new Panel();
+        workerPanel.setLayout(new GridLayout(6, 1));
+        Panel warriorPanel = new Panel();
+        warriorPanel.setLayout(new GridLayout(5, 1));
+        Panel listPanel = new Panel();
+        listPanel.setLayout(new GridLayout(1, 1));
+
+        Panel togglePanel = new Panel();
+        togglePanel.setLayout(new GridLayout(1, 2));
+
+        btnStartAI = new JButton("Включить ИИ");
+        btnStartAI.setEnabled(false);
+        btnStartAI.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                StartAI();
+            }
+        });
+        btnStopAI = new JButton("Выключить ИИ");
+        btnStopAI.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                StopAI();
+            }
+        });
+        Panel aiPanel = new Panel();
+        aiPanel.setLayout(new GridLayout(1, 2));
+        aiPanel.add(btnStartAI);
+        aiPanel.add(btnStopAI);
+        
+        Panel panel = new Panel();
+        panel.setLayout(new GridLayout(4, 1)); // 18
+        
+        ctrlPanel.add(btnStart);
+        ctrlPanel.add(btnStop);
+        
+        workerPanel.add(new JLabel("N1 (рабочие)"));
+        workerPanel.add(m_txtWorkersN1);
+        workerPanel.add(new JLabel("P1 (рабочие)"));
+        workerPanel.add(m_lstWorkersP1);
+        workerPanel.add(new JLabel("Время жизни (рабочие)"));
+        workerPanel.add(m_txtWorkersT1);
+        warriorPanel.add(new JLabel("Время жизни (воины)"));
+        warriorPanel.add(m_txtWarriorsT2);
+        warriorPanel.add(new JLabel("N2 (воины)"));
+        warriorPanel.add(m_txtWarriorsN2);
+        warriorPanel.add(new JLabel("P2 (воины)"));
+        listPanel.add(m_lstWarriorsP2);
+
+        ctrlPanel.add(chkShowInfo);
+        ctrlPanel.add(optShow);
+        ctrlPanel.add(optHide);
+        ctrlPanel.add(aiPanel);
+        
+        m_View = new Panel() {
+            @Override
+            public void paint(Graphics g) { 
+                super.paint(g);
+                g.setColor(Color.WHITE);
+                g.fillRect(0, 0, this.getWidth(), this.getHeight());
+                g.setColor(Color.BLACK);
+                if(m_habitat != null) {
+                    // отрисовка границ области отображения
+                    Point lT = new Point(m_habitat.m_left, m_habitat.m_top);
+                    Point rB = new Point(m_habitat.m_left + m_habitat.m_width + 20, 
+                            m_habitat.m_top + m_habitat.m_height + 20);
+                    Point p0 = new Point(lT.x + m_habitat.m_width / 2, lT.y);
+                    Point p1 = new Point(lT.x + m_habitat.m_width / 2, rB.y);
+                    Point p2 = new Point(lT.x, lT.y + m_habitat.m_height / 2);
+                    Point p3 = new Point(rB.x, lT.y + m_habitat.m_height / 2);
+                    g.drawLine(lT.x, lT.y, rB.x, lT.y);
+                    g.drawLine(rB.x, lT.y, rB.x, rB.y);
+                    g.drawLine(lT.x, rB.y, rB.x, rB.y);
+                    g.drawLine(lT.x, lT.y, lT.x, rB.y);
+                    g.drawLine(p0.x, p0.y, p1.x, p1.y);
+                    g.drawLine(p2.x, p2.y, p3.x, p3.y);
+                    // отрисовка объектов
+                    ListIterator it = m_habitat.objects.listIterator();
+                    try {
+                        while(it.hasNext()) {
+                            IBehaviour item = (IBehaviour)it.next();
+                            Polygon polygon = item.View();
+                            g.drawPolygon(polygon);
+                        }
+                    } catch(Exception e) {
+                    }
+                }
+                if(m_ShowTime) {
+                    String str = "Время симуляции: " + m_time;
+                    g.drawString(str, 15, m_Height - 90);
+                }
+                if(!m_Active) {
+                    if(m_ResultMessage != null) {
+                        g.drawString(m_ResultMessage, 15, m_Height - 70);
+                    }
+                }
+            }
+        };
+
+        panel.add(ctrlPanel);
+        panel.add(workerPanel);
+        panel.add(warriorPanel);
+        panel.add(listPanel);
+
+        this.add(BorderLayout.EAST, panel);
+        this.add(BorderLayout.CENTER, m_View);
+        
+        JMenu ctrlMenu = new JMenu("Управление");
+        ctrlMenu.add(new JMenuItem("Старт"));
+        ctrlMenu.add(new JMenuItem("Стоп"));
+        ctrlMenu.addSeparator();
+        ctrlMenu.add(new JMenuItem("Выход"));
+        ctrlMenu.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String str = e.getActionCommand();
+                if( str == "Старт" ) {
+                    StartAction();
+                } else if( str == "Стоп" ) {
+                    StopAction();
+                } else if( str == "Выход" ) {
+                    //dispose();
+                }
+            }
+        });
+
+        JMenuBar mainMenu = new JMenuBar();
+        mainMenu.add(ctrlMenu);
+        
+        setJMenuBar(mainMenu);
+        
+        KeyAdapter pk = new KeyAdapter() {
+            public void keyPressed(KeyEvent e) {
+                switch(e.getKeyChar()) {
+                    case 'b':
+                        StartAction();
+                        break;
+                    case 'e': 
+                        StopAction();
+                        break;
+                    case 't':
+                        m_ShowTime = !m_ShowTime;
+                        break;
+                }
+            }
+        };
+        this.addKeyListener(pk);
+        //panel.addKeyListener(pk);
+    }
+    public void StartAction() {
+        if(!m_Active) {
+            long workersN1 = 0, warriorsN2 = 0;
+            double workersP1 = 0.0, warriorsP2 = 0.0;
+            long workersT1 = 0, warriorsT2 = 0;
+            try {
+                workersN1 = Long.parseLong(m_txtWorkersN1.getText());
+                workersP1 = Double.parseDouble(m_lstWorkersP1.getSelectedItem().toString());
+                workersT1 = Long.parseLong(m_txtWorkersT1.getText());
+                warriorsN2 = Long.parseLong(m_txtWarriorsN2.getText());
+                warriorsP2 = Double.parseDouble(m_dataP2.elementAt(m_lstWarriorsP2.getSelectedIndex()));
+                warriorsT2 = Long.parseLong(m_txtWarriorsT2.getText());
+            } catch(NumberFormatException e) {
+                MessageBox msgBox = new MessageBox(false, this, "Проверьте вводимые данные", new JFrame(), "Ошибка ввода", true);
+                msgBox.setVisible(true);
+                return;
+            }
+                
+            m_Active = true;
+
+            // В конструктор передаются параметры симуляции:
+            // область обзора (int left, top, width, height); 
+            // периоды и вероятности (long N1, float P1, long N2, float P2)
+            if(m_habitat == null)
+                m_habitat = new Habitat(0, 0, 500, 400, 
+                    workersN1, workersP1, workersT1, warriorsN2, warriorsP2, warriorsT2);
+            
+            m_timer = new Timer();
+            // таймер будет вызываться каждую секунду
+            m_timer.scheduleAtFixedRate(new Updater(this, m_startTime), 0, 1000);
+            btnStart.setEnabled(!m_Active);
+            btnStop.setEnabled(m_Active);
+            m_txtWorkersN1.setEnabled(!m_Active);
+            m_lstWorkersP1.setEnabled(!m_Active);
+            m_txtWarriorsN2.setEnabled(!m_Active);
+            m_lstWarriorsP2.setEnabled(!m_Active);
+        }
+    }
+    public void StopAction() {
+        if(m_Active) {
+            m_Active = false;
+            m_timer.cancel();
+            btnStart.setEnabled(true);
+            btnStop.setEnabled(false);
+            m_txtWorkersN1.setEnabled(!m_Active);
+            m_lstWorkersP1.setEnabled(!m_Active);
+            m_txtWarriorsN2.setEnabled(!m_Active);
+            m_lstWarriorsP2.setEnabled(!m_Active);
+            m_ResultMessage = "Сгенерировано: рабочих " 
+                + m_habitat.getWorkersCount() + " воинов " 
+                + m_habitat.getWarriorsCount();
+            if( chkShowInfo.isSelected() ) {
+                MessageBox msgBox = new MessageBox(true, this, m_ResultMessage, new JFrame(), "Результаты", true);
+                msgBox.setVisible(true);
+            } else {
+                ClearTask();
+            }
+            m_View.repaint();
+        }
+    }
+    
+    public void StartAI() {
+        if(!m_ActiveAI) {
+            m_ActiveAI = true;
+            btnStartAI.setEnabled(false);
+            btnStopAI.setEnabled(true);
+        }
+    }
+    public void StopAI() {
+        if(m_ActiveAI) {
+            m_ActiveAI = false;
+            btnStartAI.setEnabled(true);
+            btnStopAI.setEnabled(false);
+        }
+    }
+    public void ClearTask() {
+        //m_Active = false;
+        m_habitat.Clear();
+        m_habitat = null;
+        m_startTime = 0;
+        //m_updater.reset();
+        //btnStart.setEnabled(true);
+        //btnStop.setEnabled(false);
+    }
+    public void Update(long startTime, double elapsedTime, double frameTime)     {
+        m_time = (long)(elapsedTime + 0.5);
+        m_startTime = startTime;
+        m_habitat.Update(m_time);
+        m_View.repaint();
+    }
+
+    private class Updater extends TimerTask     {
+        private Ants m_owner = null;
+        // Первый ли запуск метода run()?
+        private boolean m_firstRun = true;
+        // Время начала
+        private long m_startTime = 0;
+        // Время последнего обновления
+        private long m_lastTime = 0;
+        
+        public Updater(Ants owner, long startTime)         {
+            m_owner = owner;
+            if(startTime != 0) {
+                m_startTime = startTime;
+                m_lastTime = m_startTime;
+                m_firstRun = false;
+            }
+        }
+        long startTime() {
+            return m_startTime;
+        }
+        @Override
+        public void run()     {
+            if (m_firstRun)       {
+                m_startTime = System.currentTimeMillis();
+                m_lastTime = m_startTime;
+                m_firstRun = false;
+            }
+            long currentTime = System.currentTimeMillis();
+            // Время, прошедшее от начала, в секундах
+            double elapsed = (currentTime - m_startTime) / 1000.0;
+            // Время, прошедшее с последнего обновления, в секундах
+            double frameTime = (m_lastTime - m_startTime) / 1000.0;
+            // Вызываем обновление
+            m_owner.Update(m_startTime, elapsed, frameTime);
+            m_lastTime = currentTime;
+        }
+        public void reset() {
+            m_firstRun = true;
+        }
+    }
+
+    private class Habitat {
+        private long m_nWorkers; // период генерации рабочих (N1)
+        private float m_pWorkers; // вероятность генерации рабочих (P1)
+        private long m_tWorkers; // время жизни рабочих (T1)
+        private long m_nWarriors; // период генерации воинов (N2)
+        private float m_pWarriors; // вероятность генерации воинов (P2)
+        private long m_tWarriors; // время жизни воинов (T2)
+        private int m_left, m_top, m_width, m_height; // область отображения
+        private int m_workersCount = 0, m_warriorsCount = 0;
+        // Время начала
+        public ArrayList<IBehaviour> objects; // объекты симуляции
+        public TreeSet ids; // идентификаторы
+        public Habitat(int left, int top, int width, int height, 
+                       long N1, double P1, long T1, long N2, double P2, long T2) {
+            this.m_left = left;
+            this.m_top = top;
+            this.m_width = width;
+            this.m_height = height;
+            this.m_nWorkers = N1;
+            this.m_pWorkers = (float)P1;
+            this.m_tWorkers = T1;
+            this.m_nWarriors = N2;
+            this.m_pWarriors = (float)P2;
+            this.m_tWarriors = T2;
+            this.objects = new ArrayList();
+            this.ids = new TreeSet();
+        }
+        public long getWorkersCount() {
+            return m_workersCount;
+        }
+        public long getWarriorsCount() {
+            return m_warriorsCount;
+        }
+        // elapsedTime - время в секундах, прошедшее от начала симуляции
+        public void Update(long elapsedTime) {
+            // удалить объекты с истекшим временем жизни
+            // и пересчитать координаты
+            ListIterator it = objects.listIterator();
+            try {
+                long now = System.currentTimeMillis();
+                while(it.hasNext()) {
+                    Ant item = (Ant)it.next();
+                    if(m_ActiveAI)
+                        item.move(now);
+                    if(elapsedTime - item.bornTime() >= item.lifeTime()) {
+                        if(item instanceof Worker)
+                            m_workersCount--;
+                        else if(item instanceof Warrior)
+                            m_warriorsCount--;
+                        it.remove();
+                    }
+                }
+            } catch(Exception e) {
+            }
+            // создать новые объекты
+            if(elapsedTime % m_nWorkers == 0) {
+                float p = (float)Math.random();
+                if(p < m_pWorkers) {
+                    objects.add(new Worker(m_left, m_top, m_width, m_height, elapsedTime, m_tWorkers));
+                    ids.add(randomUUID());
+                    m_workersCount++;
+                }
+            }
+            if(elapsedTime % m_nWarriors == 0) {
+                float p = (float)Math.random();
+                if(p < m_pWarriors) {
+                    objects.add(new Warrior(m_left, m_top, m_width, m_height, elapsedTime, m_tWarriors));
+                    ids.add(randomUUID());
+                    m_warriorsCount++;
+                }
+            }
+        }
+        public void Clear() {
+            objects.clear();
+            m_workersCount = 0;
+            m_warriorsCount = 0;
+        }
+    }
+
+    interface IBehaviour {
+        public Polygon View();
+        public void move(long now);
+    }
+
+    // Базовый класс всех муравьёв
+    private abstract class Ant implements IBehaviour {
+        protected int m_left = 0, m_top = 0;
+        protected int m_width = 0, m_height = 0;
+        protected Rectangle m_destArea = null;
+        // текущие координаты
+        protected int m_x = 0, m_y = 0;
+        // скорость движения
+        protected double m_V = 0.0;
+        // время рождения и жизни
+        private long m_bornTime = 0, m_lifeTime = 0;
+        // время начала движения
+        protected long m_startTime = 0;
+        
+        public Ant(int left, int top, int width, int height, long bornTime, long lifeTime) {
+            m_left = left;
+            m_top = top;
+            m_width = width;
+            m_height = height;
+            m_bornTime = bornTime;
+            m_lifeTime = lifeTime;
+        }
+        public long bornTime() {
+            return m_bornTime;
+        }
+        public long lifeTime() {
+            return m_lifeTime;
+        }
+        protected void setDest(Rectangle rect) {
+            m_destArea = rect;
+        }
+    }
+    
+    // Рабочие генерируются каждые N1 секунд с вероятностью P1
+    private class Worker extends Ant {
+        // вперёд, иначе назад
+        protected boolean m_forward = true;
+        // координаты начальной и конечной точек движений (отрезок)
+        protected int m_xSrc = 0, m_ySrc = 0;
+        protected int m_xDest = 0, m_yDest = 0;
+        // вектор движения
+        protected double m_dx = 0.0, m_dy = 0.0;
+        // допуск для грубой проверки достижения конечной точки
+        double m_epsilon = 0.0;
+        
+        public Worker(int left, int top, int width, int height, long bornTime, long lifeTime) {
+            super(left, top, width, height, bornTime, lifeTime);
+            setDest(new Rectangle(width / 2, height / 2));
+            m_V = 20.0; // пиксель/сек
+            int padding = 50;
+            m_x = m_left + padding + (int)(Math.random() * (m_destArea.width - padding));
+            m_y = m_top + padding + (int)(Math.random() * (m_destArea.height - padding));
+            
+            m_xDest = m_left;
+            m_yDest = m_top;
+
+            m_x = m_left + (int)(Math.random() * m_width);
+            m_y = m_top + (int)(Math.random() * m_height);
+            m_xSrc = m_x;
+            m_ySrc = m_y;
+            Norm(m_xDest - m_xSrc, m_yDest - m_ySrc);
+        }
+        @Override
+        public void move(long now) {
+            if(m_startTime == 0)
+                m_startTime = now;
+            long t = (now - m_startTime) / 1000; // сек
+            m_x = (int)(m_xSrc + m_dx * t);
+            m_y = (int)(m_ySrc + m_dy * t);
+            double dx = m_xDest - m_x;
+            double dy = m_yDest - m_y;
+            double rest = Math.sqrt(dx * dx + dy * dy);
+
+            //System.out.println("move: m_x " + m_x + " m_y " + m_y + " rest " + rest + " (t " + t + " m_xSrc " + m_xSrc + " m_ySrc " + m_ySrc + " m_xDest " + m_xDest + " m_yDest " + m_yDest + ")");
+            if(rest < m_epsilon) {
+                if(m_forward) {
+                    int xTemp = m_xSrc;
+                    int yTemp = m_ySrc;
+                    m_xSrc = m_xDest;
+                    m_ySrc = m_yDest;
+                    m_xDest = xTemp;
+                    m_yDest = yTemp;
+                } else {
+                    int xTemp = m_xSrc;
+                    int yTemp = m_ySrc;
+                    m_xSrc = m_xDest;
+                    m_ySrc = m_yDest;
+                    m_xDest = xTemp;
+                    m_yDest = yTemp;
+                }
+                Norm(m_xDest - m_xSrc, m_yDest - m_ySrc);
+                m_forward = !m_forward;
+                m_startTime = now;
+            }
+        }
+        @Override
+        public Polygon View() {
+            Polygon p = new Polygon();
+            p.addPoint(m_x + 0,  m_y + 0);
+            p.addPoint(m_x + 20, m_y + 0);
+            p.addPoint(m_x + 20, m_y + 20);
+            p.addPoint(m_x + 0,  m_y + 20);
+            return p;
+        }
+        private void Norm(int a, int b) {
+            double lenth = Math.sqrt(a * a + b * b);
+            m_dx = m_V * a / lenth;
+            m_dy = m_V * b / lenth;
+            m_epsilon = 1.1 * Math.sqrt(m_dx * m_dx + m_dy * m_dy);
+            //System.out.println("NORM: a " + a + " b " + b + " m_dx " + m_dx + " m_dy " + m_dy + " eps " + m_epsilon + " (lenth " + lenth + " m_V " + m_V + ")");
+        }
+    }
+
+    // Воины генерируются каждые N2 секунд с вероятностью P2
+    private class Warrior extends Ant {
+        protected int m_x0 = 0, m_y0 = 0; // центр окружности
+        protected int m_R = 0; // радиус окружности
+        protected double m_A = 0; // текущий угол поворота
+        public Warrior(int left, int top, int width, int height, long bornTime, long lifeTime) {
+            super(left, top, width, height, bornTime, lifeTime);
+            setDest(new Rectangle(width / 2, height / 2, width / 2, height / 2));
+            m_x0 = width / 2;
+            m_y0 = height / 2;
+            m_R = width / 3;
+            m_V = 0.1; // радиан/сек
+            m_A = Math.random() * Math.PI * 2;
+            m_x = (int)(m_x0 + m_R * Math.cos(m_A) + 0.5);
+            m_y = (int)(m_y0 + m_R * Math.sin(m_A) + 0.5);
+        }
+        @Override
+        public void move(long now) {
+            if(m_startTime == 0)
+                m_startTime = now;
+            long t = (now - m_startTime) / 1000; // сек
+            //m_A = m_A + 0.1;
+            m_x = (int)(m_x0 + m_R * Math.cos(m_A + m_V * t) + 0.5);
+            m_y = (int)(m_y0 + m_R * Math.sin(m_A + m_V * t) + 0.5);
+        }
+        @Override
+        public Polygon View() {
+            Polygon p = new Polygon();
+            p.addPoint(m_x + 0,  m_y + 0);
+            p.addPoint(m_x + 10, m_y + 0);
+            p.addPoint(m_x + 10, m_y + 10);
+            p.addPoint(m_x + 0,  m_y + 10);
+            return p;
+        }
+    }
 
     /**
      * @param args the command line arguments
@@ -80,4 +732,51 @@ public class Ants extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
+}
+
+// объявление нового класса диалога
+class MessageBox extends JDialog { 
+   // конструктор для создания диалогового окна для вывода 
+   // сообщения m, заголовок окна передается через t.
+   // родительский фрейм - через p, модальность - через modal
+   public MessageBox(boolean action, Ants owner, String m, JFrame p, String t, boolean modal) {
+        super(p, t, modal);
+        setSize(400, 200); 
+        // здесь можно создать все необходимые компоненты для 
+        // размещения внутри диалоговой панели, а также 
+        //установить нужный режим размещения этих компонент
+        TextArea text = new TextArea(m);
+        text.setEditable(false);
+        
+        Panel panel = new Panel(); 
+        panel.setLayout(new GridLayout(2, 2, 10, 10));
+        
+        JButton btnOK = new JButton("OK");
+        ActionListener okPressed = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(action)
+                    owner.ClearTask();
+                dispose();
+            }
+        };
+        btnOK.addActionListener(okPressed);
+        panel.add(btnOK);
+
+        if(action) {
+            JButton btnCancel = new JButton("Отмена");
+            ActionListener cancelPressed = new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    owner.StartAction();
+                    dispose();
+                }
+            };
+            btnCancel.addActionListener(cancelPressed);
+            panel.add(btnCancel);
+        }
+
+        add(text);
+        add(BorderLayout.EAST, panel);
+    }
 }
