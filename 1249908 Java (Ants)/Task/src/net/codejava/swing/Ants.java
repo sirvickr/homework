@@ -397,9 +397,9 @@ public class Ants extends javax.swing.JFrame {
             m_txtWarriorsN2.setEnabled(!m_Active);
             m_txtWarriorsT2.setEnabled(!m_Active);
             m_lstWarriorsP2.setEnabled(!m_Active);
-            m_ResultMessage = "Сгенерировано: рабочих " 
-                + m_habitat.getWorkersCount() + " воинов " 
-                + m_habitat.getWarriorsCount();
+            m_ResultMessage = "Сгенерировано: рабочих " + m_habitat.getWorkersCount() 
+                    + ", воинов " + m_habitat.getWarriorsCount()
+                    + "\n Время симуляции: " + m_time + "с";
             if( chkShowInfo.isSelected() ) {
                 MessageBox msgBox = new MessageBox(true, this, m_ResultMessage, new JFrame(), "Результаты", true);
                 msgBox.setVisible(true);
