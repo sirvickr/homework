@@ -1,8 +1,10 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+ * Маленькими квадратами схематично обозначены муавьи-рабочие, 
+ * большими - воины.
+ * Рабочие двигаются по отрезку между  верхней левой и случайной точками экрана,
+ * воины - по кругу в центре рабочей области.
+*/
+
 package net.codejava.swing;
 
 import java.awt.BorderLayout;
@@ -662,9 +664,9 @@ public class Ants extends javax.swing.JFrame {
         public Polygon View() {
             Polygon p = new Polygon();
             p.addPoint(m_x + 0,  m_y + 0);
-            p.addPoint(m_x + 20, m_y + 0);
-            p.addPoint(m_x + 20, m_y + 20);
-            p.addPoint(m_x + 0,  m_y + 20);
+            p.addPoint(m_x + 12, m_y + 0);
+            p.addPoint(m_x + 12, m_y + 12);
+            p.addPoint(m_x + 0,  m_y + 12);
             return p;
         }
         private void Norm(int a, int b) {
@@ -705,9 +707,9 @@ public class Ants extends javax.swing.JFrame {
         public Polygon View() {
             Polygon p = new Polygon();
             p.addPoint(m_x + 0,  m_y + 0);
-            p.addPoint(m_x + 10, m_y + 0);
-            p.addPoint(m_x + 10, m_y + 10);
-            p.addPoint(m_x + 0,  m_y + 10);
+            p.addPoint(m_x + 18, m_y + 0);
+            p.addPoint(m_x + 18, m_y + 18);
+            p.addPoint(m_x + 0,  m_y + 18);
             return p;
         }
     }
