@@ -109,7 +109,8 @@ public class Ants extends javax.swing.JFrame {
         //m_updater = new Updater(this);
         this.setLayout(new BorderLayout());
         
-        chkShowInfo = new JCheckBox("Показывать итоги", true);
+        chkShowInfo = new JCheckBox("Показывать итоги", false);
+        chkShowInfo.setFocusable(false);
         
         optShow = new JRadioButton("Показывать время симуляции", m_ShowTime);
         optShow.addActionListener(new ActionListener() {
@@ -118,6 +119,7 @@ public class Ants extends javax.swing.JFrame {
                 m_ShowTime = true;
             }
         });
+        optShow.setFocusable(false);
         optHide = new JRadioButton("Скрывать время симуляции", !m_ShowTime);
         optHide.addActionListener(new ActionListener() {
             @Override
@@ -125,12 +127,14 @@ public class Ants extends javax.swing.JFrame {
                 m_ShowTime = false;
             }
         });
+        optHide.setFocusable(false);
 
         ButtonGroup buttons = new ButtonGroup();
         buttons.add(optShow);
         buttons.add(optHide);
 
         btnStart = new JButton("Старт");
+        btnStart.setFocusable(false);
         ActionListener startPressed = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -141,6 +145,7 @@ public class Ants extends javax.swing.JFrame {
         //btnStart.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_B, 0), "StartPressed");
         //btnStart.getActionMap().put("StartPressed", (Action)startPressed);
         btnStop = new JButton("Стоп");
+        btnStop.setFocusable(false);
         btnStop.setEnabled(false);
         btnStop.addActionListener(new ActionListener() {
             @Override
@@ -151,6 +156,7 @@ public class Ants extends javax.swing.JFrame {
         
         m_txtWorkersN1 = new JTextField("8"); // период генерации рабочих (N1)
         m_lstWorkersP1 = new JComboBox(); // вероятность генерации рабочих (P1)
+        m_lstWorkersP1.setFocusable(false);
         m_lstWorkersP1.addItem("1.0");
         m_lstWorkersP1.addItem("0.9");
         m_lstWorkersP1.addItem("0.8");
@@ -164,6 +170,7 @@ public class Ants extends javax.swing.JFrame {
         m_txtWorkersT1 = new JTextField("35"); // время жизни рабочих (T1)
         m_txtWarriorsN2 = new JTextField("5"); // период генерации воинов (N2)
         m_lstWarriorsP2 = new JList(); // вероятность генерации воинов (P2)
+        m_lstWarriorsP2.setFocusable(false);
         m_lstWarriorsP2.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         m_dataP2.add("1.0");
         m_dataP2.add("0.9");
@@ -192,6 +199,7 @@ public class Ants extends javax.swing.JFrame {
         togglePanel.setLayout(new GridLayout(1, 2));
 
         btnStartAI = new JButton("Включить ИИ");
+        btnStartAI.setFocusable(false);
         btnStartAI.setEnabled(false);
         btnStartAI.addActionListener(new ActionListener() {
             @Override
@@ -200,6 +208,7 @@ public class Ants extends javax.swing.JFrame {
             }
         });
         btnStopAI = new JButton("Выключить ИИ");
+        btnStopAI.setFocusable(false);
         btnStopAI.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -313,22 +322,26 @@ public class Ants extends javax.swing.JFrame {
         setJMenuBar(mainMenu);
         
         KeyAdapter pk = new KeyAdapter() {
+            @Override
             public void keyPressed(KeyEvent e) {
                 switch(e.getKeyChar()) {
-                    case 'b':
+                    case 's':
                         StartAction();
                         break;
                     case 'e': 
                         StopAction();
                         break;
                     case 't':
-                        m_ShowTime = !m_ShowTime;
+                        if(m_ShowTime)
+                            optHide.doClick();
+                        else
+                            optShow.doClick();
                         break;
                 }
             }
         };
         this.addKeyListener(pk);
-        //panel.addKeyListener(pk);
+        this.setFocusable(true);
     }
     public void StartAction() {
         if(!m_Active) {
@@ -363,8 +376,10 @@ public class Ants extends javax.swing.JFrame {
             btnStart.setEnabled(!m_Active);
             btnStop.setEnabled(m_Active);
             m_txtWorkersN1.setEnabled(!m_Active);
+            m_txtWorkersT1.setEnabled(!m_Active);
             m_lstWorkersP1.setEnabled(!m_Active);
             m_txtWarriorsN2.setEnabled(!m_Active);
+            m_txtWarriorsT2.setEnabled(!m_Active);
             m_lstWarriorsP2.setEnabled(!m_Active);
         }
     }
@@ -375,8 +390,10 @@ public class Ants extends javax.swing.JFrame {
             btnStart.setEnabled(true);
             btnStop.setEnabled(false);
             m_txtWorkersN1.setEnabled(!m_Active);
+            m_txtWorkersT1.setEnabled(!m_Active);
             m_lstWorkersP1.setEnabled(!m_Active);
             m_txtWarriorsN2.setEnabled(!m_Active);
+            m_txtWarriorsT2.setEnabled(!m_Active);
             m_lstWarriorsP2.setEnabled(!m_Active);
             m_ResultMessage = "Сгенерировано: рабочих " 
                 + m_habitat.getWorkersCount() + " воинов " 
