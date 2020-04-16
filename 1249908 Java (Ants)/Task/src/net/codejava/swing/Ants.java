@@ -20,6 +20,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.geom.Area;
 import java.util.ArrayList;
 import java.util.ListIterator;
 import java.util.Timer;
@@ -111,7 +112,7 @@ public class Ants extends javax.swing.JFrame {
         //m_updater = new Updater(this);
         this.setLayout(new BorderLayout());
         
-        chkShowInfo = new JCheckBox("Показывать итоги", false);
+        chkShowInfo = new JCheckBox("Показывать итоги", true);
         chkShowInfo.setFocusable(false);
         
         optShow = new JRadioButton("Показывать время симуляции", m_ShowTime);
@@ -156,7 +157,7 @@ public class Ants extends javax.swing.JFrame {
             }
         });
         
-        m_txtWorkersN1 = new JTextField("8"); // период генерации рабочих (N1)
+        m_txtWorkersN1 = new JTextField("4"); // период генерации рабочих (N1)
         m_lstWorkersP1 = new JComboBox(); // вероятность генерации рабочих (P1)
         m_lstWorkersP1.setFocusable(false);
         m_lstWorkersP1.addItem("1.0");
@@ -369,7 +370,7 @@ public class Ants extends javax.swing.JFrame {
             // область обзора (int left, top, width, height); 
             // периоды и вероятности (long N1, float P1, long N2, float P2)
             if(m_habitat == null)
-                m_habitat = new Habitat(0, 0, 500, 400, 
+                m_habitat = new Habitat(new CollisionAI(), 0, 0, 500, 400, 
                     workersN1, workersP1, workersT1, warriorsN2, warriorsP2, warriorsT2);
             
             m_timer = new Timer();
@@ -490,11 +491,15 @@ public class Ants extends javax.swing.JFrame {
         private long m_tWarriors; // время жизни воинов (T2)
         private int m_left, m_top, m_width, m_height; // область отображения
         private int m_workersCount = 0, m_warriorsCount = 0;
-        // Время начала
+        // предыдущее время обновления
+        private long prevTime = 0;
         public ArrayList<IBehaviour> objects; // объекты симуляции
         public TreeSet ids; // идентификаторы
-        public Habitat(int left, int top, int width, int height, 
+        // контроллер интеллектуального поведения
+        private BaseAI m_ai = null;
+        public Habitat(BaseAI ai, int left, int top, int width, int height, 
                        long N1, double P1, long T1, long N2, double P2, long T2) {
+            this.m_ai = ai;
             this.m_left = left;
             this.m_top = top;
             this.m_width = width;
@@ -516,15 +521,13 @@ public class Ants extends javax.swing.JFrame {
         }
         // elapsedTime - время в секундах, прошедшее от начала симуляции
         public void Update(long elapsedTime) {
+            if(prevTime == 0)
+                prevTime = elapsedTime;
             // удалить объекты с истекшим временем жизни
-            // и пересчитать координаты
-            ListIterator it = objects.listIterator();
             try {
-                long now = System.currentTimeMillis();
+                ListIterator it = objects.listIterator();
                 while(it.hasNext()) {
                     Ant item = (Ant)it.next();
-                    if(m_ActiveAI)
-                        item.move(now);
                     if(elapsedTime - item.bornTime() >= item.lifeTime()) {
                         if(item instanceof Worker)
                             m_workersCount--;
@@ -552,6 +555,23 @@ public class Ants extends javax.swing.JFrame {
                     m_warriorsCount++;
                 }
             }
+            // уточнить следующий шаг движения ("интеллектуальное поведение")
+            try {
+                if(m_ActiveAI && m_ai != null) {
+                    m_ai.ControlObjects(objects);
+                }
+            } catch(Exception e) {
+            }
+            // осуществляем уточнённое движение
+            try {
+                ListIterator it = objects.listIterator();
+                while(it.hasNext()) {
+                    Ant item = (Ant)it.next();
+                    item.Move(elapsedTime - prevTime);
+                }
+            } catch(Exception e) {
+            }
+            prevTime = elapsedTime;
         }
         public void Clear() {
             objects.clear();
@@ -561,8 +581,20 @@ public class Ants extends javax.swing.JFrame {
     }
 
     interface IBehaviour {
+        // схематичное изображение объекта
         public Polygon View();
-        public void move(long now);
+        // площадь, занимаемая изображением объекта
+        public double Area();
+        // сделать очередной шаг
+        public void Move(long dt);
+        // притормозить (пропустить ход, проигнорировав очередной шаг)
+        public void Stall();
+        // количество столкновений на данном шаге
+        public int getCollisions();
+        public void addCollision();
+        // флаг проверки на столкновение
+        public boolean isChecked();
+        public void Check();
     }
 
     // Базовый класс всех муравьёв
@@ -570,15 +602,23 @@ public class Ants extends javax.swing.JFrame {
         protected int m_left = 0, m_top = 0;
         protected int m_width = 0, m_height = 0;
         protected Rectangle m_destArea = null;
+        // площадь, занимаемая изображением объекта
+        protected double m_Area = 0.0;
         // текущие координаты
         protected int m_x = 0, m_y = 0;
         // скорость движения
         protected double m_V = 0.0;
         // время рождения и жизни
         private long m_bornTime = 0, m_lifeTime = 0;
-        // время начала движения
-        protected long m_startTime = 0;
-        
+        // текущее время
+        protected long m_currTime = 0;
+        // пропустить следующий ход
+        protected boolean m_skip = false;
+        // количество столкновений на данном шаге
+        protected int m_Collisions;
+        // флаг проверки на столкновение
+        protected boolean m_isChecked;
+
         public Ant(int left, int top, int width, int height, long bornTime, long lifeTime) {
             m_left = left;
             m_top = top;
@@ -587,6 +627,32 @@ public class Ants extends javax.swing.JFrame {
             m_bornTime = bornTime;
             m_lifeTime = lifeTime;
         }
+        
+        @Override
+        public double Area() {
+            return m_Area;
+        }
+        @Override
+        public void Stall() {
+            m_skip = true;
+        }
+        @Override
+        public int getCollisions() {
+            return m_Collisions;
+        }
+        @Override
+        public void addCollision() {
+            m_Collisions++;
+        }
+        @Override
+        public boolean isChecked() {
+            return m_isChecked;
+        }
+        @Override
+        public void Check() {
+            m_isChecked = true;
+        }
+
         public long bornTime() {
             return m_bornTime;
         }
@@ -614,13 +680,16 @@ public class Ants extends javax.swing.JFrame {
             super(left, top, width, height, bornTime, lifeTime);
             setDest(new Rectangle(width / 2, height / 2));
             m_V = 20.0; // пиксель/сек
-            int padding = 50;
+            int padding = 250; // чтобы не создавались прямо в области обитания
             m_x = m_left + padding + (int)(Math.random() * (m_destArea.width - padding));
             m_y = m_top + padding + (int)(Math.random() * (m_destArea.height - padding));
+            int size = 100; // размер области обитания в девом верхнем углу
+            m_xDest = m_left + (int)(Math.random() * 50);
+            m_yDest = m_top + (int)(Math.random() * 50);
             
-            m_xDest = m_left;
-            m_yDest = m_top;
-
+            ///test
+            ///m_x = m_left + 160;
+            ///m_y = m_top + 160;
             m_x = m_left + (int)(Math.random() * m_width);
             m_y = m_top + (int)(Math.random() * m_height);
             m_xSrc = m_x;
@@ -628,45 +697,57 @@ public class Ants extends javax.swing.JFrame {
             Norm(m_xDest - m_xSrc, m_yDest - m_ySrc);
         }
         @Override
-        public void move(long now) {
-            if(m_startTime == 0)
-                m_startTime = now;
-            long t = (now - m_startTime) / 1000; // сек
-            m_x = (int)(m_xSrc + m_dx * t);
-            m_y = (int)(m_ySrc + m_dy * t);
-            double dx = m_xDest - m_x;
-            double dy = m_yDest - m_y;
-            double rest = Math.sqrt(dx * dx + dy * dy);
+        public void Move(long dt) {
+            if(!m_skip) {
+                // продвигаемся вперёд по оси времени (если только не пропускаем ход)
+                m_currTime += dt;
+                // вычисляем координаты для текущего времени
+                m_x = (int)(m_xSrc + m_dx * m_currTime);
+                m_y = (int)(m_ySrc + m_dy * m_currTime);
+                // вычисляем оставшееся расстояние
+                double dx = m_xDest - m_x;
+                double dy = m_yDest - m_y;
+                double rest = Math.sqrt(dx * dx + dy * dy);
 
-            //System.out.println("move: m_x " + m_x + " m_y " + m_y + " rest " + rest + " (t " + t + " m_xSrc " + m_xSrc + " m_ySrc " + m_ySrc + " m_xDest " + m_xDest + " m_yDest " + m_yDest + ")");
-            if(rest < m_epsilon) {
-                if(m_forward) {
-                    int xTemp = m_xSrc;
-                    int yTemp = m_ySrc;
-                    m_xSrc = m_xDest;
-                    m_ySrc = m_yDest;
-                    m_xDest = xTemp;
-                    m_yDest = yTemp;
-                } else {
-                    int xTemp = m_xSrc;
-                    int yTemp = m_ySrc;
-                    m_xSrc = m_xDest;
-                    m_ySrc = m_yDest;
-                    m_xDest = xTemp;
-                    m_yDest = yTemp;
+                //System.out.println("move: m_x " + m_x + " m_y " + m_y + " rest " + rest + " (t " + m_currTime + " m_xSrc " + m_xSrc + " m_ySrc " + m_ySrc + " m_xDest " + m_xDest + " m_yDest " + m_yDest + ")");
+                if(rest < m_epsilon) {
+                    // максимально приблизились к конечной точке,
+                    // меняем точки старта и финиша, чтобы двинуться обратно
+                    if(m_forward) {
+                        int xTemp = m_xSrc;
+                        int yTemp = m_ySrc;
+                        m_xSrc = m_xDest;
+                        m_ySrc = m_yDest;
+                        m_xDest = xTemp;
+                        m_yDest = yTemp;
+                    } else {
+                        int xTemp = m_xSrc;
+                        int yTemp = m_ySrc;
+                        m_xSrc = m_xDest;
+                        m_ySrc = m_yDest;
+                        m_xDest = xTemp;
+                        m_yDest = yTemp;
+                    }
+                    // формируем вектор движения
+                    Norm(m_xDest - m_xSrc, m_yDest - m_ySrc);
+                    // выставляем флаг направления
+                    m_forward = !m_forward;
+                    // обнуляем текущее время (поскольку развернулись и снова готовы к началу движения)
+                    m_currTime = 0;
                 }
-                Norm(m_xDest - m_xSrc, m_yDest - m_ySrc);
-                m_forward = !m_forward;
-                m_startTime = now;
+            } else {
+                m_skip = false;
             }
         }
         @Override
         public Polygon View() {
             Polygon p = new Polygon();
+            int a = 12;
             p.addPoint(m_x + 0,  m_y + 0);
-            p.addPoint(m_x + 12, m_y + 0);
-            p.addPoint(m_x + 12, m_y + 12);
-            p.addPoint(m_x + 0,  m_y + 12);
+            p.addPoint(m_x + a, m_y + 0);
+            p.addPoint(m_x + a, m_y + a);
+            p.addPoint(m_x + 0,  m_y + a);
+            m_Area = a * a;
             return p;
         }
         private void Norm(int a, int b) {
@@ -689,28 +770,74 @@ public class Ants extends javax.swing.JFrame {
             m_x0 = width / 2;
             m_y0 = height / 2;
             m_R = width / 3;
-            m_V = 0.1; // радиан/сек
+            m_V = 0.15; // радиан/сек
+            ///test
+            ///m_A = Math.PI * 1.08;
             m_A = Math.random() * Math.PI * 2;
             m_x = (int)(m_x0 + m_R * Math.cos(m_A) + 0.5);
             m_y = (int)(m_y0 + m_R * Math.sin(m_A) + 0.5);
         }
         @Override
-        public void move(long now) {
-            if(m_startTime == 0)
-                m_startTime = now;
-            long t = (now - m_startTime) / 1000; // сек
-            //m_A = m_A + 0.1;
-            m_x = (int)(m_x0 + m_R * Math.cos(m_A + m_V * t) + 0.5);
-            m_y = (int)(m_y0 + m_R * Math.sin(m_A + m_V * t) + 0.5);
+        public void Move(long dt) {
+            if(!m_skip) {
+                m_currTime += dt;
+                //m_A = m_A + 0.1;
+                m_x = (int)(m_x0 + m_R * Math.cos(m_A + m_V * m_currTime) + 0.5);
+                m_y = (int)(m_y0 + m_R * Math.sin(m_A + m_V * m_currTime) + 0.5);
+            } else {
+                m_skip = false;
+            }
         }
         @Override
         public Polygon View() {
             Polygon p = new Polygon();
+            int a = 15;
             p.addPoint(m_x + 0,  m_y + 0);
-            p.addPoint(m_x + 18, m_y + 0);
-            p.addPoint(m_x + 18, m_y + 18);
-            p.addPoint(m_x + 0,  m_y + 18);
+            p.addPoint(m_x + a, m_y + 0);
+            p.addPoint(m_x + a, m_y + a);
+            p.addPoint(m_x + 0,  m_y + a);
+            m_Area = a * a;
             return p;
+        }
+    }
+
+    private abstract class BaseAI {
+        public abstract void ControlObjects(ArrayList<IBehaviour> objects);
+    }
+    
+    private class CollisionAI extends BaseAI {
+        @Override
+        public void ControlObjects(ArrayList<IBehaviour> objects) {
+            // на прошлой итерации могли быть столкновения - разрешаем их,
+            // уточняя перемещение (кому-то придётся притормозить, пропустив дрвугого)
+            {
+                ArrayList<IBehaviour> lst = (ArrayList<IBehaviour>) objects.clone();
+                ListIterator currIt = lst.listIterator();
+                while(currIt.hasNext()) {
+                    IBehaviour current = (IBehaviour)currIt.next();
+                    Area a = new Area(current.View());
+                    // проверяем "столкновение" со всеми остальными объектами
+                    ListIterator otherIt = lst.listIterator();
+                    while(otherIt.hasNext()) {
+                        IBehaviour other = (IBehaviour)otherIt.next();
+                        if(current != other) { // кроме себя
+                            Area b = new Area(other.View());
+                            b.intersect(a);
+                            if(!b.isEmpty()) {
+                                System.out.println("intersection of A (S=" + current.Area() + ") and B (S=" + other.Area() + ")");
+                                if(current.Area() > other.Area()) {
+                                    System.out.println("  B.Stall()");
+                                    other.Stall();
+                                } else {
+                                    System.out.println("  A.Stall()");
+                                    current.Stall();
+                                }
+                            }
+                        }
+                    }
+                    currIt.remove();
+                }
+            }
         }
     }
 
