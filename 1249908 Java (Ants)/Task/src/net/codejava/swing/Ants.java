@@ -21,6 +21,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.geom.Area;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.ListIterator;
 import java.util.Timer;
@@ -86,11 +87,12 @@ public class Ants extends javax.swing.JFrame {
     private Timer m_timer = new Timer(true);
     private Habitat m_habitat = null;
     //private Updater m_updater = null;
-    private boolean m_ShowTime = true;   
-    private boolean m_Active = false;   
-    private boolean m_ActiveAI = true;   
+    private boolean m_ShowTime = true;
+    private boolean m_Active = false;
+    private boolean m_ActiveAI = true;
     private long m_time = 0;
     private long m_startTime = 0;
+    private int m_collisions = 0;
     private Panel m_View;
     private JButton btnStart;
     private JButton btnStop;
@@ -281,7 +283,7 @@ public class Ants extends javax.swing.JFrame {
                     }
                 }
                 if(m_ShowTime) {
-                    String str = "Время симуляции: " + m_time;
+                    String str = "Время симуляции: " + m_time + "с, число столкновений: " + m_collisions;
                     g.drawString(str, 15, m_Height - 90);
                 }
                 if(!m_Active) {
@@ -400,7 +402,7 @@ public class Ants extends javax.swing.JFrame {
             m_lstWarriorsP2.setEnabled(!m_Active);
             m_ResultMessage = "Сгенерировано: рабочих " + m_habitat.getWorkersCount() 
                     + ", воинов " + m_habitat.getWarriorsCount()
-                    + "\n Время симуляции: " + m_time + "с";
+                    + "\n Время симуляции: " + m_time + "с, число столкновений: " + m_collisions;
             if( chkShowInfo.isSelected() ) {
                 MessageBox msgBox = new MessageBox(true, this, m_ResultMessage, new JFrame(), "Результаты", true);
                 msgBox.setVisible(true);
@@ -558,7 +560,7 @@ public class Ants extends javax.swing.JFrame {
             // уточнить следующий шаг движения ("интеллектуальное поведение")
             try {
                 if(m_ActiveAI && m_ai != null) {
-                    m_ai.ControlObjects(objects);
+                    m_collisions += m_ai.ControlObjects(objects);
                 }
             } catch(Exception e) {
             }
@@ -686,10 +688,8 @@ public class Ants extends javax.swing.JFrame {
             int size = 100; // размер области обитания в девом верхнем углу
             m_xDest = m_left + (int)(Math.random() * 50);
             m_yDest = m_top + (int)(Math.random() * 50);
-            
-            ///test
-            ///m_x = m_left + 160;
-            ///m_y = m_top + 160;
+            ///m_x = m_left + 150; ///test
+            ///m_y = m_top + 150;
             m_x = m_left + (int)(Math.random() * m_width);
             m_y = m_top + (int)(Math.random() * m_height);
             m_xSrc = m_x;
@@ -771,8 +771,7 @@ public class Ants extends javax.swing.JFrame {
             m_y0 = height / 2;
             m_R = width / 3;
             m_V = 0.15; // радиан/сек
-            ///test
-            ///m_A = Math.PI * 1.08;
+            ///m_A = Math.PI * 1.08; ///test
             m_A = Math.random() * Math.PI * 2;
             m_x = (int)(m_x0 + m_R * Math.cos(m_A) + 0.5);
             m_y = (int)(m_y0 + m_R * Math.sin(m_A) + 0.5);
@@ -802,29 +801,44 @@ public class Ants extends javax.swing.JFrame {
     }
 
     private abstract class BaseAI {
-        public abstract void ControlObjects(ArrayList<IBehaviour> objects);
+        public abstract int ControlObjects(ArrayList<IBehaviour> objects);
     }
     
     private class CollisionAI extends BaseAI {
         @Override
-        public void ControlObjects(ArrayList<IBehaviour> objects) {
+        public int ControlObjects(ArrayList<IBehaviour> objects) {
+            int collisions = 0;
             // на прошлой итерации могли быть столкновения - разрешаем их,
             // уточняя перемещение (кому-то придётся притормозить, пропустив дрвугого)
-            {
-                ArrayList<IBehaviour> lst = (ArrayList<IBehaviour>) objects.clone();
-                ListIterator currIt = lst.listIterator();
-                while(currIt.hasNext()) {
-                    IBehaviour current = (IBehaviour)currIt.next();
-                    Area a = new Area(current.View());
-                    // проверяем "столкновение" со всеми остальными объектами
-                    ListIterator otherIt = lst.listIterator();
-                    while(otherIt.hasNext()) {
-                        IBehaviour other = (IBehaviour)otherIt.next();
-                        if(current != other) { // кроме себя
-                            Area b = new Area(other.View());
-                            b.intersect(a);
-                            if(!b.isEmpty()) {
-                                System.out.println("intersection of A (S=" + current.Area() + ") and B (S=" + other.Area() + ")");
+            ArrayList<IBehaviour> lst = (ArrayList<IBehaviour>) objects.clone();
+            ListIterator currIt = lst.listIterator();
+            while(currIt.hasNext()) {
+                IBehaviour current = (IBehaviour)currIt.next();
+                Area a = new Area(current.View());
+                // проверяем "столкновение" со всеми остальными объектами
+                ListIterator otherIt = lst.listIterator();
+                while(otherIt.hasNext()) {
+                    IBehaviour other = (IBehaviour)otherIt.next();
+                    if(current != other) { // кроме себя
+                        Area b = new Area(other.View());
+                        b.intersect(a);
+                        if(!b.isEmpty()) {
+                            boolean enough = true;
+                            double sInt = 0, sMin = Math.min(current.Area(), other.Area());
+                            // если столкновением считать перекрытие > 60%, 
+                            // то визуально неудобно наблюдать за работой ИИ
+                            //double share = 0.60;
+                            double share = 0.01;
+                            if(b.isRectangular()) {
+                                Rectangle2D rect = b.getBounds2D();
+                                sInt = rect.getWidth() * rect.getHeight();
+                                // проверяем, перекрывается ли самый мелкий
+                                // муравей более чем на 60%
+                                enough = (sInt / sMin) > share;
+                            }
+                            System.out.println("intersection (Sint=" + sInt + " Smin= " + sMin + " enough=" + enough + ") of A (S=" + current.Area() + ") and B (S=" + other.Area() + ")");
+                            if(enough) {
+                                collisions++;
                                 if(current.Area() > other.Area()) {
                                     System.out.println("  B.Stall()");
                                     other.Stall();
@@ -835,9 +849,10 @@ public class Ants extends javax.swing.JFrame {
                             }
                         }
                     }
-                    currIt.remove();
                 }
+                currIt.remove();
             }
+            return collisions;
         }
     }
 
