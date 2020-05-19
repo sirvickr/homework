@@ -49,56 +49,67 @@ void gotoXY(int x, int y)
 	SetConsoleCursorPosition(hConsole, p); // Перемещение каретки по заданным координатам
 }
 
-void moveForward(int *u, int *v, int face, char key) {
-	int x = *u, y = *v; // разименовывание переменных
-	//стираем героя
-	gotoXY(x, y); // устанавливаем курсор в (x,y)
-	SetColor(Black, Black);
-	printf("%c", face); // выводим символ цвета экрана
-	switch (key) {
-	case 'W':
-	case 'w': if (y > Y_MIN) y--; break;
-	case 'S':
-	case 's': if (y < Y_MAX) y++; break;
-	case 'A':
-	case 'a': if (x > X_MIN) x--; break;
-	case 'D':
-	case 'd': if (x < X_MAX) x++; break;
+class HeroBot {
+public:
+	HeroBot(ConsoleColor color, int face, int x = 0, int y = 0): mColor(color), mFace(face), mX(x), mY(y) {
 	}
-	// рисуем героя
-	gotoXY(x, y);
-	SetColor(Yellow, Black); // выводим символ желтого цвета 
-	printf("%c", face);
-	*u = x;
-	*v = y;
-}
+	int x() const {
+		return mX;
+	}
+	void x(int value) {
+		mX = value;
+	}
+	int y() const {
+		return mY;
+	}
+	void y(int value) {
+		mY = value;
+	}
+	void show() {
+		gotoXY(mX, mY); // устанавливаем курсор в (x,y)
+		SetColor(mColor, Black);
+		printf("%c", mFace); // выводим символ цвета экрана
+	}
+	void hide() {
+		gotoXY(mX, mY); // устанавливаем курсор в (x,y)
+		SetColor(Black, Black);
+		printf("%c", mFace); // выводим символ цвета экрана
+	}
+	void move(int dir) {
+		// стираем объект
+		hide();
+		switch (dir) {
+		case 0: if (mY > Y_MIN) mY--; break;
+		case 1: if (mY < Y_MAX) mY++; break;
+		case 2: if (mX > X_MIN) mX--; break;
+		case 3: if (mX < X_MAX) mX++; break;
+		}
+		// рисуем объект
+		show();
+	}
+	void moveKey(char key) {
+		int dir = -1;
+		switch (key) {
+		case 'W': case 'w': dir = 0;/*if (y > Y_MIN) y--;*/ break;
+		case 'S': case 's': dir = 1;/*if (y < Y_MAX) y++;*/ break;
+		case 'A': case 'a': dir = 2;/*if (x > X_MIN) x--;*/ break;
+		case 'D': case 'd': dir = 3;/*if (x < X_MAX) x++;*/ break;
+		}
+		move(dir);
+	}
 
-int collision(int xG, int yG, int xB, int yB) {
-	if ((abs(xG - xB) < 2) && (abs(yG - yB) < 2)) {
+private:
+	ConsoleColor mColor;
+	int mFace;
+	int mX;
+	int mY;
+};
+
+int collision(const HeroBot& a, const HeroBot& b) {
+	if ((abs(a.x() - b.x()) < 2) && (abs(a.y() - b.y()) < 2)) {
 		return 1;
 	}
 	return 0;
-}
-
-void moveBot(int *u, int *v, int face, int dir) {
-	int x = *u, y = *v;
-	// стирае бота
-	gotoXY(x, y); // устанавливаем курсор в (x,y)
-	SetColor(Black, Black);
-	printf("%c", face); // выводим символ цвета экрана
-	switch (dir) {
-	case 0: if (y > Y_MIN) y--; break;
-	case 1: if (y < Y_MAX) y++; break;
-	case 2: if (x > X_MIN) x--; break;
-	case 3: if (x < X_MAX)x++; break;
-	}
-	// рисукм бота
-	gotoXY(x, y);
-	SetColor(LightMagenta, Black); // выводим символ цвета LightMagenta
-	printf("%c", face);
-	Sleep(200); // ждать 1/5 секунды
-	*u = x;
-	*v = y;
 }
 
 void drowPole() {
@@ -128,15 +139,16 @@ int main()
 	char key = 0;
 	xG = rand() % (X_MAX - X_MIN + 1) + X_MIN; // задаём координату x
 	yG = rand() % (Y_MAX - Y_MIN + 1) + Y_MIN; // задаём координату y
-	gotoXY(xG, yG); // устанавливаем курсор в (x,y)
-	SetColor(Yellow, Black);
-	printf("%c", faceG); // выводим ГЕРОЯ
+
 	int xB, yB, faceB = 2, dir; // direction;
 	xB = rand() % (X_MAX - X_MIN + 1) + X_MIN; // задаём координату x
 	yB = rand() % (Y_MAX - Y_MIN + 1) + Y_MIN; // задаём координату y
-	gotoXY(xB, yB); // устанавливаем курсор в (x,y)
-	SetColor(LightMagenta, Black);
-	printf("%c", faceB); // выводим БОТА
+
+	HeroBot hero(Yellow, faceG, xG, yG);
+	hero.show();
+	HeroBot bot(LightMagenta, faceB, xB, yB);
+	bot.show();
+
 	int life = 3;
 	for (int i = 0; i < life; i++) {
 		gotoXY(i + 2, 2); // устанавливаем курсор в (x,y)
@@ -147,11 +159,12 @@ int main()
 		drowPole();
 		if (_kbhit()) {
 			key = _getch(); //чтобы работал getch, нужно создать проект
-			moveForward(&xG, &yG, faceG, key);	// вызов функции управляемого движения
+			hero.moveKey(key);	// вызов функции управляемого движения
 		}
 		dir = rand() % 4;
-		moveBot(&xB, &yB, faceB, dir); // вызов функции неуправляемого движения
-		if (collision(xG, yG, xB, yB)) {
+		bot.move(dir);
+		Sleep(200); // ждать 1/5 секунды
+		if (collision(hero, bot)) {
 			for (int i = 0; i < life; i++) {
 				gotoXY(i + 2, 2); // устанавливаем курсор в (x,y)
 				SetColor(Black, Black);
@@ -163,29 +176,27 @@ int main()
 				SetColor(LightRed, Black);
 				printf("%c", 3); // выводим ЖИЗНЬ
 			}
-			gotoXY(xG, yG); // устанавливаем курсор в (x,y)
-			SetColor(Black, Black);
-			printf("%c", faceG); // стираем ГЕРОЯ
-			gotoXY(xB, yB); // устанавливаем курсор в (x,y)
-			SetColor(Black, Black);
-			printf("%c", faceB); // стираем БОТА
+
+			hero.hide();
+
+			bot.hide();
+			
 			gotoXY(xB, yB); // устанавливаем курсор в (x,y)
 			SetColor(LightRed, Black);
 			printf("%c", 15); // рисуем взрыв
 			Sleep(1000);
+			
 			gotoXY(xB, yB); // устанавливаем курсор в (x,y)
 			SetColor(Black, Black);
 			printf("%c", 15); // стираем взрыв
-			xG = rand() % (X_MAX - X_MIN) + X_MIN; // задаём координату x
-			yG = rand() % (Y_MAX - Y_MIN) + Y_MIN; // задаём координату y
-			gotoXY(xG, yG); // устанавливаем курсор в (x,y)
-			SetColor(Yellow, Black);
-			printf("%c", faceG); // рисуем ГЕРОЯ
-			xB = rand() % (X_MAX - X_MIN) + X_MIN; // задаём координату x
-			yB = rand() % (Y_MAX - Y_MIN) + Y_MIN; // задаём координату y
-			gotoXY(xB, yB); // устанавливаем курсор в (x,y)
-			SetColor(LightMagenta, Black);
-			printf("%c", faceB); // рисуем БОТА
+
+			hero.x(rand() % (X_MAX - X_MIN) + X_MIN); // задаём координату x
+			hero.y(rand() % (Y_MAX - Y_MIN) + Y_MIN); // задаём координату y
+			hero.show();
+
+			bot.x(rand() % (X_MAX - X_MIN) + X_MIN); // задаём координату x
+			bot.y(rand() % (Y_MAX - Y_MIN) + Y_MIN); // задаём координату y
+			bot.show();
 		}
 	} while (key != ESC && life != 0);
 	system("cls");
@@ -195,14 +206,3 @@ int main()
 	Sleep(3000);
 	return 0;
 }
-
-// Запуск программы: CTRL+F5 или меню "Отладка" > "Запуск без отладки"
-// Отладка программы: F5 или меню "Отладка" > "Запустить отладку"
-
-// Советы по началу работы 
-//   1. В окне обозревателя решений можно добавлять файлы и управлять ими.
-//   2. В окне Team Explorer можно подключиться к системе управления версиями.
-//   3. В окне "Выходные данные" можно просматривать выходные данные сборки и другие сообщения.
-//   4. В окне "Список ошибок" можно просматривать ошибки.
-//   5. Последовательно выберите пункты меню "Проект" > "Добавить новый элемент", чтобы создать файлы кода, или "Проект" > "Добавить существующий элемент", чтобы добавить в проект существующие файлы кода.
-//   6. Чтобы снова открыть этот проект позже, выберите пункты меню "Файл" > "Открыть" > "Проект" и выберите SLN-файл.
