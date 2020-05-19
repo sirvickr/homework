@@ -49,9 +49,9 @@ void gotoXY(int x, int y)
 	SetConsoleCursorPosition(hConsole, p); // Перемещение каретки по заданным координатам
 }
 
-class HeroBot {
+class GameObject {
 public:
-	HeroBot(ConsoleColor color, int face, int x = 0, int y = 0): mColor(color), mFace(face), mX(x), mY(y) {
+	GameObject(ConsoleColor color, int face, int x = 0, int y = 0): mColor(color), mFace(face), mX(x), mY(y) {
 	}
 	int x() const {
 		return mX;
@@ -64,6 +64,10 @@ public:
 	}
 	void y(int value) {
 		mY = value;
+	}
+	void locate(int x, int y) {
+		mX = x;
+		mY = y;
 	}
 	void show() {
 		gotoXY(mX, mY); // устанавливаем курсор в (x,y)
@@ -105,7 +109,7 @@ private:
 	int mY;
 };
 
-int collision(const HeroBot& a, const HeroBot& b) {
+int collision(const GameObject& a, const GameObject& b) {
 	if ((abs(a.x() - b.x()) < 2) && (abs(a.y() - b.y()) < 2)) {
 		return 1;
 	}
@@ -144,10 +148,11 @@ int main()
 	xB = rand() % (X_MAX - X_MIN + 1) + X_MIN; // задаём координату x
 	yB = rand() % (Y_MAX - Y_MIN + 1) + Y_MIN; // задаём координату y
 
-	HeroBot hero(Yellow, faceG, xG, yG);
+	GameObject hero(Yellow, faceG, xG, yG);
 	hero.show();
-	HeroBot bot(LightMagenta, faceB, xB, yB);
+	GameObject bot(LightMagenta, faceB, xB, yB);
 	bot.show();
+	GameObject explosion(LightRed, 15);
 
 	int life = 3;
 	for (int i = 0; i < life; i++) {
@@ -181,14 +186,13 @@ int main()
 
 			bot.hide();
 			
-			gotoXY(xB, yB); // устанавливаем курсор в (x,y)
-			SetColor(LightRed, Black);
-			printf("%c", 15); // рисуем взрыв
+			explosion.x(bot.x());
+			explosion.y(bot.y());
+			// рисуем взрыв
+			explosion.show();
 			Sleep(1000);
-			
-			gotoXY(xB, yB); // устанавливаем курсор в (x,y)
-			SetColor(Black, Black);
-			printf("%c", 15); // стираем взрыв
+			// стираем взрыв
+			explosion.hide();
 
 			hero.x(rand() % (X_MAX - X_MIN) + X_MIN); // задаём координату x
 			hero.y(rand() % (Y_MAX - Y_MIN) + Y_MIN); // задаём координату y
