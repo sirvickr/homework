@@ -146,7 +146,7 @@ namespace lab10
             }
         }
 
-        static void BinFileTask()
+        static void BinFileTask(string folder)
         {
             Console.WriteLine("\nРабота с двоичными файлами.");
 
@@ -155,13 +155,13 @@ namespace lab10
             int n = Convert.ToInt32(Console.ReadLine());
             //int n = 10;
 
-            ReverseNaturalSeq(n, @"D:\HW\projects\1365013 C# labs\lab10\file1.bin");
-            IntSeq(n, @"D:\HW\projects\1365013 C# labs\lab10\file2.bin");
-            RealSeq(n, @"D:\HW\projects\1365013 C# labs\lab10\file3.bin");
+            ReverseNaturalSeq(n, folder + @"\file1.bin");
+            IntSeq(n, folder + @"\file2.bin");
+            RealSeq(n, folder + @"\file3.bin");
 
         }
 
-        static void NetworkTask()
+        static void NetworkTask(string folder)
         {
             Console.WriteLine("\nРабота с сетью.");
             try
@@ -174,13 +174,6 @@ namespace lab10
                 //string url = "http://www.example.com";
                 string url = "http://www.mail.ru";
 
-                /*using (var client = new WebClient())
-                {
-                    string result = client.DownloadString(url);
-                    Console.WriteLine(result);
-                    Console.WriteLine("Headers: {0}", client.Headers.ToString());
-                    
-                }*/
                 var req = WebRequest.Create(url);
                 req.BeginGetResponse(r =>
                 {
@@ -189,16 +182,24 @@ namespace lab10
                     var reader = new StreamReader(stream, true);
                     var str = reader.ReadToEnd();
                     //Console.WriteLine(str);
-                    using (StreamWriter sw = new StreamWriter(@"D:\HW\projects\1365013 C# labs\lab10\web.txt", false, System.Text.Encoding.Default))
+                    using (StreamWriter sw = new StreamWriter(folder + @"\web.txt", false, System.Text.Encoding.Default))
                     {
                         sw.WriteLine(str);
                     }
                     // Поместите в текстовый файл информацию о хосте и всех адресах mail.ru
-                    using (StreamWriter sw = new StreamWriter(@"D:\HW\projects\1365013 C# labs\lab10\headers.txt", false, System.Text.Encoding.Default))
+                    using (StreamWriter sw = new StreamWriter(folder + @"\headers.txt", false, System.Text.Encoding.Default))
                     {
                         sw.WriteLine(response.Headers.ToString());
                     }
                 }, null);
+                /* аьтернативный способ
+                using (var client = new WebClient())
+                {
+                    string result = client.DownloadString(url);
+                    Console.WriteLine(result);
+                    Console.WriteLine("Headers: {0}", client.Headers.ToString());
+                    
+                }*/
             }
             catch (Exception e)
             {
@@ -206,12 +207,11 @@ namespace lab10
             }
         }
 
-        static void TextFileTask()
+        static void TextFileTask(string folder)
         {
             Console.WriteLine("\nРабота с текстовым (символьным) файлом.");
 
-            string path = @"D:\HW\projects\1365013 C# labs\lab10\input.txt";
-            //string path = "input.txt"
+            string path = folder + @"\input.txt";
 
             try
             {
@@ -274,9 +274,9 @@ namespace lab10
         static void Main(string[] args)
         {
             Console.WriteLine("Лабораторная работа №10");
-            BinFileTask();
-            TextFileTask();
-            NetworkTask();
+            BinFileTask(@"..\..");
+            TextFileTask(@"..\..");
+            NetworkTask(@"..\..");
 
             Console.Write("\nНажмите любую клавишу...");
             Console.ReadKey();
