@@ -46,7 +46,6 @@ public:
             pt::read_xml(fileName, tree, pt::xml_parser::no_comments | pt::xml_parser::trim_whitespace);
             for( const auto& root : tree ) { // root - это <Config>
                 for( const auto& v : root.second ) {
-                    //cout << "data(size is " << v.second.data().size() << "): first \"" << v.first << "\" second \"" << v.second.data() << "\"" << endl;
                     istringstream iss(v.second.data());
                     if(v.first == "NumberOfProcess") {
                         iss >> _procNum;
@@ -118,19 +117,17 @@ string generate_content(size_t max_file_size) {
 
 vector<string> generate_input_files(const string& prefix, size_t count, size_t max_file_size) {
     vector<string> names;
-    cout << "generate_input_files: prefix \"" << prefix << "\" count " << count << " max_file_size " << max_file_size << endl;
     ofstream file;
     for(size_t i = 0; i < count; i++) {
         ostringstream oss;
         oss << prefix << "." << i << ".txt";
-        cout << " file: " << oss.str() << endl;
         file.open(oss.str(), fstream::out);
         if(file.is_open()) {
             names.push_back(oss.str());
             file << generate_content(max_file_size);
             file.close();
         } else {
-            cout << "не удалось создать файл " << oss.str();
+            cerr << "не удалось создать файл " << oss.str();
         }
     }
     return names;
@@ -145,15 +142,12 @@ int main(int argc, char **argv) {
     }
 
     vector<string> inFileNames = generate_input_files(settings.inPrefix(), settings.procNum(), settings.maxInSize());
-    cout << "generated " << inFileNames.size() << " input files:" << endl;
-    for(const auto name: inFileNames)
-        cout << " " << name << endl;
 
     size_t procCount = settings.procNum();
     for (size_t i = 0; i < procCount; i++) {
         pid_t pid = fork();
         if (pid == -1) {
-            printf("Невозможно создать процесс\n");
+            cerr << "Невозможно создать процесс" << endl;
             exit(1);
         } else if (pid == 0) {
             // дочерний процесс
@@ -162,7 +156,6 @@ int main(int argc, char **argv) {
             ofstream output;
             string s;
             // читаем свой файл с исходными данными
-            cout << " read input file: " << inFileNames[i] << endl;
             input.open(inFileNames[i], fstream::in);
             if(input.is_open()) {
                 // вычисляем его размер
@@ -179,7 +172,6 @@ int main(int argc, char **argv) {
                     size_t wordCount = 0;
                     while(input >> s) {
                         wordCount++;
-                        cout << wordCount << "\t " << s << "\t -> " << input.tellg() << endl;
                     }
                     // вычисляем время подсчёта
                     auto finish = steady_clock::now();
@@ -193,7 +185,6 @@ int main(int argc, char **argv) {
                         output << "Error: " << size << "/" << settings.maxInSize() << '\n';
                     }
                     output.close();
-                    cout << " wrote output file: " << oss.str() << endl;
                 }
                 input.close();
             }
