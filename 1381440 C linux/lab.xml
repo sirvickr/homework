@@ -7,5 +7,5 @@
     <!-- префикс выходных файлов -->
     <OutputPrefix>output</OutputPrefix>
     <!-- максимальный размер входного файла -->
-    <MaxFileSize>500000</MaxFileSize>
+    <MaxFileSize>5000000</MaxFileSize>
 </Config>

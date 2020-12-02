@@ -38,8 +38,12 @@ Name: *Имя входного файла*
 Count: *Количество слов в файле* Pid: *id процесса, который выполнял работу* Time: *Время выполнения* Error: *В случае превышения MaxFileSize*
 */
 
+// класс настроек приложения
 class Settings {
 public:
+
+    // прочитать настройки из xml-файла
+    
     bool read(const string& fileName) {
         try {
             pt::ptree tree;
@@ -69,6 +73,8 @@ public:
         return true;
     }
     
+    // методы доступа к данным
+
     size_t procNum() const {
         return _procNum;
     }
@@ -96,11 +102,13 @@ private:
     size_t _maxInSize = 0;
 };
 
+// сгенерировать слова для одного файла
 string generate_content(size_t max_file_size) {
     const size_t max_word_length = 15;
     string content;
     content.reserve(max_file_size);
     bool space = false; // пробел разрешён
+    max_file_size += (rand() % 3); // иногда размер исходного будет чуть превышать ограничение
     for(size_t i = 0; i < max_file_size; i++) {
         // вставляем случайным образом пробел (в противном случае - случайный символ)
         int p = rand() % 5;
@@ -115,6 +123,7 @@ string generate_content(size_t max_file_size) {
     return content;
 }
 
+// создать исходные файлы и вернуть массив с их именами
 vector<string> generate_input_files(const string& prefix, size_t count, size_t max_file_size) {
     vector<string> names;
     ofstream file;
@@ -141,8 +150,12 @@ int main(int argc, char **argv) {
         return -1;
     }
 
+    cout << "Создание исходных файлов..." << endl;
+    // создаём исходные файлы и сохраняем их имена для дочерних процессов
     vector<string> inFileNames = generate_input_files(settings.inPrefix(), settings.procNum(), settings.maxInSize());
 
+    cout << "Запуск обработки..." << endl;
+    // запускаем обработку исходных файлов - по отному процессу на файл
     size_t procCount = settings.procNum();
     for (size_t i = 0; i < procCount; i++) {
         pid_t pid = fork();
