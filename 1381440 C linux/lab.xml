@@ -1,0 +1,11 @@
+
+<Config>
+	<!-- количество создаваемых процессов -->
+    <NumberOfProcess>5</NumberOfProcess>
+    <!-- префикс входных файлов -->
+    <InputPrefix>input</InputPrefix>
+    <!-- префикс выходных файлов -->
+    <OutputPrefix>output</OutputPrefix>
+    <!-- максимальный размер входного файла -->
+    <MaxFileSize>500000</MaxFileSize>
+</Config>
