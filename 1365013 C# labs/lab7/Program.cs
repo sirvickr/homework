@@ -126,27 +126,35 @@ namespace lab7
             Random rnd = new Random();
             Console.WriteLine("Часть 1");
 
-            string str = "Привет мир";
-            char ch = 'и';
-            int count = str.WordCount(ch);
-            Console.WriteLine("Количество вхождений символа '{0}' в строке \"{1}\": {2}", ch, str, count);
-
+            // 2. Написать метод max(x, y), находящий максимальное значение из двух чисел.
+            //    С его помощью найти максимальное значение из четырёх чисел a, b, c, d.
             int a = rnd.Next(-5, 6);
             int b = rnd.Next(-5, 6);
             int c = rnd.Next(-5, 6);
             int d = rnd.Next(-5, 6);
             int m = Max(a, Max(b, Max(c, d)));
-            Console.WriteLine("Максимум из {0}, {1}, {2}, {3}: {4}", a, b, c, d, m);
+            Console.WriteLine("\nМаксимум из {0}, {1}, {2}, {3}: {4}", a, b, c, d, m);
 
+            // Определите метод расширения, подсчитывающий количество делителей в исходном целом числе.
+            Console.Write("Введите целое число для подсчёта количества делителей: ");
+            int num = Convert.ToInt32(Console.ReadLine());
+            Console.WriteLine("\nколичество делителей в числе {0}: {1}", num, num.DividersCount());
+
+            // 5. Написать метод, вычисляющий значение xn/(n+x). С его помощью вычислить выражение.
             double x = rnd.Next(1, 5);
             double expression = 0.0;
             for(int i = 0; i < 10; i++)
             {
                 expression += Proportion(x, i);
             }
-            Console.WriteLine("Результат вычисления выражения для x = {0}: {1}", x, expression);
+            Console.WriteLine("\nРезультат вычисления выражения для x = {0}: {1}", x, expression);
 
-            Console.WriteLine("Таблица sin и cos от -PI до PI");
+            // Определите метод расширения, вычисляющий дробную часть в выражении
+            Console.WriteLine("\nДробная часть выражения: {0}", expression.Fraction());
+
+            // 11. Написать метод, который вычисляет значения x=sin2(a) и y=cos2(a). 
+            //     Напечатать таблицу значений от –π до π с шагом π/4
+            Console.WriteLine("\nТаблица sin и cos от -PI до PI");
             x = -Math.PI;
             double step = Math.PI / 4.0;
             while (x <= Math.PI)
@@ -155,6 +163,12 @@ namespace lab7
                 Console.WriteLine("{0}\t{1}", sincos[0], sincos[1]);
                 x += step;
             }
+
+            // Написать метод расширения, обнуляющий в массиве все отрицательные элементы.
+            int[] array = new int[] { 1, -1, 2, -2 };
+            array.Print("\nМассив до обнуления: ");
+            array.NullifyNegative();
+            array.Print("Массив после обнуления: ");
 
             Console.WriteLine("\nЧасть 2");
             int n = 5;
@@ -167,14 +181,14 @@ namespace lab7
                     jagged[i][j] = i * 10 + j;
                 }
             }
-            PrintJagged(jagged, n, "Ступенчатый массив:");
+            PrintJagged(jagged, n, "\nСтупенчатый массив:");
             ReplaceEvenColumns(jagged, n, new int[] { 0, -1, 0, 0, -2 });
-            PrintJagged(jagged, n, "После замены чётных столбцов:");
+            PrintJagged(jagged, n, "\nПосле замены чётных столбцов:");
             int[] posCounts = CountPositive(jagged, n);
-            PrintVector(posCounts, n, "Количество положительных элементов в строках:");
+            PrintVector(posCounts, n, "\nКоличество положительных элементов в строках:");
             int[] oddIndices = FindLastOdd(jagged, n);
-            PrintVector(oddIndices, n, "Номера последнего нечётного элемента в столбцах:");
-            Console.WriteLine("Нажмите любую клавишу...");
+            PrintVector(oddIndices, n, "\nНомера последнего нечётного элемента в столбцах:");
+            Console.WriteLine("\nНажмите любую клавишу...");
             Console.ReadKey();
         }
     }

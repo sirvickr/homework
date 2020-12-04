@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace lab8
 {
@@ -11,15 +8,17 @@ namespace lab8
         // меняет местами первую букву со второй, третью с четвертой и т.д.
         static string SwapCouples(string s)
         {
-            string result = "";
-            for (int i = 0; i < s.Length; i += 2)
+            StringBuilder sb = new StringBuilder(s);
+            for (int i = 0; i < sb.Length; i += 2)
             {
-                char c = s[i];
-                if(i < s.Length - 1)
-                    result += s[i + 1];
-                result += s[i];
+                char ch = sb[i];
+                if (i < sb.Length - 1)
+                {
+                    sb[i] = sb[i + 1];
+                    sb[i + 1] = ch;
+                }
             }
-            return result;
+            return sb.ToString();
         }
 
         // подсчитывает количество букв в строке
@@ -39,7 +38,8 @@ namespace lab8
         // заменяет все вхождения подстроки substr1 на подстроку substr2
         static string ReplaceSubstr(string s, string substr1, string substr2)
         {
-            return s.Replace(substr1, substr2);
+            StringBuilder sb = new StringBuilder(s);
+            return sb.Replace(substr1, substr2).ToString();
         }
 
         // Вывести только те слова сообщения, которые содержат не более чем n букв
@@ -56,18 +56,52 @@ namespace lab8
             }
         }
 
+        static void RemoveIf(ref StringBuilder sb, ref int begin, ref int end, char ch)
+        {
+            int length = end - begin;
+            if (length > 0)
+            {
+                if (sb[end - 1] == ch)
+                {
+                    sb.Remove(begin, length);
+                    begin -= length;
+                    end -= length;
+                }
+            }
+        }
+
         // Печатает все слова, кроме заканчивающихся на заданный символ
         static void PrintFilteredWords(string s, char ch)
         {
-            Console.WriteLine("\nСлова сообщения, не оканчивающихся на '{0}':", ch);
-            string[] words = s.Split(new char[5] { ' ', ',', '.', ';', '-' }, StringSplitOptions.RemoveEmptyEntries);
-            for (int i = 0; i < words.Length; i++)
+            StringBuilder sb = new StringBuilder(s);
+            int begin = 0;
+            int index = 0;
+            bool withinWord = false;
+            for (; index < sb.Length; index++)
             {
-                if (!words[i].EndsWith(ch.ToString()))
+                char c = sb[index];
+                if(c == ' ' || c == '\t')
                 {
-                    Console.WriteLine(words[i]);
+                    if (withinWord)
+                    {
+                        RemoveIf(ref sb, ref begin, ref index, ch);
+                        withinWord = false;
+                    }
+                }
+                else
+                {
+                    if (!withinWord)
+                    {
+                        begin = index;
+                        withinWord = true;
+                    }
                 }
             }
+            if (index - begin > 0)
+            {
+                RemoveIf(ref sb, ref begin, ref index, ch);
+            }
+            Console.WriteLine("\nСообщение без слов, оканчивающихся на '{0}': {1}", ch, sb.ToString());
         }
 
         // Найти самое длинное слово сообщения
@@ -110,7 +144,7 @@ namespace lab8
             PrintShortWords(message, 7);
 
             // - Удалить из сообщения все слова, которые заканчиваются на заданный символ.
-            PrintFilteredWords(message, 'е');
+            PrintFilteredWords(message, 'я');
 
             // - Найти самое длинное слово сообщения.
             Console.WriteLine("\nСамое длинное слово в строке: {0}", TheLongestWord(message));

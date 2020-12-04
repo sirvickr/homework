@@ -54,6 +54,11 @@ namespace customers_db
                 while (true)
                 {
                     Socket handler = listenSocket.Accept();
+
+                    // отправляем код подтвержения
+                    byte[] ack = new byte[] { 1, 2, 3, 4 };
+                    handler.Send(ack);
+
                     // получаем запрос
                     StringBuilder builder = new StringBuilder();
                     int bytes = 0; // количество полученных байтов
@@ -64,25 +69,24 @@ namespace customers_db
                         builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
                     }
                     while (handler.Available > 0);
+
                     string name = builder.ToString();
                     // пишем в журнал о принятом запросе
                     Console.WriteLine(DateTime.Now.ToShortTimeString() + "\tзапрос на покупателя: " + name);
+                    
                     // отправляем ответ
                     string message = null;
                     if (customers.ContainsKey(name))
-                    {
                         message = customers[name].ToString();
-                    }
                     else
-                    {
                         message = "покупатель не найден в БД";
-                    }
                     data = Encoding.Unicode.GetBytes(message);
                     handler.Send(data);
+                    
                     // закрываем сокет
                     handler.Shutdown(SocketShutdown.Both);
                     handler.Close();
-                }
+                } // цикл приёма соединений
             }
             catch (Exception ex)
             {
