@@ -16,6 +16,13 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
+     <widget class="QLineEdit" name="txtFilter">
+      <property name="toolTip">
+       <string>Фильтры по имени файлов (разделены символом &quot;;&quot;)</string>
+      </property>
+     </widget>
+    </item>
+    <item>
      <widget class="QSplitter" name="splitHorz">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
@@ -43,6 +50,47 @@
    </property>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actSave">
+   <property name="text">
+    <string>Сохранить</string>
+   </property>
+   <property name="toolTip">
+    <string>Сохранить состояние текущей сессии</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actQuit">
+   <property name="text">
+    <string>Выход</string>
+   </property>
+   <property name="toolTip">
+    <string>Завершение работы</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
+  </action>
+  <action name="actAbout">
+   <property name="text">
+    <string>О программе</string>
+   </property>
+   <property name="toolTip">
+    <string>Информация о приложении</string>
+   </property>
+  </action>
+  <action name="actShowAll">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Все файлы</string>
+   </property>
+   <property name="toolTip">
+    <string>Отображать все файлы, независимо от текущего фильтра</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>

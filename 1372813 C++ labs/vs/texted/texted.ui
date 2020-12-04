@@ -11,10 +11,17 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>texted</string>
+   <string>Просмотр файлов</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QLineEdit" name="txtFilter">
+      <property name="toolTip">
+       <string>Фильтры по имени файлов (разделены символом &quot;;&quot;)</string>
+      </property>
+     </widget>
+    </item>
     <item>
      <widget class="QSplitter" name="splitter_2">
       <property name="orientation">
@@ -41,51 +48,87 @@
      <height>21</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menu">
+   <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>Файл</string>
     </property>
-    <addaction name="action"/>
-    <addaction name="action_2"/>
-    <addaction name="separator"/>
-    <addaction name="action_3"/>
    </widget>
-   <widget class="QMenu" name="menu_2">
+   <widget class="QMenu" name="menuHelp">
     <property name="title">
-     <string>Инструменты</string>
+     <string>Справка</string>
     </property>
-    <addaction name="action_5"/>
    </widget>
-   <addaction name="menu"/>
-   <addaction name="menu_2"/>
-  </widget>
-  <widget class="QToolBar" name="mainToolBar">
-   <attribute name="toolBarArea">
-    <enum>TopToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
+   <addaction name="menuFile"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-  <action name="action">
+  <action name="actSave">
+   <property name="icon">
+    <iconset>
+     <normaloff>../../img/save.png</normaloff>../../img/save.png</iconset>
+   </property>
    <property name="text">
-    <string>Сохранить сессию</string>
+    <string>Сохранить</string>
+   </property>
+   <property name="toolTip">
+    <string>Сохранить состояние текущей сессии</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
    </property>
   </action>
-  <action name="action_2">
-   <property name="text">
-    <string>Загрузить сессию</string>
+  <action name="actQuit">
+   <property name="icon">
+    <iconset>
+     <normaloff>../../img/close.png</normaloff>../../img/close.png</iconset>
    </property>
-  </action>
-  <action name="action_3">
    <property name="text">
     <string>Выход</string>
    </property>
+   <property name="toolTip">
+    <string>Завершение работы</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
   </action>
-  <action name="action_5">
+  <action name="actAbout">
+   <property name="icon">
+    <iconset>
+     <normaloff>../../img/info.png</normaloff>../../img/info.png</iconset>
+   </property>
    <property name="text">
-    <string>Фильтр</string>
+    <string>О программе</string>
+   </property>
+   <property name="toolTip">
+    <string>Информация о приложении</string>
+   </property>
+  </action>
+  <action name="actShowAll">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>../../img/all.png</normaloff>../../img/all.png</iconset>
+   </property>
+   <property name="text">
+    <string>Все файлы</string>
+   </property>
+   <property name="toolTip">
+    <string>Отображать все отфильтрованные файлы затенёнными</string>
+   </property>
+  </action>
+  <action name="actAutosave">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>../../img/autosave.png</normaloff>../../img/autosave.png</iconset>
+   </property>
+   <property name="text">
+    <string>Автосохранение при выходе</string>
    </property>
   </action>
  </widget>
