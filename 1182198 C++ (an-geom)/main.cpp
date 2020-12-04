@@ -229,10 +229,10 @@ figures_t findFigures(points_t& points) {
 										#endif
 										vTopExcludes.push_back(k);
 									}
-									if(vertexIndex < vertexes.size())
+									if (vertexIndex < vertexes.size())
 										vertexes[vertexIndex++] = k;
 									else
-										cerr << "!!!!!!!! vertexes[ " << vertexIndex << " ]: " << vertexes.size() << " !!!!!!!!";
+										;// cerr << "!!!!!!!! vertexes[ " << vertexIndex << " ]: " << vertexes.size() << " !!!!!!!!";
 									mask |= (1 << index);
 								}
 								#ifdef TRACE_ON
