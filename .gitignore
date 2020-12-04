@@ -28,3 +28,6 @@
 *.layout
 .metadata
 build-*
+/1249908 Java (Ants)/Task/nbproject/private/
+/1249908 Java (Ants)/Task/build/
+/1249908 Java (Ants)/Task/dist/
