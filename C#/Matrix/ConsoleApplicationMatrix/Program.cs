@@ -45,6 +45,8 @@ namespace ConsoleApplicationMatrix
 
                 //Выводим матрицу c. 
                 c.Show();
+
+
             }
             catch (MyException e)
             {
