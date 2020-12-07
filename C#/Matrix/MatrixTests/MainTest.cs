@@ -252,7 +252,5 @@ namespace MatrixTests
             Matrix a = new Matrix(2, 2);
             int r = a[3, 1];
         }
-
-
     }
 }
