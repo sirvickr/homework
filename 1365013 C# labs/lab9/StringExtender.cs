@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace lab9
@@ -24,27 +25,14 @@ namespace lab9
         // Является ли строка телефонным номером, записанным в формате xx-xx-xx, xxx-xxx или xxx-xx-xx
         public static bool IsPhoneNumber(this string s)
         {
-            // xx-xx-xx
-            if (s.Length == 8 && Char.IsDigit(s[0]) && Char.IsDigit(s[1]) &&
-                s[2] == '-' && Char.IsDigit(s[3]) && Char.IsDigit(s[4]) &&
-                s[5] == '-' && Char.IsDigit(s[6]) && Char.IsDigit(s[7]))
-            {
-                return true;
-            }
-            // xxx-xxx
-            if (s.Length == 7 && Char.IsDigit(s[0]) && Char.IsDigit(s[1]) && Char.IsDigit(s[2]) &&
-                s[3] == '-' && Char.IsDigit(s[4]) && Char.IsDigit(s[5]) && Char.IsDigit(s[6]))
-            {
-                return true;
-            }
-            // xxx-xx-xx
-            if (s.Length == 9 && Char.IsDigit(s[0]) && Char.IsDigit(s[1]) && Char.IsDigit(s[2]) &&
-                s[3] == '-' && Char.IsDigit(s[4]) && Char.IsDigit(s[5]) &&
-                s[6] == '-' && Char.IsDigit(s[7]) && Char.IsDigit(s[8]))
-            {
-                return true;
-            }
-
+            Regex[] expressions = new Regex[] {
+                new Regex(@"^\d{2}-\d{2}-\d{2}"),
+                new Regex(@"^\d{3}-\d{3}"),
+                new Regex(@"^\d{3}-\d{2}-\d{2}"),
+            };
+            foreach(Regex regex in expressions)
+                if(regex.Matches(s).Count > 0)
+                    return true;
             return false;
         }
     }

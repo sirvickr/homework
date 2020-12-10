@@ -138,6 +138,9 @@ namespace lab9
             Console.WriteLine("содержится в исходном сообщении");
             // Замените его на слово, определенное пользователем. 
             PrintCensoredWords(message, substr, substitute);
+            Console.Write("\nНажмите любую клавишу...");
+            Console.ReadKey();
+
             // Выведите все слова заданной длины. 
             PrintEqualWords(message, 9);
             // Выведите на экран все слова сообщения, записанные с заглавной буквы.
