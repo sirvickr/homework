@@ -29,7 +29,7 @@ namespace lab7
             Console.Write("array:");
             for (int i = 0; i < array.Length; i++)
             {
-                if(array[i] < 0)
+                if (array[i] < 0)
                 {
                     array[i] = 0;
                 }
