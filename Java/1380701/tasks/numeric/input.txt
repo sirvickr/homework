@@ -1,0 +1,2 @@
+word n1 n2	abc
+cd21e1f opqr
