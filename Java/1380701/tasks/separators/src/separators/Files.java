@@ -6,7 +6,6 @@
 package separators;
 
 import java.io.*;
-import java.util.regex.*;
 
 public class Files {
 
@@ -22,24 +21,40 @@ public class Files {
 	        return;
 		}
 		char[] buf = new char[(int) file.length()];
-		try(FileReader reader = new FileReader("input.txt")) {
-	        int result = reader.read(buf);
-	        if(result != -1) {
-    			Pattern vowels = Pattern.compile("(?iu)[aeiouyAEIOUY]");
+		try {
+			FileReader reader = new FileReader("input.txt");
+			
+			int result = reader.read(buf);
+			if(result != -1) {
+				FileWriter writer = new FileWriter("output.txt", false);
 
-    			String str = new String(buf);
-	        	System.out.print(str);
-	        	String[] words = str.split("[_.,;:\\n\\t!?]+");
-        		System.out.println("");
-	        	for(String word : words) {
-        			Matcher m = vowels.matcher(word);
-        			int vowelCount = 0;
-        			while (m.find()) {
-        				vowelCount++;
-        			}
-        			System.out.println("\"" + word + "\": " + vowelCount);
-	        	}
-	        } 
+				String vowels = "aeiouyAEIOUY";
+			
+				String str = new String(buf);
+				System.out.print(str);
+				String[] words = str.split("[_.,;:\\n\\t!?]+");
+				System.out.println("");
+				for(String word : words) {
+					int vowelCount = 0;
+					int consonantCount = 0;
+					for(int i = 0; i < word.length(); i++) {
+						char ch = word.charAt(i);
+						if (vowels.indexOf(ch) >=0) {
+							vowelCount++;
+						} else if(Character.isLetter(ch)) {
+							consonantCount++;
+						}
+					}
+					if(vowelCount == consonantCount) {
+						System.out.println("\"" + word + "\": v " + vowelCount + " c " + consonantCount);
+						writer.write(word);
+						writer.append('\n');
+					}
+				} // for(word)
+				writer.close();
+			}
+			
+			reader.close();
 	    } catch(IOException ex) {
 	        System.out.println(ex.getMessage());
 	    }       
