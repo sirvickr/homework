@@ -8,7 +8,7 @@ import java.io.*;
 
 public class words {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		String fileName = "input.txt";
 		File file = new File(fileName);
 		if(!file.exists()) {
@@ -20,22 +20,20 @@ public class words {
 	        return;
 		}
 		char[] buf = new char[(int) file.length()];
-		try(FileReader reader = new FileReader("input.txt")) {
-	        int result = reader.read(buf);
-	        if(result != -1) {
-	        	String str = new String(buf);
-	        	System.out.print(str);
-	        	String[] words = str.split("[ \t\n]+");
-        		System.out.println("");
-	        	for(String word : words) {
-	        		if(word.matches(".*\\d.*")) {
-	        			System.out.println("\"" + word + "\"");
-	        		}
-	        	}
-	        } 
-	    } catch(IOException ex) {
-	        System.out.println(ex.getMessage());
-	    }       
+		FileReader reader = new FileReader("input.txt");
+        int result = reader.read(buf);
+        if(result != -1) {
+        	String str = new String(buf);
+        	System.out.print(str);
+        	String[] words = str.split("[ \t\n]+");
+    		System.out.println("");
+        	for(String word : words) {
+        		if(word.matches(".*\\d.*")) {
+        			System.out.println("\"" + word + "\"");
+        		}
+        	}
+        }
+        reader.close();
 	}
 
 }

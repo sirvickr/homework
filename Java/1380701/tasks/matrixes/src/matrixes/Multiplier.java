@@ -26,70 +26,66 @@ public class Multiplier {
 	}
 	
 	// прочитать из файла матрицы с чётными номерами
-	static ArrayList<ArrayList<float[]>> readEvenMatrixes(String fileName)
+	static ArrayList<ArrayList<float[]>> readEvenMatrixes(String fileName) throws IOException
 	{
 		System.out.println("Содержимое файла " + fileName + ":");
 		ArrayList<ArrayList<float[]>> result = new ArrayList<ArrayList<float[]>>();
-		try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
-			String line;
-			int n = 0;
-			int index = 0; // номер матрицы
-			ArrayList<float[]> matrix = new ArrayList<float[]>();
-			while ((line = br.readLine()) != null) {
-	        	String[] words = line.trim().split("[\t]+");
-	        	if(words.length > 1) {
-		        	n = words.length;
-		        	float[] row = new float[n];
-		        	for(int j = 0; j < n; j++)
-		        		row[j] = Float.parseFloat(words[j]);
-					matrix.add(row);
-	        	} else {
-		        	if(n > 0) { // только что закончили формирование матрицы
-		    			index++; // индекс сразу преобразуется в порядковый номер
-		        		if(index % 2 == 0) { // если порядклвый номер чётный, добавляем матрицу в результат
-		        			printMatrix(matrix);
-		        			result.add(matrix);
-		        		}
-						matrix = new ArrayList<float[]>();
+		BufferedReader br = new BufferedReader(new FileReader(fileName));
+		String line;
+		int n = 0;
+		int index = 0; // номер матрицы
+		ArrayList<float[]> matrix = new ArrayList<float[]>();
+		while ((line = br.readLine()) != null) {
+        	String[] words = line.trim().split("[\t]+");
+        	if(words.length > 1) {
+	        	n = words.length;
+	        	float[] row = new float[n];
+	        	for(int j = 0; j < n; j++)
+	        		row[j] = Float.parseFloat(words[j]);
+				matrix.add(row);
+        	} else {
+	        	if(n > 0) { // только что закончили формирование матрицы
+	    			index++; // индекс сразу преобразуется в порядковый номер
+	        		if(index % 2 == 0) { // если порядклвый номер чётный, добавляем матрицу в результат
+	        			printMatrix(matrix);
+	        			result.add(matrix);
+	        		}
+					matrix = new ArrayList<float[]>();
 
-						n = 0;
-		        	}
+					n = 0;
 	        	}
-	        	///System.out.println("");
-			}
-	    } catch(IOException ex) {
-	        System.out.println(ex.getMessage());
-	    }
+        	}
+        	///System.out.println("");
+		}
+		br.close();
 		return result;
 	}
 	
 	// записать список матриц в файл
-	static void writeMatrixList(String fileName, ArrayList<ArrayList<float[]>> matrixes)
+	static void writeMatrixList(String fileName, ArrayList<ArrayList<float[]>> matrixes) throws IOException
 	{
 		System.out.println("Содержимое файла " + fileName + ":");
-		try (FileWriter writer = new FileWriter(fileName, false)) {
-			for(int x = 0; x < matrixes.size(); x++) {
-				ArrayList<float[]> m = matrixes.get(x);
-				for(float[] row : m) {
-					boolean first = true;
-					for(float cell : row) {
-						if(!first)
-							writer.append('\t');
-						first = false;
-						writer.write(Float.toString(cell));
-					}
-					writer.append('\n');
+		FileWriter writer = new FileWriter(fileName, false);
+		for(int x = 0; x < matrixes.size(); x++) {
+			ArrayList<float[]> m = matrixes.get(x);
+			for(float[] row : m) {
+				boolean first = true;
+				for(float cell : row) {
+					if(!first)
+						writer.append('\t');
+					first = false;
+					writer.write(Float.toString(cell));
 				}
 				writer.append('\n');
-    			printMatrix(m);
 			}
-			//writer.write("\nРазмер подмножества товаров, удовлетворяющих условию: " + count);
-	    } catch(IOException ex) {
-	        System.out.println(ex.getMessage());
+			writer.append('\n');
+			printMatrix(m);
 		}
+		//writer.write("\nРазмер подмножества товаров, удовлетворяющих условию: " + count);
+		writer.close();
 	}
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		String iFileName1 = "1.txt";
 		String iFileName2 = "2.txt";
 		String oFileName = "3.txt";

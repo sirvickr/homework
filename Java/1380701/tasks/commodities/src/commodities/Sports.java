@@ -9,31 +9,27 @@ import java.io.*;
 
 public class Sports {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		String fileName = "input.txt";
     	int count = 0;
-		try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
-			String line;
-			while ((line = br.readLine()) != null) {
-	        	System.out.println(line);
-	        	String[] words = line.split("[\t]+");
-	        	if(words.length != 5) {
-        			continue;
-	        	}
-	        	float weight = Float.parseFloat(words[3]);
-	        	float price = Float.parseFloat(words[4]);
-	        	if(weight >= 15000.0f && weight <= 25000.0f && price >= 10000.0f && price <= 50000.0f) {
-	        		count++;
-	        	}
-			}
-	    } catch(IOException ex) {
-	        System.out.println(ex.getMessage());
-	    }
-		try (FileWriter writer = new FileWriter(fileName, true)) {
-			writer.write("\nРазмер подмножества товаров, удовлетворяющих условию: " + count);
-	    } catch(IOException ex) {
-	        System.out.println(ex.getMessage());
+		BufferedReader br = new BufferedReader(new FileReader(fileName));
+		String line;
+		while ((line = br.readLine()) != null) {
+        	System.out.println(line);
+        	String[] words = line.split("[\t]+");
+        	if(words.length != 5) {
+    			continue;
+        	}
+        	float weight = Float.parseFloat(words[3]);
+        	float price = Float.parseFloat(words[4]);
+        	if(weight >= 15000.0f && weight <= 25000.0f && price >= 10000.0f && price <= 50000.0f) {
+        		count++;
+        	}
 		}
+		FileWriter writer = new FileWriter(fileName, true);
+		writer.write("\nРазмер подмножества товаров, удовлетворяющих условию: " + count);
+		br.close();
+		writer.close();
 	}
 
 }
