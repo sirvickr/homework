@@ -1,110 +1,11 @@
 ﻿using System;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace lab9
 {
     class Program
     {
-        const int RuFirst = 1040;
-        const int RuLast = 1103;
-
-        // Вывести массив строк
-        static void PrintStrings(string[] strings, string caption = "")
-        {
-            if (caption.Length >= 0)
-                Console.WriteLine(caption);
-            for (int i = 0; i < strings.Length; i++)
-            {
-                Console.WriteLine(strings[i]);
-            }
-        }
-
-        // Определяет, содержится ли в сообщении заданное слово.
-        static bool FindWord(string s, string word)
-        {
-            string[] words = s.Split(new char[4] { ' ', ',', '.', ';' }, StringSplitOptions.RemoveEmptyEntries);
-            for (int i = 0; i < words.Length; i++)
-            {
-                if (words[i] == word)
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        // Замените искомое слово.
-        static void PrintCensoredWords(string s, string oldWord, string newWord)
-        {
-            Console.WriteLine("\nСлова зацензурированного сообщения (\"{0}\" заменяется на \"{1}\"):", oldWord, newWord);
-            string[] words = s.Split(new char[4] { ' ', ',', '.', ';' }, StringSplitOptions.RemoveEmptyEntries);
-            for (int i = 0; i < words.Length; i++)
-            {
-                if (words[i] != oldWord)
-                {
-                    Console.WriteLine(words[i]);
-                }
-                else
-                {
-                    Console.WriteLine(newWord);
-                }
-            }
-        }
-
-        // Вывести все слова заданной длины
-        static void PrintEqualWords(string s, int n)
-        {
-            Console.WriteLine("\nСлова сообщения, длина которых равна {0} символов:", n);
-            string[] words = s.Split(new char[4] { ' ', ',', '.', ';' }, StringSplitOptions.RemoveEmptyEntries);
-            for (int i = 0; i < words.Length; i++)
-            {
-                if (words[i].Length == n)
-                {
-                    Console.WriteLine(words[i]);
-                }
-            }
-        }
-
-        // Вывести все русские слова в тексте.
-        static void PrintCapitalizedWords(string s)
-        {
-            Console.WriteLine("\nВсе руские слова");
-            string[] words = s.Split(new char[4] { ' ', ',', '.', ';' }, StringSplitOptions.RemoveEmptyEntries);
-            for (int i = 0; i < words.Length; i++)
-            {
-                bool russian = true;
-                for (int j = 0; j < words.Length; j++)
-                {
-                    if (words[i][0] < RuFirst || words[i][0] > RuLast)
-                    {
-                        russian = false;
-                        break;
-                    }
-                }
-                if(russian)
-                {
-                    Console.WriteLine(words[i]);
-                }
-            }
-        }
-
-        // Вывести все слова в сообщении заданной длины, записанные с заглавной буквы
-        static void PrintCapitalizedWords(string s, int n = -1)
-        {
-            Console.Write("\nСлова сообщения, начинающиеся с заглавной буквы");
-            if(n >= 0)
-                Console.Write(", длина которых равна {0} символов:", n);
-            Console.WriteLine("");
-            string[] words = s.Split(new char[4] { ' ', ',', '.', ';' }, StringSplitOptions.RemoveEmptyEntries);
-            for (int i = 0; i < words.Length; i++)
-            {
-                if (words[i][0] != Char.ToUpper(words[i][0]))
-                    continue;
-                if (n >= 0 && words[i].Length != n)
-                    continue;
-                Console.WriteLine(words[i]);
-            }
-        }
-
         // Вывести номера телефонов, записанные в формате xx-xx-xx, xxx-xxx или xxx-xx-xx
         static void PrintPhoneNumbers(string s)
         {
@@ -128,34 +29,66 @@ namespace lab9
             string message = "Бессмысленное текстовое Сообщение, for the task: 23-14-85; 325-901; 537-22-12";
             Console.WriteLine("Часть 1. Исходная строка: {0}", message);
 
-            string substr = "текстовое";
-            Console.Write("Введите: чем заменить слово \"{0}\": ", substr);
-            string substitute = Console.ReadLine();
-            // Определите, содержится ли в сообщении заданное слово. 
-            Console.Write("Слово {0} ", substr);
-            if(!FindWord(message, substr))
-                Console.Write("не ");
-            Console.WriteLine("содержится в исходном сообщении");
-            // Замените его на слово, определенное пользователем. 
-            PrintCensoredWords(message, substr, substitute);
-            Console.Write("\nНажмите любую клавишу...");
-            Console.ReadKey();
+            Console.Write("Введите: длину слов для поиска: ");
+            string s = Console.ReadLine();
+            int length = s.Trim().Length > 0 ? Convert.ToInt32(s) : 9;
 
+            {
+                string taboo = "текстовое";
+                Console.Write("Введите: чем заменить слово \"{0}\": ", taboo);
+                string substitute = Console.ReadLine();
+                if(substitute.Trim().Length == 0)
+                    substitute = "голосовое";
+                // Определите, содержится ли в сообщении заданное слово. 
+                Console.Write("Слово \"{0}\" ", taboo);
+                if (!Regex.IsMatch(message, taboo))
+                    Console.Write("не ");
+                Console.WriteLine("содержится в исходном сообщении");
+                // Замените его на слово, определенное пользователем.
+                Regex regex = new Regex(taboo);
+                Console.WriteLine("\n1. Слова зацензурированного сообщения (\"{0}\" заменяется на \"{1}\"):\n{2}", taboo, substitute, regex.Replace(message, substitute));
+            }
             // Выведите все слова заданной длины. 
-            PrintEqualWords(message, 9);
+            {
+                Console.WriteLine("\n2. Слова сообщения, длина которых равна {0} символов:", length);
+                MatchCollection matches = new Regex(@"\b\w{" + length + @"}\b").Matches(message);
+                foreach (Match match in matches)
+                    Console.WriteLine(match.Value);
+            }
             // Выведите на экран все слова сообщения, записанные с заглавной буквы.
-            PrintCapitalizedWords(message);
+            {
+                Console.WriteLine("\n3. Слова сообщения, начинающиеся с заглавной буквы");
+                Regex regex = new Regex(@"\b[А-ЯA-Z]\w*");
+                MatchCollection matches = regex.Matches(message);
+                foreach (Match match in matches)
+                    Console.WriteLine(match.Value);
+            }
 
             // Удалите из сообщения все знаки препинания. 
-            Console.WriteLine("\nСообщение без знаков препинания: {0}", message.WithoutPunctuation());
+            Console.WriteLine("\n4. Сообщение без знаков препинания: {0}", message.WithoutPunctuation());
             // Найдите все русские слова в тексте.
-            PrintCapitalizedWords(message);
+            {
+                Console.WriteLine("\n5. Русские слова в тексте:");
+                MatchCollection matches = new Regex(@"\b[А-Яа-я]+\b").Matches(message);
+                foreach (Match match in matches)
+                    Console.WriteLine(match.Value);
+            }
+
             // Выведите на экран все слова в сообщении заданной длины записанные с заглавной буквы.
-            PrintCapitalizedWords(message, 9);
+            {
+                Console.WriteLine("\n6. Слова сообщения, записанные с заглавной буквы, длина которых равна {0} символов:", length);
+                Regex regex = new Regex(@"\b[А-ЯA-Z]\w{" + (length - 1) + @"}\b");
+                MatchCollection matches = regex.Matches(message);
+                foreach (Match match in matches)
+                    Console.WriteLine(match.Value);
+            }
 
             // В сообщении могут встречаться номера телефонов, записанные в формате xx-xx-xx, xxx-xxx или xxx-xx-xx. 
             // Вывести все номера телефонов, которые содержатся в сообщении.
             PrintPhoneNumbers(message);
+
+            Console.Write("\nНажмите любую клавишу для продолжения...");
+            Console.ReadKey();
 
             Console.WriteLine("\nКлассы\n");
 
@@ -173,6 +106,9 @@ namespace lab9
             Human adolescent = new Human(Mammal.Genders.Female, "Светлана", 15);
             adolescent.Print();
             Console.WriteLine("");
+
+            Console.Write("\nНажмите любую клавишу для продолжения...");
+            Console.ReadKey();
 
             // Часть 3
 
@@ -248,8 +184,7 @@ namespace lab9
             Console.WriteLine($"\nСекунды (3725с, оператор): {(int)time3}");
 
             Console.Write("\nВведите текущее время с клавиатуры (Ч:М:С): ");
-            string s = Console.ReadLine();
-            Time time = s;
+            Time time = Console.ReadLine();
             Console.WriteLine($"\nТекущее время: {time.ToString()}");
 
             Console.Write("\nНажмите любую клавишу...");
