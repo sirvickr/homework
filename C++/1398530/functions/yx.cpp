@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "yx.h"
 
 #include <cmath>
