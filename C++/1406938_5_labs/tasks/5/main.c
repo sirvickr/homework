@@ -10,7 +10,6 @@
 
 #define MAX_NAME_SIZE 256
 
-#define MENU_INPUT  0
 #define MENU_OUTPUT 1
 #define MENU_ACTION 2
 #define MENU_SEARCH 3
@@ -22,34 +21,6 @@ typedef struct {
 	char name[MAX_NAME_SIZE];
 	float price;
 } ticket_t;
-
-ticket_t* create_tickets(unsigned count) {
-	ticket_t* tickets = (ticket_t*)malloc(count * sizeof(ticket_t));
-	for(unsigned i = 0; i < count; i++) {
-		tickets[i].num = i + 1;
-		sprintf(tickets[i].name, "ticket%u", tickets[i].num);
-		tickets[i].price = 250.5f;
-	}
-	return tickets;
-}
-
-void destroy_tickets(ticket_t* tickets) {
-	free(tickets);
-}
-
-void print_ticket(const ticket_t* ticket) {
-	if(ticket) {
-		printf("%u\t\"%s\" (%.2f рублей)\n", ticket->num, ticket->name, ticket->price);
-	} else {
-		printf("Билет не найден\n");
-	}
-}
-
-void print_tickets(ticket_t* tickets, unsigned from, unsigned to) {
-	for(unsigned i = from; i < to; i++) {
-		print_ticket(&tickets[i]);
-	}
-}
 
 void input_ticket_num(ticket_t* ticket) {
 	printf("Введите номер билета: ");
@@ -70,6 +41,32 @@ void input_ticket(ticket_t* ticket) {
 	input_ticket_num(ticket);
 	input_concert_name(ticket);
 	input_ticket_price(ticket);
+}
+
+ticket_t* create_tickets(unsigned count) {
+	ticket_t* tickets = (ticket_t*)malloc(count * sizeof(ticket_t));
+	for(unsigned i = 0; i < count; i++) {
+		input_ticket(&tickets[i]);
+	}
+	return tickets;
+}
+
+void destroy_tickets(ticket_t* tickets) {
+	free(tickets);
+}
+
+void print_ticket(const ticket_t* ticket) {
+	if(ticket) {
+		printf("%u\t\"%s\" (%.2f рублей)\n", ticket->num, ticket->name, ticket->price);
+	} else {
+		printf("Билет не найден\n");
+	}
+}
+
+void print_tickets(ticket_t* tickets, unsigned from, unsigned to) {
+	for(unsigned i = from; i < to; i++) {
+		print_ticket(&tickets[i]);
+	}
 }
 
 ticket_t* find_ticket_by_num(ticket_t* tickets, unsigned count, unsigned num) {
@@ -128,7 +125,6 @@ int main( int argc, char* argv[] )
 		return 0;
 	ticket_t* tickets = create_tickets(n);
 	do {
-		printf("[%d]\tВвод данных\n", MENU_INPUT);
 		printf("[%d]\tВывод данных\n", MENU_OUTPUT);
 		printf("[%d]\tРабота с данными выбранного билета\n", MENU_ACTION);
 		printf("[%d]\tПоиск\n", MENU_SEARCH);
@@ -137,8 +133,6 @@ int main( int argc, char* argv[] )
 		printf("Выберите действие: ");
 		scanf("%u", &menu);
 		switch(menu) {
-		case MENU_INPUT:
-			break;
 		case MENU_OUTPUT:
 			printf("Введите индекс начала диапазона: ");
 			scanf("%u", &i);
@@ -215,7 +209,7 @@ int main( int argc, char* argv[] )
 			printf("Неверное значение\n");
 		}
 		printf("---------------------------------------------------------------------\n");
-	} while(menu != 9);
+	} while(menu != MENU_EXIT);
 
 	destroy_tickets(tickets);
 	return 0;
