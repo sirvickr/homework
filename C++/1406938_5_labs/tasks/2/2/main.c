@@ -10,11 +10,11 @@ int main( int argc, char* argv[] )
 {
 	int n, q;
 	scanf ("%d", &n);
-	printf("n = %d\n", n);
+	printf(" n = %d\n", n);
 	for(int i = 0; i < n; i++) {
 		scanf ("%d", &q);
 		if((q & 1) == 0 && ((q / 2) & 1) == 1) {
-			printf("%d\n", q);
+			printf(" %d\n", q);
 		}
 	}
 

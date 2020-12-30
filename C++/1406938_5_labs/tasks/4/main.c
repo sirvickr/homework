@@ -16,7 +16,7 @@ char s[MAX_BUF_SIZE];
 // точка входа программы
 int main( int argc, char* argv[] )
 {
-	printf("input string: ");
+	printf(" input string: ");
 	scanf ("%1023s", s); 
 	int state = STATE_INITIAL;
 	// указатель для пробега по строке - по нему будем считывать каждый символ
@@ -51,7 +51,7 @@ int main( int argc, char* argv[] )
 	}
 	if(target != NULL)
 		*target = '\0'; // обрезаем строку
-	fprintf(stderr, "result: \"%s\"\n", s);
+	fprintf(stderr, " result: \"%s\"\n", s);
 
 	return 0;
 }

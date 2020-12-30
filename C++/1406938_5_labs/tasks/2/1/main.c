@@ -9,9 +9,9 @@ int main( int argc, char* argv[] )
 {
 	int n;
 	double x;
-	printf("input n: ");
+	printf(" input n: ");
 	scanf ("%d", &n);
-	printf("input x: ");
+	printf(" input x: ");
 	scanf ("%lf", &x);
 	if(n > 0) {
 		double result = 0;
@@ -21,7 +21,7 @@ int main( int argc, char* argv[] )
 			result += x;
 			printf("%lf (sum = %lf)\n", x, result);
 		}
-		printf("result: %lf\n", result);
+		printf(" result: %lf\n", result);
 	}
 
 	return 0;

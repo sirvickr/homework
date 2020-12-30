@@ -5,11 +5,11 @@
 int main( int argc, char* argv[] )
 {
 	float x, y, z;
-	printf("input x: ");
+	printf(" input x: ");
 	scanf ("%f", &x);
-	printf("input y: ");
+	printf(" input y: ");
 	scanf ("%f", &y);
-	printf("input z: ");
+	printf(" input z: ");
 	scanf ("%f", &z);
 	
 	// сохраняем результаты промежуточных выражений, чтобы не вычислять их по 2 раза
@@ -20,7 +20,7 @@ int main( int argc, char* argv[] )
 
 	float b = 1 + cos(y - 2) / (x * x * x * x / 2 + sinz * sinz);
 	
-	printf("x %f y %f z %f:\na %f b %f\n", x, y, z, a, b);
+	printf(" x %f y %f z %f:\n a %f b %f\n", x, y, z, a, b);
 
 	return 0;
 }

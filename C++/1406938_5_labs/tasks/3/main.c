@@ -28,7 +28,7 @@ double G(double x) {
 int main( int argc, char* argv[] )
 {
 	double x;
-	printf("input x0: ");
+	printf(" input x0: ");
 	scanf ("%lf", &x);
 	double X[SEQUENCE_ITEM_COUNT] = { x };
 	double Y[SEQUENCE_ITEM_COUNT];
@@ -39,9 +39,9 @@ int main( int argc, char* argv[] )
 		Y[i] = G(X[i]);
 		F += X[i];
 	}
-	printf("F = %e\n", F);
+	printf(" F = %e\n", F);
 	for(int i = 0; i < SEQUENCE_ITEM_COUNT; i++) {
-		printf("y%d\t%.3f\n", i + 1, Y[i]);
+		printf(" y%d\t%.3f\n", i + 1, Y[i]);
 	}
 
 	return 0;

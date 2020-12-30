@@ -33,14 +33,14 @@ int main( int argc, char* argv[] )
 		{ -0.5f,  0.0f },
 	};
 	Point point;
-	printf("input x: ");
+	printf(" input x: ");
 	scanf ("%f", &point.X);
-	printf("input y: ");
+	printf(" input y: ");
 	scanf ("%f", &point.Y);
 	
 	int in = IsPointInsidePolygon(shape, VERTEX_COUNT, point);
 	
-	printf("point (%f %f) is ", point.X, point.Y);
+	printf(" point (%f %f) is ", point.X, point.Y);
 	if(in)
 		printf("inside");
 	else
