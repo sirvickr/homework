@@ -11,8 +11,6 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <math.h>
 
 #define SEQUENCE_ITEM_COUNT 11
