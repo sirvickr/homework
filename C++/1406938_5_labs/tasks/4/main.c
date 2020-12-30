@@ -13,45 +13,47 @@
 #define STATE_BRACKET 1
 #define MAX_BUF_SIZE 1024
 
+char s[MAX_BUF_SIZE];
+
 // точка входа программы
 int main( int argc, char* argv[] )
 {
-	char s[MAX_BUF_SIZE] = "s(abc)de(fgq)(we)rty";
-	fprintf(stderr, "s = %s\n", s);
+	printf("input string: ");
+	scanf ("%1023s", s); 
 	int state = STATE_INITIAL;
+	// указатель для пробега по строке - по нему будем считывать каждый символ
 	char* pc = s;
+	// указатель для затирания символов, которые стоят в скобках
 	char* target = NULL;
+	// проходим по строке один раз, анализируя каждый символ
 	while(*pc != '\0') {
-		fprintf(stderr, "%c:\t", *pc);
 		switch(state) {
 		case STATE_INITIAL:
-			fprintf(stderr, "i\t");
+			// находимся снаружи скобок
 			if(*pc == '(') {
-				fprintf(stderr, "->b");
+				// нашли скобку - ставим сюда указатель для последующего затирания символов
 				if(target == NULL)
 					target = pc;
 				state = STATE_BRACKET;
 			} else if(target != NULL && target != pc) {
-				fprintf(stderr, " copy: %c->%c", *target, *pc);
+				// затираем символы, которые были в скобках
 				*target = *pc;
 				target++;
 			}
 			break;
 		case STATE_BRACKET:
-			fprintf(stderr, "b");
+			// находимся внутри скобок
 			if(*pc == ')') {
-				fprintf(stderr, "->i");
 				state = STATE_INITIAL;
 			}
 			break;
 		}
-		fprintf(stderr, "\n");
 		pc++;
 		///break;
 	}
 	if(target != NULL)
-		*target = '\0';
-	fprintf(stderr, "s = %s\n", s);
+		*target = '\0'; // обрезаем строку
+	fprintf(stderr, "result: \"%s\"\n", s);
 
 	return 0;
 }
