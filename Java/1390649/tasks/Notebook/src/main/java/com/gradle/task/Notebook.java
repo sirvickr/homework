@@ -77,18 +77,33 @@ public class Notebook {
         }
     }
 
-    // вывести отфильтрованные по ключам заметки на экран
-    public void Print(String[] args) {
+    // вывести отфильтрованные по датам и ключам заметки на экран
+    public void Print(String[] filters) {
         TreeMap<Date, String> messages = new TreeMap<>();
+        Date since = null;
+        Date until = null;
+        if(filters.length >= 2) {
+            try {
+                since = dateFormat.parse(filters[0]);
+                until = dateFormat.parse(filters[1]);
+                System.out.println("since \"" + dateFormat.format(since) + "\" until \"" + dateFormat.format(until) + "\"");
+            } catch (ParseException e) {
+                System.out.println("Недопустимый формат даты, должен быть такой: " + datePattern);
+            }
+        }
         for (String key : data.notes.keySet()) {
             Message item = data.notes.get(key);
-            boolean matchKey = args.length <= 3 || Arrays.asList(args).contains(key);
-            if(matchKey) {
-                try {
-                    messages.put(dateFormat.parse(item.date), item.date + "\t[" + key + "]\t" + item.note);
-                } catch (ParseException e) {
-                    System.out.println("Недопустимый формат даты в сообщении (" + item.date + "), должен быть такой: " + datePattern);
+            try {
+                Date date = dateFormat.parse(item.date);
+                // true если либо фильтр не задан, либо дата не попадает в него; иначе false
+                boolean matchDate = since == null || until == null ||
+                       (date.compareTo(since) >= 0 && date.compareTo(until) <= 0);
+                boolean matchKey = filters.length < 3 || Arrays.asList(filters).contains(key);
+                if(matchDate && matchKey) {
+                    messages.put(date, item.date + "\t[" + key + "]\t" + item.note);
                 }
+            } catch (ParseException e) {
+                System.out.println("Недопустимый формат даты в сообщении (" + item.date + "), должен быть такой: " + datePattern);
             }
         }
         Print(messages);

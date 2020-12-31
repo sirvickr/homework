@@ -18,7 +18,7 @@ class NotebookTest {
             notebook.Add(key, note);
             assertEquals(i + 1, notebook.Content().size());
             assertTrue(notebook.Content().containsKey(key));
-            assertEquals(note, notebook.Content().get(key));
+            assertEquals(note, notebook.Content().get(key).note);
         }
     }
 }
