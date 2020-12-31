@@ -1,18 +1,34 @@
 package com.gradle.task;
 
 import java.io.*;
-import java.util.HashMap;
+import java.util.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+class Message {
+    public Message(String date, String note) {
+        this.date = date;
+        this.note = note;
+    }
+    public String date;
+    public String note;
+}
+
 class Data {
-    public HashMap<String, String> notes = new HashMap<>();
+    public HashMap<String, Message> notes = new HashMap<>();
 }
 
 public class Notebook {
     // конструктор по умолчанию
     public Notebook() {
         builder.setPrettyPrinting();
+    }
+
+    // доступ к содержимому
+    public HashMap<String, Message> Content() {
+        return data.notes;
     }
 
     // прочитать данные
@@ -47,7 +63,7 @@ public class Notebook {
 
     // добавить заметку
     public void Add(String key, String note) {
-        data.notes.put(key, note);
+        data.notes.put(key, new Message(dateFormat.format(new Date()), note));
         System.out.println("Добавлена заметка " + key + ": " + note);
     }
 
@@ -61,20 +77,34 @@ public class Notebook {
         }
     }
 
-    // вывести все заметки на экран
-    public void Print() {
-        System.out.println("Количество заметок: " + data.notes.size());
+    // вывести отфильтрованные по ключам заметки на экран
+    public void Print(String[] args) {
+        TreeMap<Date, String> messages = new TreeMap<>();
         for (String key : data.notes.keySet()) {
-            System.out.println(key + "\t" + data.notes.get(key));
+            Message item = data.notes.get(key);
+            boolean matchKey = args.length <= 3 || Arrays.asList(args).contains(key);
+            if(matchKey) {
+                try {
+                    messages.put(dateFormat.parse(item.date), item.date + "\t[" + key + "]\t" + item.note);
+                } catch (ParseException e) {
+                    System.out.println("Недопустимый формат даты в сообщении (" + item.date + "), должен быть такой: " + datePattern);
+                }
+            }
         }
+        Print(messages);
     }
 
-    // доступ к содержимому
-    public HashMap<String, String> Content() {
-        return data.notes;
+    // вывести заметки, отсортированные по дате в возрастающем порядке
+    private void Print(TreeMap<Date, String> messages) {
+        System.out.println("Количество заметок: " + messages.size());
+        for (Date date : messages.keySet()) {
+            System.out.println(messages.get(date));
+        }
     }
 
     private String fileName = "notebook.json";
     private Data data = new Data();
     private final GsonBuilder builder = new GsonBuilder();
+    private String datePattern = "yyyy-MM-dd HH:mm:ss";
+    private SimpleDateFormat dateFormat = new SimpleDateFormat(datePattern);
 }
