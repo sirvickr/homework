@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Book_mass", "Book_mass.vcproj", "{592DAE4E-A87C-49EA-96D2-7B4714F2A9B4}"
+	GlobalSection(Qt) = preSolution
+		Integration = True
+	EndGlobalSection
+EndProject
+Global
+	GlobalSection(Qt) = preSolution
+		Integration = True
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{592DAE4E-A87C-49EA-96D2-7B4714F2A9B4}.Debug|Win32.ActiveCfg = Debug|Win32
+		{592DAE4E-A87C-49EA-96D2-7B4714F2A9B4}.Debug|Win32.Build.0 = Debug|Win32
+		{592DAE4E-A87C-49EA-96D2-7B4714F2A9B4}.Release|Win32.ActiveCfg = Release|Win32
+		{592DAE4E-A87C-49EA-96D2-7B4714F2A9B4}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
