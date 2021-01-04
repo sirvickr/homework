@@ -4,6 +4,7 @@
 #include <QString>
 #include <QVector>
 #include <QDate>
+#include <tuple>
 
 // Открытие/изобретение
 class Invention
@@ -13,7 +14,7 @@ public:
 	enum Realm { Unspecified, Electroncs, Chemistry, Physics, Biology, Maths, enum_size };
 
 	Invention() = default;
-	Invention(Realm realm, const QString& name, int year, const QString& authors, bool award, bool patent, QDate patentDate);
+	Invention(Realm realm, const QString& name, int year, const QString& authors, bool award, bool patent, QDate patentDate = QDate(1900, 1, 1));
 
 	static const QString& realmName(Realm realm) {
 		return RealmNames[realm];
@@ -67,6 +68,40 @@ public:
 	}
 	void patentDate(QDate value) noexcept {
 		mPatentDate = value;
+	}
+
+	inline const std::tuple<Realm, int, const QString&> shortRank() const {
+		return { mRealm, mYear, mName };
+	}
+
+	inline const std::tuple<Realm, const QString&, int, const QString&, bool, bool, QDate> fullRank() const {
+		return { mRealm, mName, mYear, mAuthors, mAward, mPatent, mPatentDate };
+	}
+
+	// операторы сравнения используются для сортировки
+	inline bool operator<(const Invention& rhs) const {
+		return this->shortRank() < rhs.shortRank();
+	}
+
+	inline bool operator<=(const Invention& rhs) const {
+		return this->shortRank() <= rhs.shortRank();
+	}
+
+	inline bool operator>=(const Invention& rhs) const {
+		return this->shortRank() >= rhs.shortRank();
+	}
+
+	inline bool operator>(const Invention& rhs) const {
+		return this->shortRank() > rhs.shortRank();
+	}
+
+	// операторы == и != сравнивают все поля
+	inline bool operator==(const Invention& rhs) const {
+		return this->fullRank() == rhs.fullRank();
+	}
+
+	inline bool operator!=(const Invention& rhs) const {
+		return !(*this == rhs);
 	}
 
 private:
