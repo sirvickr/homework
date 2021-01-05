@@ -6,15 +6,6 @@
 #include <QDate>
 #include <tuple>
 
-enum CRUD {
-	crudCreateInvention = 0,//0x01, // Добавить
-	crudRemoveInvention = 1,//0x02, // Удалить
-	crudUpdateInvention = 2,//0x04, // Сохранить
-	crudCreateAuthor    = 3,//0x08,
-	crudRemoveAuthor    = 4,//0x10,
-	crudUpdateAuthor    = 5,//0x20,
-};
-
 // Открытие/изобретение
 class Invention
 {
@@ -82,15 +73,11 @@ public:
 	inline const std::tuple<Realm, int, const QString&> shortRank() const {
 		return { mRealm, mYear, mName };
 	}
-#if 1
-	inline const std::tuple<Realm, const QString&, int, const QString&, bool, bool> fullRank() const {
-		return { mRealm, mName, mYear, mAuthors, mAward, mPatent };
+
+	inline const std::tuple<Realm, const QString&, int, const QString&, bool, bool, QDate> fullRank() const {
+		return { mRealm, mName, mYear, mAuthors, mAward, mPatent, mPatentDate };
 	}
-#else
-	inline const std::tuple<Realm, QString> fullRank() const {
-		return { mRealm, mName };
-	}
-#endif
+
 	// операторы сравнения используются для сортировки
 	inline bool operator<(const Invention& rhs) const {
 		return this->shortRank() < rhs.shortRank();
