@@ -17,11 +17,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     invention.cpp \
+    inventionsmapdatabase.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
     invention.h \
+    inventionsmapdatabase.h \
     mainwindow.h
 
 FORMS += \

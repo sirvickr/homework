@@ -2,10 +2,10 @@
 #define MAINWINDOW_H
 
 #include "invention.h"
+#include "inventionsmapdatabase.h"
 #include "ui_mainwindow.h"
 
 #include <QMainWindow>
-#include <QMap>
 
 // Биты для маски активности (enabled) элементов управления
 enum CRUD {
@@ -69,9 +69,9 @@ private:
 	// выбранный автор
 	int currentAuthor = -1;
 	// база данных открытий/изобретений
-	Inventions inventions;
+	InventionsMapDatabase db;
 	// следующий уникальный идентификатор для добавления записей
-	int nextID = 0;
+//	int nextID = 0;
 	// Текущий буфер изменений параметров изобретения
 	Invention buffer;
 
@@ -115,22 +115,20 @@ private:
 	class InventionItem : public QListWidgetItem
 	{
 	public:
-		InventionItem(const Inventions& inventions)
-			: QListWidgetItem(), inventions(inventions)
+		InventionItem(const Invention::Rank& rank)
+			: QListWidgetItem(), rank(rank)
 		{
 		}
-		explicit InventionItem(const Inventions& inventions, const QString &text, QListWidget *listview = nullptr)
-			: QListWidgetItem(text, listview), inventions(inventions)
+		explicit InventionItem(const Invention::Rank& rank, const QString &text, QListWidget *listview = nullptr)
+			: QListWidgetItem(text, listview), rank(rank)
 		{
 		}
 		bool operator<(const QListWidgetItem &other) const override
 		{
-			int i = this->data(Qt::UserRole).toInt();
-			int j = other.data(Qt::UserRole).toInt();
-			return inventions[i] < inventions[j];
+			return this->rank < static_cast<const InventionItem&>(other).rank;
 		}
 	private:
-		const Inventions& inventions;
+		Invention::Rank rank;
 	};
 };
 

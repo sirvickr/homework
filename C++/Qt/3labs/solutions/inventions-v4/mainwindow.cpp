@@ -111,9 +111,9 @@ int MainWindow::verifyYearValue(int mask)
 
 int MainWindow::verifyBuffer(int mask)
 {	// буфер не изменён
-	auto item = inventions.find(currentItem);
-	if(item != inventions.end()) {
-		if(buffer == item.value()) {
+	Invention invention;
+	if(db.record(currentItem, invention)) {
+		if(buffer == invention) {
 			mask = crudResetBit(mask, CRUD::crudCreateInvention);
 			mask = crudResetBit(mask, CRUD::crudUpdateInvention);
 		}
@@ -127,9 +127,9 @@ void MainWindow::setPatentWidgets(bool patent)
 	ui.datPatentReg->setVisible(patent);
 	if(patent) {
 		ui.chkPatent->setCheckState(Qt::CheckState::Checked);
-		auto item = inventions.find(currentItem);
-		if(item != inventions.end()) {
-			ui.datPatentReg->setDate(item.value().patentDate());
+		Invention invention;
+		if(db.record(currentItem, invention)) {
+			ui.datPatentReg->setDate(invention.patentDate());
 		}
 	} else {
 		ui.chkPatent->setCheckState(Qt::CheckState::Unchecked);
@@ -148,7 +148,7 @@ void MainWindow::putAuthors(const QString& authors)
 	ui.txtAuthor->clear();
 	QStringList list = authors.split(',', Qt::SkipEmptyParts);
 	foreach (const QString& item, list) {
-		new InventionItem(inventions, item.trimmed(), ui.lstAutors);
+		new QListWidgetItem(item.trimmed(), ui.lstAutors);
 	}
 	if(list.size() > 0) {
 		ui.lstAutors->setCurrentRow(0);
@@ -170,9 +170,9 @@ QString MainWindow::getAuthors()
 void MainWindow::showItems(int current, bool isKey)
 {
 	ui.lstInventions->clear();
-	for(auto entry = inventions.cbegin(); entry != inventions.cend(); entry++) {
+	for(auto entry = db.cbegin(); entry != db.cend(); entry++) {
 		const Invention& invention = entry.value();
-		QListWidgetItem *item = new InventionItem(inventions);
+		QListWidgetItem *item = new InventionItem(invention.rank());
 		item->setText(QString::number(entry.key()) + "\t" + Invention::realmName(invention.realm())
 					  + "\t" + QString::number(invention.year()) + "\t" + invention.name());
 		item->setData(Qt::UserRole, entry.key());
@@ -192,8 +192,11 @@ void MainWindow::showItem(int index)
 	if(index < 0)
 		return;
 	currentItem = ui.lstInventions->item(index)->data(Qt::UserRole).toInt();
-	buffer = inventions[currentItem];
-	objectToView(buffer);
+	Invention invention;
+	if(db.record(currentItem, invention)) {
+		buffer = invention;
+		objectToView(buffer);
+	}
 }
 
 void MainWindow::showAuthor(int index)
@@ -215,34 +218,27 @@ void MainWindow::selectCurrent(QListWidget* lst, int& index) {
 void MainWindow::on_btnFill_clicked()
 {
 	foreach (const auto& sample, samples) {
-		inventions[nextID++] = sample;
+		db.append(sample);
 	}
 	showItems();
 }
 
 void MainWindow::on_btnAdd_clicked()
 {
-	currentItem = nextID++;
-	inventions[currentItem] = buffer;
+	currentItem = db.append(buffer);
 	showItems(currentItem, true);
 }
 
 void MainWindow::on_btnSave_clicked()
 {
-	auto item = inventions.find(currentItem);
-	if(item == inventions.end())
-		return;
-	item.value() = buffer;
+	db.update(currentItem, buffer);
 	showItems(currentItem, true);
 }
 
 void MainWindow::on_btnDelete_clicked()
 {
-	auto item = inventions.find(currentItem);
-	if(item == inventions.end())
-		return;
 	int index = keyToIndex(currentItem);
-	inventions.remove(currentItem);
+	db.remove(currentItem);
 	showItems(index, false);
 }
 
@@ -250,7 +246,7 @@ void MainWindow::on_cbxRealm_currentIndexChanged(int index)
 {
     if(index < 0)
         return;
-    buffer.realm(static_cast<Invention::Realm>(index));
+	buffer.realm(static_cast<Invention::Realm>(index));
     verifyView();
 }
 
@@ -287,12 +283,9 @@ void MainWindow::on_datPatentReg_userDateChanged(const QDate &date)
 
 void MainWindow::on_btnAddAuthor_clicked()
 {
-	auto item = inventions.find(currentItem);
-	if(item == inventions.end())
-		return;
 	QString author = ui.txtAuthor->text().trimmed();
 	if(author.size() > 0) {
-		new InventionItem(inventions, author, ui.lstAutors);
+		new QListWidgetItem(author, ui.lstAutors);
 		buffer.authors(getAuthors());
 		verifyView();
 	}
