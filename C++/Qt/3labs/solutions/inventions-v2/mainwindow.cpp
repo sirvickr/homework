@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent)
-	: QMainWindow(parent)
+	: QMainWindow(parent), inventionCapacity(2)
 {
 	ui.setupUi(this);
 
@@ -9,43 +9,141 @@ MainWindow::MainWindow(QWidget *parent)
 
 	connect(ui.lstAutors, SIGNAL(currentRowChanged(int)), this, SLOT(showAuthor(int)));
 
-	inventions[0].realm(Invention::Realm::Physics);
-	inventions[0].name("Костыль");
-	inventions[0].year(2020);
-	inventions[0].authors("Левша, Правша, Косолапый мишка");
-	inventions[0].award(false);
-	inventions[0].patent(false);
-	inventions[0].patentDate(QDate::currentDate());
-
-	inventions[1].realm(Invention::Realm::Maths);
-	inventions[1].name("Велосипед");
-	inventions[1].year(2015);
-	inventions[1].authors("Билл Гейтс, Илон Маск, Дмитрий Рогозин");
-	inventions[1].award(false);
-	inventions[1].patent(true);
-	inventions[1].patentDate(QDate(2020, 11, 25));
-
+	// заполнение перечня возможных значений области применения
 	for(int i = 0; i < Invention::Realm::enum_size; i++) {
 		ui.cbxRealm->addItem(Invention::realmName(static_cast<Invention::Realm>(i)));
 	}
+	ui.lstInventions->setSortingEnabled(true);
 
-	for(int i = 0; i < MaxItemCount; i++) {
-		QListWidgetItem *item = new QListWidgetItem;
-		item->setText(inventions[i].name() + "\t" + QString::number(inventions[i].year()));
-		item->setData(Qt::UserRole, i);
-		ui.lstInventions->addItem(item);
+	setPatentWidgets(false);
+
+	inventions = new Invention[inventionCapacity] {
+		{ Invention::Realm::Physics,   "Костыль", 2020,   "Левша, Правша, Косолапый мишка",         false, false, QDate::currentDate() },
+		{ Invention::Realm::Maths,     "Велосипед", 2015, "Билл Гейтс, Илон Маск, Дмитрий Рогозин", false, true,  QDate(2020, 11, 25) },
+	};
+	inventionCount = inventionCapacity;
+
+	showItems();
+}
+
+MainWindow::~MainWindow()
+{
+	delete[] inventions;
+	inventions = nullptr;
+	inventionCount = 0;
+}
+
+Invention MainWindow::viewToObject()
+{
+	return {
+		static_cast<Invention::Realm>(ui.cbxRealm->currentIndex()),
+		ui.txtName->text(),
+		ui.txtYear->text().toInt(),
+		getAuthors(),
+		ui.chkAward->checkState() == Qt::CheckState::Checked,
+		ui.chkPatent->checkState() == Qt::CheckState::Checked,
+		ui.datPatentReg->date()
+	};
+}
+
+void MainWindow::objectToView(const Invention& invention)
+{
+	setRealmWidgets(invention.realm());
+	ui.txtName->setText(invention.name());
+	ui.txtYear->setText(QString::number(invention.year()));
+	ui.chkAward->setCheckState(invention.award() ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
+	ui.chkPatent->setCheckState(invention.patent() ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
+	setPatentWidgets(invention.patent());
+	putAuthors(invention.authors());
+}
+
+int MainWindow::keyToIndex(int key)
+{
+	int index = -1;
+	for(int i = 0; i < ui.lstInventions->count(); ++i) {
+		QListWidgetItem* item = ui.lstInventions->item(i);
+		if(key == item->data(Qt::UserRole).toInt()) {
+			index = i;
+			break;
+		}
 	}
+	return index;
+}
+
+void MainWindow::verifyView()
+{
+	int mask = crudMax();
+	mask = verifyRealmValue(mask);
+	mask = verifyNameValue(mask);
+	mask = verifyYearValue(mask);
+	mask = verifyBuffer(mask);
+	//
+	if(ui.lstInventions->count() == 0) {
+		mask = crudResetBit(mask, CRUD::crudDeleteInvention);
+		mask = crudResetBit(mask, CRUD::crudUpdateInvention);
+		mask = crudResetBit(mask, CRUD::crudUpdateAuthor);
+		mask = crudResetBit(mask, CRUD::crudDeleteAuthor);
+	}
+	// Нельзя добавить больше, чем inventionCapacity записей
+	if(inventionCount == inventionCapacity) {
+		mask = crudResetBit(mask, CRUD::crudCreateInvention);
+	}
+
+	ui.btnAdd->setEnabled(static_cast<bool>(mask & (1 << CRUD::crudCreateInvention)));
+	ui.btnSave->setEnabled(static_cast<bool>(mask & (1 << CRUD::crudUpdateInvention)));
+	ui.btnDelete->setEnabled(static_cast<bool>(mask & (1 << CRUD::crudDeleteInvention)));
+	ui.btnAddAuthor->setEnabled(static_cast<bool>(mask & (1 << CRUD::crudCreateAuthor)));
+	ui.btnSaveAuthor->setEnabled(static_cast<bool>(mask & (1 << CRUD::crudUpdateAuthor)));
+	ui.btnDelAuthor->setEnabled(static_cast<bool>(mask & (1 << CRUD::crudDeleteAuthor)));
+}
+
+int MainWindow::verifyRealmValue(int mask)
+{	// не "Наизвестная область"
+	if(ui.cbxRealm->currentIndex() < 1) {
+		mask = crudResetBit(mask, CRUD::crudCreateInvention);
+		mask = crudResetBit(mask, CRUD::crudUpdateInvention);
+	}
+	return mask;
+}
+
+int MainWindow::verifyNameValue(int mask)
+{	// не пустое название
+	if(ui.txtName->text().trimmed().size() == 0) {
+		mask = crudResetBit(mask, CRUD::crudCreateInvention);
+		mask = crudResetBit(mask, CRUD::crudUpdateInvention);
+	}
+	return mask;
+}
+
+int MainWindow::verifyYearValue(int mask)
+{
+	if(ui.txtYear->text().toInt() < 1900) {
+		mask = crudResetBit(mask, CRUD::crudCreateInvention);
+		mask = crudResetBit(mask, CRUD::crudUpdateInvention);
+	}
+	return mask;
+}
+
+int MainWindow::verifyBuffer(int mask)
+{	// буфер не изменён
+	if(currentItem >= 0 && currentItem < inventionCount) {
+		if(buffer == inventions[currentItem]) {
+			mask = crudResetBit(mask, CRUD::crudCreateInvention);
+			mask = crudResetBit(mask, CRUD::crudUpdateInvention);
+		}
+	}
+	return mask;
 }
 
 void MainWindow::setPatentWidgets(bool patent)
 {
-	if(currentItem < 0)
-		return;
-	ui.lblPatentReg->setVisible(patent);
-	ui.datPatentReg->setVisible(patent);
+	ui.lblPatentReg->setEnabled(patent);
+	ui.datPatentReg->setEnabled(patent);
 	if(patent) {
 		ui.chkPatent->setCheckState(Qt::CheckState::Checked);
-		ui.datPatentReg->setDate(inventions[currentItem].patentDate());
+		if(currentItem >= 0 && currentItem < inventionCount) {
+			ui.datPatentReg->setDate(inventions[currentItem].patentDate());
+		}
 	} else {
 		ui.chkPatent->setCheckState(Qt::CheckState::Unchecked);
 	}
@@ -63,7 +161,7 @@ void MainWindow::putAuthors(const QString& authors)
 	ui.txtAuthor->clear();
 	QStringList list = authors.split(',', Qt::SkipEmptyParts);
 	foreach (const QString& item, list) {
-		new QListWidgetItem(item.trimmed(), ui.lstAutors);
+		new InventionItem(inventions, item.trimmed(), ui.lstAutors);
 	}
 	if(list.size() > 0) {
 		ui.lstAutors->setCurrentRow(0);
@@ -82,107 +180,148 @@ QString MainWindow::getAuthors()
 	return result;
 }
 
-void MainWindow::delAuthor()
+void MainWindow::showItems(int current, bool isKey)
 {
-	if(currentAuthor < 0)
-		return;
-	delete ui.lstAutors->takeItem(currentAuthor);
-	int count = ui.lstAutors->count();
-	if(count > 0) {
-		if(currentAuthor == count)
-			currentAuthor--;
-		ui.lstAutors->setCurrentRow(currentAuthor);
-	} else {
-		currentAuthor = -1;
+	ui.lstInventions->clear();
+	for(int i = 0; i < inventionCount; i++) {
+		const Invention& invention = inventions[i];
+		QListWidgetItem *item = new InventionItem(inventions);
+		item->setText(Invention::realmName(invention.realm()) + "\t" + QString::number(invention.year()) + "\t" + invention.name());
+		item->setData(Qt::UserRole, i);
+		ui.lstInventions->addItem(item);
 	}
+	if(isKey) {
+		current = keyToIndex(current);
+	}
+	if(current >= 0) {
+		selectCurrent(ui.lstInventions, current);
+	}
+	verifyView();
 }
 
 void MainWindow::showItem(int index)
 {
-	currentItem = index;
-	if(currentItem < 0)
+	if(index < 0)
 		return;
-	const Invention &invention = inventions[ui.lstInventions->item(currentItem)->data(Qt::UserRole).toInt()];
-	setRealmWidgets(invention.realm());
-	ui.txtName->setText(invention.name());
-	ui.txtYear->setText(QString::number(invention.year()));
-	ui.chkAward->setCheckState(invention.award() ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
-	ui.chkPatent->setCheckState(invention.patent() ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
-	setPatentWidgets(invention.patent());
-	putAuthors(invention.authors());
+	currentItem = ui.lstInventions->item(index)->data(Qt::UserRole).toInt();
+	buffer = inventions[currentItem];
+	objectToView(buffer);
 }
 
 void MainWindow::showAuthor(int index)
 {
-	if(currentItem < 0)
-		return;
 	currentAuthor = index;
 	if(currentAuthor < 0) {
-		ui.txtAuthor->setEnabled(false);
+		ui.txtAuthor->clear();
 	} else {
 		ui.txtAuthor->setText(ui.lstAutors->item(currentAuthor)->text());
-		ui.txtAuthor->setEnabled(true);
 	}
+}
+
+void MainWindow::selectCurrent(QListWidget* lst, int& index) {
+	if(index == lst->count())
+		index--;
+	lst->setCurrentRow(index);
+}
+
+void MainWindow::on_btnAdd_clicked()
+{
+	if(inventionCount == inventionCapacity)
+		return;
+	currentItem = inventionCount++;
+	inventions[currentItem] = viewToObject();
+	showItems(currentItem, true);
+}
+
+void MainWindow::on_btnSave_clicked()
+{
+	if(currentItem < 0 || currentItem >= inventionCount)
+		return;
+	inventions[currentItem] = viewToObject();
+	showItems(currentItem, true);
+}
+
+void MainWindow::on_btnDelete_clicked()
+{
+	if(currentItem < 0 || currentItem >= inventionCount || inventionCount < 1)
+		return;
+	int index = keyToIndex(currentItem);
+	for(int i = currentItem, j = currentItem + 1; j < inventionCount; i++, j++)
+		inventions[i] = inventions[j];
+	inventionCount--;
+	showItems(index, false);
 }
 
 void MainWindow::on_cbxRealm_currentIndexChanged(int index)
 {
-	if(currentItem < 0)
-		return;
-	if(checkIndex(index)) {
-		inventions[currentItem].realm(static_cast<Invention::Realm>(index));
-	}
+    if(index < 0)
+        return;
+    buffer.realm(static_cast<Invention::Realm>(index));
+    verifyView();
 }
 
 void MainWindow::on_txtName_editingFinished()
 {
-	if(currentItem < 0)
-		return;
-	inventions[currentItem].name(ui.txtName->text());
+	buffer.name(ui.txtName->text());
+	verifyView();
 }
 
-void MainWindow::on_chkPatent_toggled(bool checked)
+void MainWindow::on_txtYear_editingFinished()
 {
-	if(currentItem < 0)
-		return;
-	inventions[currentItem].patent(checked);
-	setPatentWidgets(checked);
+	buffer.year(ui.txtYear->text().toInt());
+	verifyView();
 }
 
 void MainWindow::on_chkAward_toggled(bool checked)
 {
-	if(currentItem < 0)
-		return;
-	inventions[currentItem].award(checked);
+	buffer.award(checked);
+	verifyView();
+}
+
+void MainWindow::on_chkPatent_toggled(bool checked)
+{
+	buffer.patent(checked);
+	verifyView();
+	setPatentWidgets(checked);
 }
 
 void MainWindow::on_datPatentReg_userDateChanged(const QDate &date)
 {
-	if(currentItem < 0)
-		return;
-	inventions[currentItem].patentDate(date);
+	buffer.patentDate(date);
+	verifyView();
 }
 
-void MainWindow::on_txtAuthor_editingFinished()
+void MainWindow::on_btnAddAuthor_clicked()
 {
-	if(currentItem < 0)
+	if(currentItem < 0 || currentItem >= inventionCount)
 		return;
+	QString author = ui.txtAuthor->text().trimmed();
+	if(author.size() > 0) {
+		new InventionItem(inventions, author, ui.lstAutors);
+		buffer.authors(getAuthors());
+		verifyView();
+	}
+}
+
+void MainWindow::on_btnSaveAuthor_clicked()
+{
 	if(currentAuthor < 0)
 		return;
-	QString author = ui.txtAuthor->text();
+	QString author = ui.txtAuthor->text().trimmed();
 	if(author.size() > 0) {
 		ui.lstAutors->item(currentAuthor)->setText(ui.txtAuthor->text());
-	} else {
-		delAuthor();
+		buffer.authors(getAuthors());
+		verifyView();
 	}
-	inventions[currentItem].authors(getAuthors());
 }
 
 void MainWindow::on_btnDelAuthor_clicked()
 {
-	if(currentItem < 0)
+	if(currentAuthor < 0)
 		return;
+	delete ui.lstAutors->takeItem(currentAuthor);
+	selectCurrent(ui.lstAutors, currentAuthor);
 	ui.txtAuthor->clear();
-	delAuthor();
-	inventions[currentItem].authors(getAuthors());
+	buffer.authors(getAuthors());
+	verifyView();
 }
