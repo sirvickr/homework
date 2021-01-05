@@ -35,19 +35,6 @@ MainWindow::MainWindow(QWidget *parent)
 	showItems();
 }
 
-Invention MainWindow::viewToObject()
-{
-	return {
-		static_cast<Invention::Realm>(ui.cbxRealm->currentIndex()),
-		ui.txtName->text(),
-		ui.txtYear->text().toInt(),
-		getAuthors(),
-		ui.chkAward->checkState() == Qt::CheckState::Checked,
-		ui.chkPatent->checkState() == Qt::CheckState::Checked,
-		ui.datPatentReg->date()
-	};
-}
-
 void MainWindow::objectToView(const Invention& invention)
 {
 	setRealmWidgets(invention.realm());
@@ -186,7 +173,8 @@ void MainWindow::showItems(int current, bool isKey)
 	for(auto entry = inventions.cbegin(); entry != inventions.cend(); entry++) {
 		const Invention& invention = entry.value();
 		QListWidgetItem *item = new InventionItem(inventions);
-		item->setText(Invention::realmName(invention.realm()) + "\t" + QString::number(invention.year()) + "\t" + invention.name());
+		item->setText(QString::number(entry.key()) + "\t" + Invention::realmName(invention.realm())
+					  + "\t" + QString::number(invention.year()) + "\t" + invention.name());
 		item->setData(Qt::UserRole, entry.key());
 		ui.lstInventions->addItem(item);
 	}
@@ -235,7 +223,7 @@ void MainWindow::on_btnFill_clicked()
 void MainWindow::on_btnAdd_clicked()
 {
 	currentItem = nextID++;
-	inventions[currentItem] = viewToObject();
+	inventions[currentItem] = buffer;
 	showItems(currentItem, true);
 }
 
@@ -244,7 +232,7 @@ void MainWindow::on_btnSave_clicked()
 	auto item = inventions.find(currentItem);
 	if(item == inventions.end())
 		return;
-	item.value() = viewToObject();
+	item.value() = buffer;
 	showItems(currentItem, true);
 }
 

@@ -79,8 +79,6 @@ private:
 	// Отобразить записи базы данных в браузере: isKey = true означает,
 	// что current - это ключ объекта, иначе индекс списка
 	void showItems(int current = 0, bool isKey = false);
-	// Отобразить поля текущей записи в элементах управления
-	Invention viewToObject();
 	// Прочитать поля текущей записи с элементов управления
 	void objectToView(const Invention& invention);
 	// Найти индекс нужной записи в браузере
