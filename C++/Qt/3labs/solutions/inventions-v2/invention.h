@@ -9,12 +9,18 @@
 // Открытие/изобретение
 class Invention
 {
+	// Названия областей дейтельности
 	static const QVector<QString> RealmNames;
 public:
+	// Перечень областей дейтельности
 	enum Realm { Unspecified, Electroncs, Chemistry, Physics, Biology, Maths, enum_size };
+	// "Вес" экземпляра, для сравнения экземпляров
+	using Rank = std::tuple<Realm, int, const QString&, const QString&, bool, bool, QDate>;
 
 	Invention() = default;
-	Invention(Realm realm, const QString& name, int year, const QString& authors, bool award, bool patent, QDate patentDate = QDate(1900, 1, 1));
+	Invention(Realm realm, const QString& name, int year, const QString& authors, bool award, bool patent, QDate patentDate);
+
+	// Методы доступа
 
 	static const QString& realmName(Realm realm) {
 		return RealmNames[realm];
@@ -70,34 +76,30 @@ public:
 		mPatentDate = value;
 	}
 
-	inline const std::tuple<Realm, int, const QString&> shortRank() const {
-		return { mRealm, mYear, mName };
+	inline const Rank rank() const {
+		return { mRealm, mYear, mName, mAuthors, mAward, mPatent, mPatentDate };
 	}
 
-	inline const std::tuple<Realm, const QString&, int, const QString&, bool, bool, QDate> fullRank() const {
-		return { mRealm, mName, mYear, mAuthors, mAward, mPatent, mPatentDate };
-	}
+	// Операторы сравнения
 
-	// операторы сравнения используются для сортировки
 	inline bool operator<(const Invention& rhs) const {
-		return this->shortRank() < rhs.shortRank();
+		return this->rank() < rhs.rank();
 	}
 
 	inline bool operator<=(const Invention& rhs) const {
-		return this->shortRank() <= rhs.shortRank();
+		return this->rank() <= rhs.rank();
 	}
 
 	inline bool operator>=(const Invention& rhs) const {
-		return this->shortRank() >= rhs.shortRank();
+		return this->rank() >= rhs.rank();
 	}
 
 	inline bool operator>(const Invention& rhs) const {
-		return this->shortRank() > rhs.shortRank();
+		return this->rank() > rhs.rank();
 	}
 
-	// операторы == и != сравнивают все поля
 	inline bool operator==(const Invention& rhs) const {
-		return this->fullRank() == rhs.fullRank();
+		return this->rank() == rhs.rank();
 	}
 
 	inline bool operator!=(const Invention& rhs) const {
@@ -118,7 +120,7 @@ private:
 	// Наличие патента
 	bool mPatent = false;
 	// Дата регистрации патента
-	QDate mPatentDate = QDate::currentDate();
+	QDate mPatentDate = QDate(1900, 1, 1);
 };
 
 #endif // INVENTION_H
