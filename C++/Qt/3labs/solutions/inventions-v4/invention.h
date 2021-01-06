@@ -4,6 +4,7 @@
 #include <QString>
 #include <QVector>
 #include <QDate>
+#include <QDataStream>
 #include <tuple>
 
 // Открытие/изобретение
@@ -104,6 +105,30 @@ public:
 
 	inline bool operator!=(const Invention& rhs) const {
 		return !(*this == rhs);
+	}
+
+	friend QDataStream& operator <<(QDataStream& stream, const Invention& instance)
+	{
+		stream << instance.mRealm;
+		stream << instance.mYear;
+		stream << instance.mName;
+		stream << instance.mAuthors;
+		stream << instance.mAward;
+		stream << instance.mPatent;
+		stream << instance.mPatentDate;
+		return stream;
+	}
+
+	friend QDataStream& operator >>(QDataStream& stream, Invention& instance)
+	{
+		stream >> instance.mRealm;
+		stream >> instance.mYear;
+		stream >> instance.mName;
+		stream >> instance.mAuthors;
+		stream >> instance.mAward;
+		stream >> instance.mPatent;
+		stream >> instance.mPatentDate;
+		return stream;
 	}
 
 private:

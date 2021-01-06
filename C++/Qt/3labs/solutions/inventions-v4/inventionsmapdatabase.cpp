@@ -1,9 +1,6 @@
 #include "inventionsmapdatabase.h"
 
-InventionsMapDatabase::InventionsMapDatabase()
-{
-
-}
+#include <QFile>
 
 int InventionsMapDatabase::count() const
 {
@@ -12,47 +9,28 @@ int InventionsMapDatabase::count() const
 
 int InventionsMapDatabase::append(const Invention& record)
 {
-#if 1
 	Id id = nextID++;
 	inventions[id] = record;
+	mModified = true;
 	return id;
-#else
-	mCurrId = nextID++;
-	inventions[mCurrId] = record;
-	return mCurrId;
-#endif
 }
-
-/*int InventionsMapDatabase::append()
-{
-	return append(mBuffer);
-}*/
 
 void InventionsMapDatabase::remove(Id id)
 {
 	inventions.remove(id);
+	mModified = true;
 }
-
-/*void InventionsMapDatabase::remove()
-{
-	remove(mCurrId);
-}*/
 
 void InventionsMapDatabase::update(Id id, const Invention& record)
 {
 	auto item = inventions.find(id);
 	if(item == inventions.end())
 		return;
-	item.value() = record;
+	if(item.value() != record) {
+		item.value() = record;
+		mModified = true;
+	}
 }
-
-/*void InventionsMapDatabase::update()
-{
-	auto item = inventions.find(mCurrId);
-	if(item == inventions.end())
-		return;
-	item.value() = mBuffer;
-}*/
 
 bool InventionsMapDatabase::record(Id id, Invention &record) const
 {
@@ -63,40 +41,69 @@ bool InventionsMapDatabase::record(Id id, Invention &record) const
 	return true;
 }
 
-/*InventionsMapDatabase::Id InventionsMapDatabase::current() const {
-	return mCurrId;
-}
-
-void InventionsMapDatabase::current(Id id) {
-	auto item = inventions.find(id);
-	if(item == inventions.end())
-		return;
-	mCurrId = id;
-	mBuffer = item.value();
-}*/
-
-bool InventionsMapDatabase::save(const QString& filename) const
-{
-	return false;
-}
-
-bool InventionsMapDatabase::load(const QString& filename)
-{
-	return false;
-}
-
 void InventionsMapDatabase::clear() {
+	inventions.clear();
+	nextID = 0;
+	mModified = true;
 }
 
 bool InventionsMapDatabase::isModified() const
 {
-	return false;
+	return mModified;
 }
 
-/*bool InventionsMapDatabase::isBufferModified(Id id) const
+InventionsMapDatabase::Inventions::const_iterator InventionsMapDatabase::cbegin() const
 {
-	auto item = inventions.find(id);
-	if(item == inventions.end())
+	return inventions.cbegin();
+}
+
+InventionsMapDatabase::Inventions::const_iterator InventionsMapDatabase::cend() const
+{
+	return inventions.cend();
+}
+
+bool InventionsMapDatabase::load(const QString& filename)
+{
+	// создаем объектное представление  файала
+	QFile file(filename);
+	// открываем файл только для чтения
+	if(!file.open(QIODevice::ReadOnly)) {
 		return false;
-	return mBuffer == item.value();
-}*/
+	}
+	// удаляем текущие данные
+	clear();
+	// свзяываем поток данных с открытым файлом
+	QDataStream stream(&file);
+	// Считываем данные из файла (в том же порядке, что и записывали), пока не достигнем конца файла
+	Invention record;
+	while(!stream.atEnd()) {
+		stream >> record;
+		append(record);
+	}
+	// Закрываем файл
+	file.close();
+	// Возвращаем признак успешного завершения
+	return true;
+}
+
+bool InventionsMapDatabase::save(const QString& filename) const
+{
+	// создаем объектное представление  файала
+	QFile file(filename);
+	// открываем файл только для чтения
+	if(!file.open(QIODevice::WriteOnly)) {
+		return false;
+	}
+	// свзяываем поток данных с открытым файлом
+	QDataStream stream(&file);
+	// Записываем данные в файл
+	for(auto entry = inventions.cbegin(); entry != inventions.cend(); entry++) {
+		stream << entry.value();
+	}
+	// Закрываем файл
+	file.close();
+	// Сбрасываем признак модификации, поскольку только что синхронизировались с хранилищем
+	mModified = false;
+	// Возвращаем признак успешного завершения
+	return true;
+}

@@ -8,17 +8,19 @@
 #include <QMainWindow>
 
 // Биты для маски активности (enabled) элементов управления
-enum CRUD {
-	crudCreateInvention = 0, // Добавить
-	crudReadInvention   = 1, // -
-	crudUpdateInvention = 2, // Сохранить
-	crudDeleteInvention = 3, // Удалить
-	crudCreateAuthor    = 4,
-	crudReadAuthor      = 5,
-	crudUpdateAuthor    = 6,
-	crudDeleteAuthor    = 7,
+enum EnabledBits {
+	bitCreateInvention, // Добавить открытие/изобретение
+	bitUpdateInvention, // Сохранить открытие/изобретение
+	bitDeleteInvention, // Удалить открытие/изобретение
+	bitCreateAuthor,    // Добавить автора
+	bitUpdateAuthor,    // Сохранить автора
+	bitDeleteAuthor,    // Удалить автора
+	bitNewDatabase,     // Создать новую базу данных
+	bitLoadDatabase,    // Загрузить из файла
+	bitSaveDatabase,    // Записать в тот же файл
+	bitSaveDatabaseAs,  // Записать в указанный файл
 
-	crudMax
+	bitMax
 };
 
 class MainWindow : public QMainWindow
@@ -33,12 +35,10 @@ private slots:
 	void showItem(int index);
 	// Отобразить выбранного автора
 	void showAuthor(int index);
-	// Реакция на нажатие кнопки "Заполнить"
-	void on_btnFill_clicked();
 	// Реакция на нажатие кнопки "Добавить"
 	void on_btnAdd_clicked();
 	// Реакция на нажатие кнопки "Сохранить"
-	void on_btnSave_clicked();
+	void on_btnUpdate_clicked();
 	// Реакция на нажатие кнопки "Удалить"
 	void on_btnDelete_clicked();
 	// Реакция на выбор области применения из перечня
@@ -56,9 +56,17 @@ private slots:
 	// Реакция на нажатие кнопки "Добавить автора"
 	void on_btnAddAuthor_clicked();
 	// Реакция на нажатие кнопки "Сохранить автора"
-	void on_btnSaveAuthor_clicked();
+	void on_btnUpdateAuthor_clicked();
 	// Реакция на нажатие кнопки "Удалить автора"
 	void on_btnDelAuthor_clicked();
+	// Реакция на нажатие кнопки "Создать новую"
+	void on_btnNewDatabase_clicked();
+	// Реакция на нажатие кнопки "Загрузить"
+	void on_btnLoadDatabase_clicked();
+	// Реакция на нажатие кнопки "Сохранить"
+	void on_btnSaveDatabase_clicked();
+	// Реакция на нажатие кнопки "Сохранить как"
+	void on_btnSaveDatabaseAs_clicked();
 
 private:
 	using Inventions = QMap<int, Invention>;
@@ -70,10 +78,12 @@ private:
 	int currentAuthor = -1;
 	// база данных открытий/изобретений
 	InventionsMapDatabase db;
-	// следующий уникальный идентификатор для добавления записей
-//	int nextID = 0;
 	// Текущий буфер изменений параметров изобретения
 	Invention buffer;
+	// Имя файла с данными
+	QString fileName;
+	// Фильтр для стандартных диалоговых окон
+	const QString filesFilter;
 
 private:
 	// Отобразить записи базы данных в браузере: isKey = true означает,
@@ -103,11 +113,8 @@ private:
 	QString getAuthors();
 	// Выделить в списке элемент, соответствующий текущему индексу
 	void selectCurrent(QListWidget* lst, int& index);
-	// Вспомогательные битобые операции
-	int crudMax() { // установить все возможные биты маски
-		return (1 << CRUD::crudMax) - 1;
-	}
-	int crudResetBit(int mask, CRUD bit) { // сбросить один бит в маске
+	// Сбросить один бит в маске
+	inline int resetBit(int mask, EnabledBits bit) {
 		return mask & ~(1 << bit);
 	}
 

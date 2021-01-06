@@ -1,22 +1,9 @@
 #include "mainwindow.h"
 
-#include <QVector>
-
-static QVector<Invention> samples = {
-	{ Invention::Realm::Physics,   "Костыль", 2020, "Левша, Правша, Косолапый мишка", false, false, QDate::currentDate() },
-	{ Invention::Realm::Maths,     "Велосипед", 2015, "Билл Гейтс, Илон Маск, Дмитрий Рогозин", false, true, QDate(2020, 11, 25) },
-	{ Invention::Realm::Biology,   "Спутник-V", 2015, "Центр им. Гамалеи", false, true, QDate(2020, 12, 15) },
-	{ Invention::Realm::Physics,   "Открытие спонтанной радиоактивности", 1903, "Антуан Анри Беккерель", true, false, QDate::currentDate() },
-	{ Invention::Realm::Physics,   "Создание квантовой механики", 1932, "Вернер Карл Гейзенберг", true, false, QDate::currentDate() },
-	{ Invention::Realm::Physics,   "Открытие нейтрона", 1935, "Джеймс Чедвик", true, false, QDate::currentDate() },
-	{ Invention::Realm::Physics,   "Открытие космических лучей", 1936, "Виктор Франц Гесс", true, false, QDate::currentDate() },
-	{ Invention::Realm::Physics,   "Открытие позитрона", 1935, "Карл Дейвид Андерсон", true, false, QDate::currentDate() },
-	{ Invention::Realm::Chemistry, "Открытие квазикристаллов", 2011, "Дан Шехтман", true, false, QDate::currentDate() },
-	{ Invention::Realm::Chemistry, "Открытие фуллеренов", 1996, "Роберт Кёрл, Харолд Крото, Ричард Смелли", true, false, QDate::currentDate() },
-};
+#include <QFileDialog>
 
 MainWindow::MainWindow(QWidget *parent)
-	: QMainWindow(parent)
+	: QMainWindow(parent), filesFilter("Изобретения (*.inv);;Все файлы (*)")
 {
 	ui.setupUi(this);
 
@@ -61,32 +48,47 @@ int MainWindow::keyToIndex(int key)
 
 void MainWindow::verifyView()
 {
-	int mask = crudMax();
+	// устанавливаем все возможные биты в Enabled
+	int mask = (1 << EnabledBits::bitMax) - 1;
 	mask = verifyRealmValue(mask);
 	mask = verifyNameValue(mask);
 	mask = verifyYearValue(mask);
 	mask = verifyBuffer(mask);
-	//
+	// сбрасываем активность при пустом браузере
 	if(ui.lstInventions->count() == 0) {
-		mask = crudResetBit(mask, CRUD::crudDeleteInvention);
-		mask = crudResetBit(mask, CRUD::crudUpdateInvention);
-		mask = crudResetBit(mask, CRUD::crudUpdateAuthor);
-		mask = crudResetBit(mask, CRUD::crudDeleteAuthor);
+		mask = resetBit(mask, EnabledBits::bitDeleteInvention);
+		mask = resetBit(mask, EnabledBits::bitUpdateInvention);
+		mask = resetBit(mask, EnabledBits::bitUpdateAuthor);
+		mask = resetBit(mask, EnabledBits::bitDeleteAuthor);
+	}
+	// сбрасываем активность в зависимости от синхронизации данных с хранилищем
+	if(!db.isModified()) {
+		mask = resetBit(mask, EnabledBits::bitSaveDatabase);
+		mask = resetBit(mask, EnabledBits::bitSaveDatabaseAs);
+	}
+	// если база не загружена и не сохранена, она и есть новая
+	if(fileName.isEmpty()) {
+		mask = resetBit(mask, EnabledBits::bitNewDatabase);
+		mask = resetBit(mask, EnabledBits::bitSaveDatabase);
 	}
 
-	ui.btnAdd->setEnabled(static_cast<bool>(mask & (1 << CRUD::crudCreateInvention)));
-	ui.btnSave->setEnabled(static_cast<bool>(mask & (1 << CRUD::crudUpdateInvention)));
-	ui.btnDelete->setEnabled(static_cast<bool>(mask & (1 << CRUD::crudDeleteInvention)));
-	ui.btnAddAuthor->setEnabled(static_cast<bool>(mask & (1 << CRUD::crudCreateAuthor)));
-	ui.btnSaveAuthor->setEnabled(static_cast<bool>(mask & (1 << CRUD::crudUpdateAuthor)));
-	ui.btnDelAuthor->setEnabled(static_cast<bool>(mask & (1 << CRUD::crudDeleteAuthor)));
+	ui.btnAdd->setEnabled(static_cast<bool>(mask & (1 << EnabledBits::bitCreateInvention)));
+	ui.btnUpdate->setEnabled(static_cast<bool>(mask & (1 << EnabledBits::bitUpdateInvention)));
+	ui.btnDelete->setEnabled(static_cast<bool>(mask & (1 << EnabledBits::bitDeleteInvention)));
+	ui.btnAddAuthor->setEnabled(static_cast<bool>(mask & (1 << EnabledBits::bitCreateAuthor)));
+	ui.btnUpdateAuthor->setEnabled(static_cast<bool>(mask & (1 << EnabledBits::bitUpdateAuthor)));
+	ui.btnDelAuthor->setEnabled(static_cast<bool>(mask & (1 << EnabledBits::bitDeleteAuthor)));
+	ui.btnNewDatabase->setEnabled(static_cast<bool>(mask & (1 << EnabledBits::bitNewDatabase)));
+	ui.btnLoadDatabase->setEnabled(static_cast<bool>(mask & (1 << EnabledBits::bitLoadDatabase)));
+	ui.btnSaveDatabase->setEnabled(static_cast<bool>(mask & (1 << EnabledBits::bitSaveDatabase)));
+	ui.btnSaveDatabaseAs->setEnabled(static_cast<bool>(mask & (1 << EnabledBits::bitSaveDatabaseAs)));
 }
 
 int MainWindow::verifyRealmValue(int mask)
 {	// не "Наизвестная область"
 	if(ui.cbxRealm->currentIndex() < 1) {
-		mask = crudResetBit(mask, CRUD::crudCreateInvention);
-		mask = crudResetBit(mask, CRUD::crudUpdateInvention);
+		mask = resetBit(mask, EnabledBits::bitCreateInvention);
+		mask = resetBit(mask, EnabledBits::bitUpdateInvention);
 	}
 	return mask;
 }
@@ -94,8 +96,8 @@ int MainWindow::verifyRealmValue(int mask)
 int MainWindow::verifyNameValue(int mask)
 {	// не пустое название
 	if(ui.txtName->text().trimmed().size() == 0) {
-		mask = crudResetBit(mask, CRUD::crudCreateInvention);
-		mask = crudResetBit(mask, CRUD::crudUpdateInvention);
+		mask = resetBit(mask, EnabledBits::bitCreateInvention);
+		mask = resetBit(mask, EnabledBits::bitUpdateInvention);
 	}
 	return mask;
 }
@@ -103,8 +105,8 @@ int MainWindow::verifyNameValue(int mask)
 int MainWindow::verifyYearValue(int mask)
 {
 	if(ui.txtYear->text().toInt() < 1900) {
-		mask = crudResetBit(mask, CRUD::crudCreateInvention);
-		mask = crudResetBit(mask, CRUD::crudUpdateInvention);
+		mask = resetBit(mask, EnabledBits::bitCreateInvention);
+		mask = resetBit(mask, EnabledBits::bitUpdateInvention);
 	}
 	return mask;
 }
@@ -114,8 +116,8 @@ int MainWindow::verifyBuffer(int mask)
 	Invention invention;
 	if(db.record(currentItem, invention)) {
 		if(buffer == invention) {
-			mask = crudResetBit(mask, CRUD::crudCreateInvention);
-			mask = crudResetBit(mask, CRUD::crudUpdateInvention);
+			mask = resetBit(mask, EnabledBits::bitCreateInvention);
+			mask = resetBit(mask, EnabledBits::bitUpdateInvention);
 		}
 	}
 	return mask;
@@ -215,21 +217,13 @@ void MainWindow::selectCurrent(QListWidget* lst, int& index) {
 	lst->setCurrentRow(index);
 }
 
-void MainWindow::on_btnFill_clicked()
-{
-	foreach (const auto& sample, samples) {
-		db.append(sample);
-	}
-	showItems();
-}
-
 void MainWindow::on_btnAdd_clicked()
 {
 	currentItem = db.append(buffer);
 	showItems(currentItem, true);
 }
 
-void MainWindow::on_btnSave_clicked()
+void MainWindow::on_btnUpdate_clicked()
 {
 	db.update(currentItem, buffer);
 	showItems(currentItem, true);
@@ -244,8 +238,8 @@ void MainWindow::on_btnDelete_clicked()
 
 void MainWindow::on_cbxRealm_currentIndexChanged(int index)
 {
-    if(index < 0)
-        return;
+	if(index < 0)
+		return;
 	buffer.realm(static_cast<Invention::Realm>(index));
     verifyView();
 }
@@ -291,7 +285,7 @@ void MainWindow::on_btnAddAuthor_clicked()
 	}
 }
 
-void MainWindow::on_btnSaveAuthor_clicked()
+void MainWindow::on_btnUpdateAuthor_clicked()
 {
 	if(currentAuthor < 0)
 		return;
@@ -311,5 +305,42 @@ void MainWindow::on_btnDelAuthor_clicked()
 	selectCurrent(ui.lstAutors, currentAuthor);
 	ui.txtAuthor->clear();
 	buffer.authors(getAuthors());
+	verifyView();
+}
+
+void MainWindow::on_btnNewDatabase_clicked()
+{
+	db.clear();
+	fileName.clear();
+	showItems();
+}
+
+void MainWindow::on_btnLoadDatabase_clicked()
+{
+	fileName = QFileDialog::getOpenFileName(
+		this,                    // parent
+		"Открыть базу данных",   // caption
+		"",                      // dir
+		filesFilter);            // filter
+	db.load(fileName);
+	showItems();
+}
+
+void MainWindow::on_btnSaveDatabase_clicked()
+{
+	if(fileName.isEmpty())
+		return;
+	db.save(fileName);
+	verifyView();
+}
+
+void MainWindow::on_btnSaveDatabaseAs_clicked()
+{
+	fileName = QFileDialog::getSaveFileName(
+		this,                    // parent
+		"Сохранить базу данных", // caption
+		"",                      // dir
+		filesFilter);            // filter
+	db.save(fileName);
 	verifyView();
 }
