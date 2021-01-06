@@ -103,32 +103,33 @@ int MainWindow::keyToIndex(int key)
 
 void MainWindow::verifyView()
 {
-	int mask = crudMax();
+        // устанавливаем все возможные биты в Enabled
+        int mask = (1 << EnabledBits::bitMax) - 1;
 	mask = verifyRealmValue(mask);
 	mask = verifyNameValue(mask);
 	mask = verifyYearValue(mask);
 	mask = verifyBuffer(mask);
 	//
 	if(ui.lstInventions->count() == 0) {
-		mask = crudResetBit(mask, CRUD::crudDeleteInvention);
-		mask = crudResetBit(mask, CRUD::crudUpdateInvention);
-		mask = crudResetBit(mask, CRUD::crudUpdateAuthor);
-		mask = crudResetBit(mask, CRUD::crudDeleteAuthor);
+                mask = resetBit(mask, EnabledBits::bitDeleteInvention);
+                mask = resetBit(mask, EnabledBits::bitUpdateInvention);
+                mask = resetBit(mask, EnabledBits::bitUpdateAuthor);
+                mask = resetBit(mask, EnabledBits::bitDeleteAuthor);
 	}
 
-	ui.btnAdd->setEnabled(static_cast<bool>(mask & (1 << CRUD::crudCreateInvention)));
-	ui.btnSave->setEnabled(static_cast<bool>(mask & (1 << CRUD::crudUpdateInvention)));
-	ui.btnDelete->setEnabled(static_cast<bool>(mask & (1 << CRUD::crudDeleteInvention)));
-	ui.btnAddAuthor->setEnabled(static_cast<bool>(mask & (1 << CRUD::crudCreateAuthor)));
-	ui.btnSaveAuthor->setEnabled(static_cast<bool>(mask & (1 << CRUD::crudUpdateAuthor)));
-	ui.btnDelAuthor->setEnabled(static_cast<bool>(mask & (1 << CRUD::crudDeleteAuthor)));
+        ui.btnAdd->setEnabled(static_cast<bool>(mask & (1 << EnabledBits::bitCreateInvention)));
+        ui.btnSave->setEnabled(static_cast<bool>(mask & (1 << EnabledBits::bitUpdateInvention)));
+        ui.btnDelete->setEnabled(static_cast<bool>(mask & (1 << EnabledBits::bitDeleteInvention)));
+        ui.btnAddAuthor->setEnabled(static_cast<bool>(mask & (1 << EnabledBits::bitCreateAuthor)));
+        ui.btnSaveAuthor->setEnabled(static_cast<bool>(mask & (1 << EnabledBits::bitUpdateAuthor)));
+        ui.btnDelAuthor->setEnabled(static_cast<bool>(mask & (1 << EnabledBits::bitDeleteAuthor)));
 }
 
 int MainWindow::verifyRealmValue(int mask)
 {	// не "Наизвестная область"
 	if(ui.cbxRealm->currentIndex() < 1) {
-		mask = crudResetBit(mask, CRUD::crudCreateInvention);
-		mask = crudResetBit(mask, CRUD::crudUpdateInvention);
+                mask = resetBit(mask, EnabledBits::bitCreateInvention);
+                mask = resetBit(mask, EnabledBits::bitUpdateInvention);
 	}
 	return mask;
 }
@@ -136,8 +137,8 @@ int MainWindow::verifyRealmValue(int mask)
 int MainWindow::verifyNameValue(int mask)
 {	// не пустое название
 	if(ui.txtName->text().trimmed().size() == 0) {
-		mask = crudResetBit(mask, CRUD::crudCreateInvention);
-		mask = crudResetBit(mask, CRUD::crudUpdateInvention);
+                mask = resetBit(mask, EnabledBits::bitCreateInvention);
+                mask = resetBit(mask, EnabledBits::bitUpdateInvention);
 	}
 	return mask;
 }
@@ -145,8 +146,8 @@ int MainWindow::verifyNameValue(int mask)
 int MainWindow::verifyYearValue(int mask)
 {
 	if(ui.txtYear->text().toInt() < 1900) {
-		mask = crudResetBit(mask, CRUD::crudCreateInvention);
-		mask = crudResetBit(mask, CRUD::crudUpdateInvention);
+                mask = resetBit(mask, EnabledBits::bitCreateInvention);
+                mask = resetBit(mask, EnabledBits::bitUpdateInvention);
 	}
 	return mask;
 }
@@ -155,8 +156,8 @@ int MainWindow::verifyBuffer(int mask)
 {	// буфер не изменён
 	if(currentItem >= 0 && currentItem < inventionCount) {
 		if(buffer == inventions[currentItem]) {
-			mask = crudResetBit(mask, CRUD::crudCreateInvention);
-			mask = crudResetBit(mask, CRUD::crudUpdateInvention);
+                        mask = resetBit(mask, EnabledBits::bitCreateInvention);
+                        mask = resetBit(mask, EnabledBits::bitUpdateInvention);
 		}
 	}
 	return mask;
@@ -188,7 +189,7 @@ void MainWindow::putAuthors(const QString& authors)
 	ui.txtAuthor->clear();
 	QStringList list = authors.split(',', Qt::SkipEmptyParts);
 	foreach (const QString& item, list) {
-		new InventionItem(inventions, item.trimmed(), ui.lstAutors);
+                new QListWidgetItem(item.trimmed(), ui.lstAutors);
 	}
 	if(list.size() > 0) {
 		ui.lstAutors->setCurrentRow(0);
@@ -212,7 +213,7 @@ void MainWindow::showItems(int current, bool isKey)
 	ui.lstInventions->clear();
 	for(int i = 0; i < inventionCount; i++) {
 		const Invention& invention = inventions[i];
-		QListWidgetItem *item = new InventionItem(inventions);
+                QListWidgetItem *item = new InventionItem(invention.rank());
 		item->setText(Invention::realmName(invention.realm()) + "\t" + QString::number(invention.year()) + "\t" + invention.name());
 		item->setData(Qt::UserRole, i);
 		ui.lstInventions->addItem(item);
@@ -333,7 +334,7 @@ void MainWindow::on_btnAddAuthor_clicked()
 		return;
 	QString author = ui.txtAuthor->text().trimmed();
 	if(author.size() > 0) {
-		new InventionItem(inventions, author, ui.lstAutors);
+                new QListWidgetItem(author, ui.lstAutors);
 		buffer.authors(getAuthors());
 		verifyView();
 	}

@@ -7,17 +7,17 @@
 #include <QMainWindow>
 
 // Биты для маски активности (enabled) элементов управления
-enum CRUD {
-	crudCreateInvention = 0, // Добавить
-	crudReadInvention   = 1, // -
-	crudUpdateInvention = 2, // Сохранить
-	crudDeleteInvention = 3, // Удалить
-	crudCreateAuthor    = 4,
-	crudReadAuthor      = 5,
-	crudUpdateAuthor    = 6,
-	crudDeleteAuthor    = 7,
+enum EnabledBits {
+	bitCreateInvention = 0, // Добавить
+	bitReadInvention   = 1, // -
+	bitUpdateInvention = 2, // Сохранить
+	bitDeleteInvention = 3, // Удалить
+	bitCreateAuthor    = 4,
+	bitReadAuthor      = 5,
+	bitUpdateAuthor    = 6,
+	bitDeleteAuthor    = 7,
 
-	crudMax
+	bitMax
 };
 
 class MainWindow : public QMainWindow
@@ -107,11 +107,8 @@ private:
 	QString getAuthors();
 	// Выделить в списке элемент, соответствующий текущему индексу
 	void selectCurrent(QListWidget* lst, int& index);
-	// Вспомогательные битобые операции
-	int crudMax() { // установить все возможные биты маски
-		return (1 << CRUD::crudMax) - 1;
-	}
-	int crudResetBit(int mask, CRUD bit) { // сбросить один бит в маске
+	// Сбросить один бит в маске
+	inline int resetBit(int mask, EnabledBits bit) {
 		return mask & ~(1 << bit);
 	}
 
@@ -119,22 +116,20 @@ private:
 	class InventionItem : public QListWidgetItem
 	{
 	public:
-		InventionItem(const Inventions inventions)
-			: QListWidgetItem(), inventions(inventions)
+		InventionItem(const Invention::Rank& rank)
+			: QListWidgetItem(), rank(rank)
 		{
 		}
-		explicit InventionItem(const Inventions inventions, const QString &text, QListWidget *listview = nullptr)
-			: QListWidgetItem(text, listview), inventions(inventions)
+		explicit InventionItem(const Invention::Rank& rank, const QString &text, QListWidget *listview = nullptr)
+			: QListWidgetItem(text, listview), rank(rank)
 		{
 		}
 		bool operator<(const QListWidgetItem &other) const override
 		{
-			int i = this->data(Qt::UserRole).toInt();
-			int j = other.data(Qt::UserRole).toInt();
-			return inventions[i] < inventions[j];
+			return this->rank < static_cast<const InventionItem&>(other).rank;
 		}
 	private:
-		const Inventions inventions;
+		Invention::Rank rank;
 	};
 };
 
