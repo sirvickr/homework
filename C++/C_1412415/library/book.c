@@ -63,12 +63,9 @@ void* input_book(FILE* stream, int prompt) {
 }
 
 void* read_book(FILE* stream) {
-	printf("enter read_book: stream %p\n", stream);
 	book_t* book = book_create();
 	int index;
 	int scan_result = fscanf(stream, "%d\t%u\t%s\t%s\t%s\n", &index, &book->year, book->code, book->author, book->name);
-	printf("  res %d\n", scan_result);
-	printf("leave read_book: %u\t\"%s\"\t\"%s\"\t\"%s\"\n", book->year, book->code, book->author, book->name);
 	if(scan_result != 5) {
 		free(book);
 		book = NULL;

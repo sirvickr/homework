@@ -39,9 +39,6 @@ int main( int argc, char* argv[] )
 	FILE* file;
 	char file_name[MAX_FILE_NAME];
 	bilist_t* books = bilist_create();
-	bilist_push_back(books, book_create_init(2000, "ISBN1", "Straustrup", "C++"));
-	bilist_push_back(books, book_create_init(2020, "ISBN2", "Noname", "C#"));
-	bilist_push_back(books, book_create_init(2014, "ISBN3", "Band of four", "Desigh Patterns"));
 	do {
 		printf("[%d]\tДобавление новой записи в список\n", MENU_CREATE);
 		printf("[%d]\tРедактирование записи в списке\n", MENU_UPDATE);

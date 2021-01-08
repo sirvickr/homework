@@ -68,10 +68,8 @@ void bilist_insert(bilist_t* list, binode_t* curr, void* data) {
 
 // удаляет элемент item из списка
 void bilist_remove(bilist_t* list, binode_t* item, callback_t release) {
-	fprintf(stderr, "enter remove: count %d item %p\n", list->count, item);
 	if(!list->count)
 		return;
-	fprintf(stderr, " prev %p next %p\n", item->prev, item->next);
 	if(item->prev) {
 		item->prev->next = item->next;
 	}
@@ -83,10 +81,8 @@ void bilist_remove(bilist_t* list, binode_t* item, callback_t release) {
 		list->head = NULL;
 		list->tail = NULL;
 	}
-	fprintf(stderr, " release\n");
 	if(release)
 		release(item->data);
-	fprintf(stderr, "leave remove\n");
 	free(item);
 }
 
@@ -97,17 +93,14 @@ int bilist_size(const bilist_t* list) {
 
 // возвращает элемент по индексу
 binode_t* bilist_item(bilist_t* list, int index) {
-	fprintf(stderr, " item: index %d\n", index);
 	binode_t* curr = list->head;
 	int n = 0;
 	while(curr) {
-		fprintf(stderr, "  %d\n", n);
 		if(index == n)
 			return curr;
 		curr = curr->next;
 		n++;
 	}
-	fprintf(stderr, " item: not found\n");
 	return NULL;
 }
 
