@@ -137,12 +137,13 @@ void bilist_print(const bilist_t* list, writer_t printer, FILE* stream, const ch
 		printer(curr->data, stream);
 		curr = curr->next;
 	}
+	fflush(stream);
 }
 
 // считывает список
 void bilist_read(bilist_t* list, reader_t reader, FILE* stream) {
 	void* data;
-	while(data = reader(stream)) {
+	while((data = reader(stream))) {
 		bilist_push_back(list, data);
 	}
 }

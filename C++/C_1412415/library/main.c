@@ -25,6 +25,7 @@ int check_index(unsigned count, unsigned index) {
 		return 0;
 	if(index >= count) {
 		printf("Индекс может быть от 0 до %u\n", count - 1);
+		fflush(stdout);
 		return 0;
 	}
 	return 1;
@@ -33,9 +34,8 @@ int check_index(unsigned count, unsigned index) {
 // точка входа программы
 int main( int argc, char* argv[] )
 {
-	unsigned i/*, j, n*/, menu, action;
+	unsigned i, menu;
 	book_t book;
-	book_t* ptr = NULL;
 	FILE* file;
 	char file_name[MAX_FILE_NAME];
 	bilist_t* books = bilist_create();
@@ -50,6 +50,7 @@ int main( int argc, char* argv[] )
 		printf("[%d]\tИзвлечение информации из списка по указанным критериям\n", MENU_SEARCH);
 		printf("[%d]\tВыход\n", MENU_EXIT);
 		printf("Выберите действие: ");
+		fflush(stdout);
 		scanf("%u", &menu);
 
 		switch(menu) {
@@ -58,6 +59,7 @@ int main( int argc, char* argv[] )
 			break;
 		case MENU_UPDATE:
 			printf("Введите индекс элемента: ");
+			fflush(stdout);
 			scanf("%u", &i);
 			if(!check_index(bilist_size(books), i))
 				break;
@@ -65,6 +67,7 @@ int main( int argc, char* argv[] )
 			break;
 		case MENU_DELETE:
 			printf("Введите индекс элемента: ");
+			fflush(stdout);
 			scanf("%u", &i);
 			if(!check_index(bilist_size(books), i))
 				break;
@@ -72,6 +75,7 @@ int main( int argc, char* argv[] )
 			break;
 		case MENU_SORT:
 			printf("Введите индекс поля, по которому будет выполняться поиск (0 - год, 1 - шифр, 2 - фамилия автора, 3 - название книги): ");
+			fflush(stdout);
 			scanf("%u", &i);
 			switch(i) {
 			case 0:
@@ -93,12 +97,14 @@ int main( int argc, char* argv[] )
 			default:
 				printf("Номер может быть от 0 до 3\n");
 			}
+			fflush(stdout);
 			break;
 		case MENU_OUTPUT:
 			bilist_print(books, print_book, stdout, "Список книг");
 			break;
 		case MENU_LOAD:
 			printf("Введите имя файла: ");
+			fflush(stdout);
 			scanf ("%255s", file_name);
 			file = fopen(file_name, "rt");
 			if(!file) {
@@ -111,6 +117,7 @@ int main( int argc, char* argv[] )
 			break;
 		case MENU_SAVE:
 			printf("Введите имя файла: ");
+			fflush(stdout);
 			scanf ("%255s", file_name);
 			file = fopen(file_name, "wt");
 			if(!file) {
@@ -122,6 +129,7 @@ int main( int argc, char* argv[] )
 			break;
 		case MENU_SEARCH:
 			printf("Введите индекс поля, по которому будет выполняться поиск (0 - год, 1 - шифр, 2 - фамилия автора, 3 - название книги): ");
+			fflush(stdout);
 			scanf("%u", &i);
 			switch(i) {
 			case 0:

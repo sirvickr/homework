@@ -30,26 +30,34 @@ void book_destroy(void* book) {
 }
 
 void input_book_year(book_t* book, FILE* stream, int prompt) {
-	if(prompt)
+	if(prompt) {
 		printf("Введите год выпуска: ");
+		fflush(stdout);
+	}
 	fscanf(stream, "%u", &book->year);
 }
 
 void input_book_code(book_t* book, FILE* stream, int prompt) {
-	if(prompt)
+	if(prompt) {
 		printf("Введите шифр книги: ");
+		fflush(stdout);
+	}
 	fscanf(stream, "%255s", book->code); 
 }
 
 void input_book_author(book_t* book, FILE* stream, int prompt) {
-	if(prompt)
+	if(prompt) {
 		printf("Введите фамилию автора: ");
+		fflush(stdout);
+	}
 	fscanf(stream, "%255s", book->author); 
 }
 
 void input_book_name(book_t* book, FILE* stream, int prompt) {
-	if(prompt)
+	if(prompt) {
 		printf("Введите название книги: ");
+		fflush(stdout);
+	}
 	fscanf(stream, "%255s", book->name); 
 }
 
