@@ -14,9 +14,10 @@
 #define MENU_ACTION 2
 #define MENU_SEARCH 3
 #define MENU_SWAP   4
-#define MENU_EXIT   5
+#define MENU_SORT   5
+#define MENU_EXIT   6
 
-typedef struct {
+typedef struct ticket_t {
 	unsigned num;
 	char name[MAX_NAME_SIZE];
 	float price;
@@ -96,11 +97,41 @@ ticket_t* find_ticket_by_price(ticket_t* tickets, unsigned count, float price) {
 	return NULL;
 }
 
+// обмен двух билетов местами
+
 void swap_tickets(ticket_t* a, ticket_t* b) {
 	ticket_t c;
 	memcpy(&c, a, sizeof(ticket_t));
 	memcpy(a, b, sizeof(ticket_t));
 	memcpy(b, &c, sizeof(ticket_t));
+}
+
+// сортировка пузырьком
+
+typedef float (*compare_t)(const ticket_t* a, const ticket_t* b);
+
+void bubble_sort(ticket_t* tickets, unsigned count, compare_t compare) {
+	for(unsigned bound = count - 1; bound > 0; bound--) {
+		for(unsigned i = 0; i < bound; i++) {
+			if(compare(&tickets[i], &tickets[i + 1]) > 0) {
+				swap_tickets(&tickets[i], &tickets[i + 1]);
+			}
+		}
+	}
+}
+
+// функции обратного вызова для сортировки
+
+float ticket_compare_by_num(const ticket_t* a, const ticket_t* b) {
+	return (int)a->num - (int)b->num;
+}
+
+float ticket_compare_by_name(const ticket_t* a, const ticket_t* b) {
+	return strcmp(a->name, b->name);
+}
+
+float ticket_compare_by_price(const ticket_t* a, const ticket_t* b) {
+	return a->price - b->price;
 }
 
 int check_index(unsigned count, unsigned index) {
@@ -114,6 +145,7 @@ int check_index(unsigned count, unsigned index) {
 }
 
 // точка входа программы
+
 int main( int argc, char* argv[] )
 {
 	unsigned i, j, n, menu, action;
@@ -129,6 +161,7 @@ int main( int argc, char* argv[] )
 		printf("[%d]\tРабота с данными выбранного билета\n", MENU_ACTION);
 		printf("[%d]\tПоиск\n", MENU_SEARCH);
 		printf("[%d]\tОбмен двух значений\n", MENU_SWAP);
+		printf("[%d]\tСортировка билетов\n", MENU_SORT);
 		printf("[%d]\tВыход\n", MENU_EXIT);
 		printf("Выберите действие: ");
 		scanf("%u", &menu);
@@ -201,6 +234,26 @@ int main( int argc, char* argv[] )
 			}
 			swap_tickets(&tickets[i], &tickets[j]);
 			print_tickets(tickets, 0, n);
+			break;
+		case MENU_SORT:
+			printf("Введите индекс поля, по которому будет выполняться сортировка (0 - номер, 1 - название, 2 - цена): ");
+			scanf("%u", &i);
+			switch(i) {
+			case 0:
+				bubble_sort(tickets, n, ticket_compare_by_num);
+				print_tickets(tickets, 0, n);
+				break;
+			case 1:
+				bubble_sort(tickets, n, ticket_compare_by_name);
+				print_tickets(tickets, 0, n);
+				break;
+			case 2:
+				bubble_sort(tickets, n, ticket_compare_by_price);
+				print_tickets(tickets, 0, n);
+				break;
+			default:
+				printf("Номер может быть от 0 до 2\n");
+			}
 			break;
 		case MENU_EXIT:
 			printf("Завершение работы\n");
