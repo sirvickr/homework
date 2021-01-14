@@ -161,52 +161,6 @@ namespace lab10
 
         }
 
-        static void NetworkTask(string folder)
-        {
-            Console.WriteLine("\nРабота с сетью.");
-            try
-            {
-                // Создайте приложение читающее содержимое веб-страницы по введенному адресу 
-                // и размещающее ее в текстовый файл.
-                
-                //Console.Write("Введите адрес сайта: ");
-                //string url = Console.ReadLine();
-                //string url = "http://www.example.com";
-                string url = "http://www.mail.ru";
-
-                var req = WebRequest.Create(url);
-                req.BeginGetResponse(r =>
-                {
-                    var response = req.EndGetResponse(r);
-                    var stream = response.GetResponseStream();
-                    var reader = new StreamReader(stream, true);
-                    var str = reader.ReadToEnd();
-                    //Console.WriteLine(str);
-                    using (StreamWriter sw = new StreamWriter(folder + @"\web.txt", false, System.Text.Encoding.Default))
-                    {
-                        sw.WriteLine(str);
-                    }
-                    // Поместите в текстовый файл информацию о хосте и всех адресах mail.ru
-                    using (StreamWriter sw = new StreamWriter(folder + @"\headers.txt", false, System.Text.Encoding.Default))
-                    {
-                        sw.WriteLine(response.Headers.ToString());
-                    }
-                }, null);
-                /* аьтернативный способ
-                using (var client = new WebClient())
-                {
-                    string result = client.DownloadString(url);
-                    Console.WriteLine(result);
-                    Console.WriteLine("Headers: {0}", client.Headers.ToString());
-                    
-                }*/
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
-        }
-
         static void TextFileTask(string folder)
         {
             Console.WriteLine("\nРабота с текстовым (символьным) файлом.");
@@ -264,6 +218,52 @@ namespace lab10
                         }
                     }
                 }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
+
+        static void NetworkTask(string folder)
+        {
+            Console.WriteLine("\nРабота с сетью.");
+            try
+            {
+                // Создайте приложение читающее содержимое веб-страницы по введенному адресу 
+                // и размещающее ее в текстовый файл.
+                
+                //Console.Write("Введите адрес сайта: ");
+                //string url = Console.ReadLine();
+                //string url = "http://www.example.com";
+                string url = "http://www.mail.ru";
+
+                var req = WebRequest.Create(url);
+                req.BeginGetResponse(r =>
+                {
+                    var response = req.EndGetResponse(r);
+                    var stream = response.GetResponseStream();
+                    var reader = new StreamReader(stream, true);
+                    var str = reader.ReadToEnd();
+                    //Console.WriteLine(str);
+                    using (StreamWriter sw = new StreamWriter(folder + @"\web.txt", false, System.Text.Encoding.Default))
+                    {
+                        sw.WriteLine(str);
+                    }
+                    // Поместите в текстовый файл информацию о хосте и всех адресах mail.ru
+                    using (StreamWriter sw = new StreamWriter(folder + @"\headers.txt", false, System.Text.Encoding.Default))
+                    {
+                        sw.WriteLine(response.Headers.ToString());
+                    }
+                }, null);
+                /* аьтернативный способ
+                using (var client = new WebClient())
+                {
+                    string result = client.DownloadString(url);
+                    Console.WriteLine(result);
+                    Console.WriteLine("Headers: {0}", client.Headers.ToString());
+                    
+                }*/
             }
             catch (Exception e)
             {
